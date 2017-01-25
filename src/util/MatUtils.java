@@ -39,16 +39,16 @@ public class MatUtils {
     return image;
   }
 
-  public static Mat fromBufferedImage(BufferedImage bi) {
+  /**
+   * @param dicom
+   * @return a {@link Mat} read from {@code dicom}.
+   */
+  public static Mat fromDICOM(DICOM dicom) {
+    BufferedImage bi = dicom.getBufferedImage();
     Mat mat = new Mat(bi.getHeight(), bi.getWidth(), CvType.CV_8UC1);
     byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
     mat.put(0, 0, data);
     return mat;
   }
-
-  public static Mat fromDICOM(DICOM dicom) {
-    return fromBufferedImage(dicom.getBufferedImage());
-  }
-
 
 }
