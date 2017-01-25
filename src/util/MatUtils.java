@@ -3,7 +3,10 @@ package util;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+
+import ij.plugin.DICOM;
 
 /**
  * Suite of utility methods that can be used to process {@link Mat}s.
@@ -35,5 +38,17 @@ public class MatUtils {
     System.arraycopy(b, 0, targetPixels, 0, b.length);
     return image;
   }
+
+  public static Mat fromBufferedImage(BufferedImage bi) {
+    Mat mat = new Mat(bi.getHeight(), bi.getWidth(), CvType.CV_8UC1);
+    byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
+    mat.put(0, 0, data);
+    return mat;
+  }
+
+  public static Mat fromDICOM(DICOM dicom) {
+    return fromBufferedImage(dicom.getBufferedImage());
+  }
+
 
 }
