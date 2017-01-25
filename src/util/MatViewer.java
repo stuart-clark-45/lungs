@@ -6,7 +6,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +34,7 @@ public class MatViewer {
 
   public MatViewer(List<Mat> mats, List<String> matTitles) {
     this.images =
-        new CircularList<>(mats.parallelStream().map(MatViewer::toBufferedImage)
+        new CircularList<>(mats.parallelStream().map(MatUtils::toBufferedImage)
             .collect(Collectors.toList()));
     this.matTitles = new CircularList<>(matTitles);
     this.lock = new Object();
@@ -130,26 +129,6 @@ public class MatViewer {
       names.add(i + "/" + numMats);
     }
     return names;
-  }
-
-  /**
-   * Convert {@code mat} into a {@link BufferedImage} and return it.
-   * 
-   * @param mat
-   * @return
-   */
-  private static BufferedImage toBufferedImage(Mat mat) {
-    int type = BufferedImage.TYPE_BYTE_GRAY;
-    if (mat.channels() > 1) {
-      type = BufferedImage.TYPE_3BYTE_BGR;
-    }
-    int bufferSize = mat.channels() * mat.cols() * mat.rows();
-    byte[] b = new byte[bufferSize];
-    mat.get(0, 0, b); // get all the pixels
-    BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
-    final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-    System.arraycopy(b, 0, targetPixels, 0, b.length);
-    return image;
   }
 
 }
