@@ -3,7 +3,7 @@ package util;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opencv.core.Mat;
-import org.opencv.highgui.Highgui;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +18,8 @@ public class MatViewerTest {
   public void test() throws Exception {
     List<Mat> mats = new ArrayList<>();
 
-
-    mats.add(Highgui.imread(getClass().getResource("/biggie.jpg").getPath()));
-    mats.add(Highgui.imread(getClass().getResource("/yellow-sub.jpg").getPath()));
+    mats.add(Imgcodecs.imread(getClass().getResource("/biggie.jpg").getPath()));
+    mats.add(Imgcodecs.imread(getClass().getResource("/yellow-sub.jpg").getPath()));
 
     new MatViewer(mats).display();
   }
