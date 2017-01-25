@@ -1,5 +1,5 @@
 <ivy-module version="2.0">
-    <info organisation="com.myspotontheweb" module="demo"/>
+    <info organisation="com.clark.stuart" module="lungs"/>
 
     <configurations defaultconfmapping="compile->default">
         <conf name="compile" description="Required to compile application"/>
