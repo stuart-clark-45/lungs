@@ -11,6 +11,7 @@
         <!-- compile dependencies -->
 	    <!--<dependency org="org.apache.commons" name="commons-lang3" rev="3.0"/>-->
         <!--<dependency org="org.bytedeco" name="javacv" rev="1.3.1"/>-->
+        <dependency org="gov.nih.imagej" name="imagej" rev="1.47"/>
 
 
         <!-- runtime dependencies -->
