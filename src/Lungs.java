@@ -2,15 +2,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import ij.plugin.DICOM;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.highgui.Highgui;
+
+import ij.plugin.DICOM;
 import util.MatUtils;
 import util.MatViewer;
 
 public class Lungs {
-
 
   private static final String DIR =
       "resource/DOI/LIDC-IDRI-0029/1.3.6.1.4.1.14519.5.2.1.6279.6001.788972240715000723677133060452/1.3.6.1.4.1.14519.5.2.1.6279.6001.264090899378396711987322794314/";
@@ -22,6 +21,9 @@ public class Lungs {
 
     List<Mat> mats = new ArrayList<>();
     List<String> names = new ArrayList<>();
+
+
+    // TODO need to order by image number found by obtaining info
 
     for (File file : dcmFiles) {
       DICOM dicom = new DICOM();
