@@ -17,9 +17,14 @@ public class CircularList<E> extends ArrayList<E> {
 
   @Override
   public E get(int index) {
+    if(isEmpty()){
+      throw new IndexOutOfBoundsException("The list is empty");
+    }
+
     while (index < 0) {
       index = size() + index;
     }
+
     return super.get(index % size());
   }
 
