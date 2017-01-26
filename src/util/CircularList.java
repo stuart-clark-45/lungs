@@ -11,13 +11,21 @@ import java.util.Collection;
  */
 public class CircularList<E> extends ArrayList<E> {
 
+  public CircularList() {
+    super();
+  }
+
+  public CircularList(int initialCapacity) {
+    super(initialCapacity);
+  }
+
   public CircularList(Collection<? extends E> c) {
     super(c);
   }
 
   @Override
   public E get(int index) {
-    if(isEmpty()){
+    if (isEmpty()) {
       throw new IndexOutOfBoundsException("The list is empty");
     }
 
