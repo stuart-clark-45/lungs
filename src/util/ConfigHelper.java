@@ -39,7 +39,7 @@ public class ConfigHelper {
   }
 
   /**
-   * @param key a boolean key
+   * @param key a key with a boolean value
    * @return the value for the key.
    * @throws IllegalStateException if key not present or value not a boolean
    */
@@ -55,6 +55,18 @@ public class ConfigHelper {
     }
 
     return Boolean.parseBoolean(value);
+  }
+
+  /**
+   * @param key a key with a string value
+   * @return the value for the key.
+   * @throws IllegalStateException if key not present.
+   */
+  public static String getString(String key) {
+    // Check the key
+    assertKeySet(key);
+
+    return (String) props.get(key);
   }
 
   /**
