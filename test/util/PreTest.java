@@ -30,7 +30,7 @@ public class PreTest extends BlockJUnit4ClassRunner {
     MongoHelper.getDataStore().getDB().dropDatabase();
 
     // Set application mode
-    ConfigHelper.getProps().put(Mode.KEY, Mode.VALUE.TEST);
+    ConfigHelper.getProps().put(Mode.KEY, Mode.VALUE.TEST.name());
     LOGGER.info("Config set up");
   }
 
