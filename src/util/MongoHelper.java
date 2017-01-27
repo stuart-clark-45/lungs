@@ -15,7 +15,7 @@ public class MongoHelper {
   private static Datastore DS;
 
   static {
-    String dbName = "lungs";
+    String dbName = (String) ConfigHelper.getProps().get("db");
     MongoClient mongo = new MongoClient();
     Morphia morphia = new Morphia();
     DS = morphia.createDatastore(mongo, dbName);
