@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.mongodb.morphia.Datastore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import config.Mode;
 import ij.plugin.DICOM;
@@ -23,8 +27,11 @@ import util.MongoHelper;
  */
 public class MedicalImageImporter extends Importer<MedicalImage> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(MedicalImageImporter.class);
+
   private static final String PROD_PATH = "./resource/DOI";
   private static final String TEST_PATH = "./testres/medical-image-importer";
+  private static final int LOG_INTERVAL = 100;
 
   private String path;
   private Datastore ds;
@@ -46,9 +53,19 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
   protected void importModels(Datastore ds) throws LungsException {
 
     try {
-      Files.find(Paths.get(path), Integer.MAX_VALUE,
-          (p, bfa) -> bfa.isRegularFile() && p.getFileName().toString().endsWith(".dcm")).forEach(
-          this::parseAndSave);
+      List<Path> dicomFiles =
+          Files.find(Paths.get(path), Integer.MAX_VALUE,
+              (p, bfa) -> bfa.isRegularFile() && p.getFileName().toString().endsWith(".dcm"))
+              .collect(Collectors.toList());
+
+      int counter = 0;
+      for (Path dicomFile : dicomFiles) {
+        parseAndSave(dicomFile);
+        if (counter++ % LOG_INTERVAL == 0) {
+          LOGGER.info(counter + "/" + dicomFiles.size() + " imported");
+        }
+      }
+
     } catch (IOException e) {
       throw new LungsException("Failed to import models", e);
     }
