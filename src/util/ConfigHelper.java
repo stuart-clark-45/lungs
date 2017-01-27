@@ -19,6 +19,9 @@ public class ConfigHelper {
 
   private static final String FILE_NAME = "application.conf";
 
+  /**
+   * Used {@link ConfigHelper#getProps()} never this field directly.
+   */
   private static ConfigurationMap props;
 
   /**
@@ -46,7 +49,7 @@ public class ConfigHelper {
     // Check the key
     assertKeySet(key);
 
-    String value = (String) props.get(key);
+    String value = (String) getProps().get(key);
 
     // Check the value
     if (!value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false")) {
@@ -65,14 +68,14 @@ public class ConfigHelper {
     // Check the key
     assertKeySet(key);
 
-    return (String) props.get(key);
+    return (String) getProps().get(key);
   }
 
   /**
    * @return the current system mode.
    */
   public static Mode.VALUE getMode() {
-    String s = (String) props.get(Mode.KEY);
+    String s = (String) getProps().get(Mode.KEY);
     return Mode.VALUE.valueOf(s);
   }
 
