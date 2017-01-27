@@ -7,8 +7,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.ConfigurationMap;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import config.Mode;
 
 /**
  * Helper class used to make a single isntance of the configuration globally accessible.
@@ -17,13 +17,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigHelper {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigHelper.class);
   private static final String FILE_NAME = "application.conf";
 
   private static ConfigurationMap props;
 
   /**
-   * @return a map of keys to values taken from application.conf
+   * @return a map of keys to values originally loaded from {@code FILE_NAME}.
    */
   public static ConfigurationMap getProps() {
     if (props == null) {
@@ -39,7 +38,7 @@ public class ConfigHelper {
   }
 
   /**
-   * @param key a key with a boolean value
+   * @param key a key with a boolean value.
    * @return the value for the key.
    * @throws IllegalStateException if key not present or value not a boolean
    */
@@ -58,7 +57,7 @@ public class ConfigHelper {
   }
 
   /**
-   * @param key a key with a string value
+   * @param key a key with a string value.
    * @return the value for the key.
    * @throws IllegalStateException if key not present.
    */
@@ -67,6 +66,14 @@ public class ConfigHelper {
     assertKeySet(key);
 
     return (String) props.get(key);
+  }
+
+  /**
+   * @return the current system mode.
+   */
+  public static Mode.VALUE getMode() {
+    String s = (String) props.get(Mode.KEY);
+    return Mode.VALUE.valueOf(s);
   }
 
   /**

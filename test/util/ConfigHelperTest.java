@@ -8,10 +8,14 @@ import org.apache.commons.configuration.ConfigurationMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import config.Mode;
 
 /**
  * @author Stuart Clark
  */
+@RunWith(PreTest.class)
 public class ConfigHelperTest {
 
   private static final String TESTING123 = "testing123";
@@ -50,6 +54,11 @@ public class ConfigHelperTest {
     String value = "value";
     props.put(TESTING123, value);
     assertEquals(value, ConfigHelper.getString(TESTING123));
+  }
+
+  @Test
+  public void testGetMode() throws Exception {
+    assertEquals(Mode.VALUE.TEST, ConfigHelper.getMode());
   }
 
   @Test(expected = IllegalStateException.class)
