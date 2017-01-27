@@ -15,6 +15,8 @@ public class MedicalImage {
   @Id
   private ObjectId id;
 
+  private String filePath;
+
   private String patientId;
 
   /**
@@ -54,6 +56,14 @@ public class MedicalImage {
 
   public ObjectId getId() {
     return id;
+  }
+
+  public String getFilePath() {
+    return filePath;
+  }
+
+  public void setFilePath(String filePath) {
+    this.filePath = filePath;
   }
 
   public String getPatientId() {
