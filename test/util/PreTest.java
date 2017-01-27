@@ -6,6 +6,8 @@ import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Mode;
+
 /**
  * Runs code to be exectuded before all tests
  *
@@ -28,7 +30,7 @@ public class PreTest extends BlockJUnit4ClassRunner {
     MongoHelper.getDataStore().getDB().dropDatabase();
 
     // Set application mode
-    ConfigHelper.getProps().put("mode", "test");
+    ConfigHelper.getProps().put(Mode.KEY, Mode.VALUE.TEST);
     LOGGER.info("Config set up");
   }
 
