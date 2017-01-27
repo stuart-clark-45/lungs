@@ -16,19 +16,30 @@ public class PreTest extends BlockJUnit4ClassRunner {
   private static final Logger LOGGER = LoggerFactory.getLogger(PreTest.class);
 
   static {
+    // Load OpenCV
     LOGGER.info("Loading OpenCV...");
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     LOGGER.info("OpenCV Loaded");
+
+    // Set up database
+    String dbName = "junitdb";
+    LOGGER.info("Using " + dbName + "as database");
+    ConfigHelper.getProps().put("db", dbName);
+    MongoHelper.getDataStore().getDB().dropDatabase();
+
+    // Set application mode
+    ConfigHelper.getProps().put("mode", "test");
+    LOGGER.info("Config set up");
   }
 
   /**
-   * Creates a BlockJUnit4ClassRunner to run {@code klass}
+   * Creates a BlockJUnit4ClassRunner to run {@code clazz}
    *
-   * @param klass
+   * @param clazz
    * @throws InitializationError if the test class is malformed.
    */
-  public PreTest(Class<?> klass) throws InitializationError {
-    super(klass);
+  public PreTest(Class<?> clazz) throws InitializationError {
+    super(clazz);
   }
 
 }
