@@ -152,7 +152,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
   }
 
   public static void main(String[] args) throws Exception {
-    new MedicalImageImporter().call();
+    new MedicalImageImporter().run();
   }
 
 }

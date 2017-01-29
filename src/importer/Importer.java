@@ -14,7 +14,7 @@ import util.MongoHelper;
  *
  * @author Stuart Clark
  */
-public abstract class Importer<T> implements Callable<Void> {
+public abstract class Importer<T> implements Runnable {
 
   /**
    * The class of the model that your will parse your data into.
@@ -33,18 +33,19 @@ public abstract class Importer<T> implements Callable<Void> {
    * efficiency.
    */
   @Override
-  public Void call() throws Exception {
-    Datastore ds = MongoHelper.getDataStore();
-    DBCollection collection = ds.getCollection(clazz);
+  public void run() {
+    try {
+      Datastore ds = MongoHelper.getDataStore();
+      DBCollection collection = ds.getCollection(clazz);
 
-    collection.drop();
-    collection.dropIndexes();
+      collection.drop();
+      collection.dropIndexes();
+      importModels(ds);
 
-    importModels(ds);
-
-    ds.ensureIndexes(clazz);
-
-    return null;
+      ds.ensureIndexes(clazz);
+    } catch (LungsException e) {
+      throw new IllegalStateException("Failed to import models", e);
+    }
   }
 
   protected abstract void importModels(Datastore ds) throws LungsException;
