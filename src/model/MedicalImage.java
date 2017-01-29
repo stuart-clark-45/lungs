@@ -54,6 +54,16 @@ public class MedicalImage {
 
   private String seriesInstanceUID;
 
+  private Double sliceLocation;
+
+  private Integer bitsAllocated;
+
+  private Integer bitsStored;
+
+  private Integer highBit;
+
+  private Integer seriesNumber;
+
   public ObjectId getId() {
     return id;
   }
@@ -142,7 +152,7 @@ public class MedicalImage {
     return studyInstanceUID;
   }
 
-  public void setStudyInstanceUID(String studyInstanceUID) {
+  public void setStudyInstanceUIDs(String studyInstanceUID) {
     this.studyInstanceUID = studyInstanceUID;
   }
 
@@ -154,4 +164,43 @@ public class MedicalImage {
     this.seriesInstanceUID = seriesInstanceUID;
   }
 
+  public Double getSliceLocation() {
+    return sliceLocation;
+  }
+
+  public Integer getBitsAllocated() {
+    return bitsAllocated;
+  }
+
+  public void setBitsAllocated(Integer bitsAllocated) {
+    this.bitsAllocated = bitsAllocated;
+  }
+
+  public Integer getBitsStored() {
+    return bitsStored;
+  }
+
+  public void setBitsStored(Integer bitsStored) {
+    this.bitsStored = bitsStored;
+  }
+
+  public Integer getHighBit() {
+    return highBit;
+  }
+
+  public void setHighBit(Integer highBit) {
+    this.highBit = highBit;
+  }
+
+  public Integer getSeriesNumber() {
+    return seriesNumber;
+  }
+
+  public void setSeriesNumber(Integer seriesNumber) {
+    this.seriesNumber = seriesNumber;
+  }
+
+  public void setSliceLocation(Double sliceLocation) {
+    this.sliceLocation = sliceLocation;
+  }
 }
