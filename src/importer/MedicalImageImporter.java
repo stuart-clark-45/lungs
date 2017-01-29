@@ -81,6 +81,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
     String info = dicom.getInfo(sPath);
 
     MedicalImage image = new MedicalImage();
+    image.setFilePath(sPath);
     image.setImageNumber(imageNumber(info));
 
     ds.save(image);
