@@ -3,6 +3,7 @@ package model;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Indexed;
 
 /**
  * Model used to hold information about single medical image.
@@ -17,6 +18,7 @@ public class MedicalImage {
 
   private String filePath;
 
+  @Indexed
   private String patientId;
 
   /**
@@ -52,6 +54,7 @@ public class MedicalImage {
 
   private String studyInstanceUID;
 
+  @Indexed
   private String seriesInstanceUID;
 
   private Double sliceLocation;
