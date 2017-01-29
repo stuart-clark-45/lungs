@@ -80,16 +80,50 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
     DICOM dicom = new DICOM();
     String info = dicom.getInfo(sPath);
 
+    String modality = stringForKey("0008,0060  Modality: ", info);
+    if (!modality.equals("CT")) {
+      return;
+    }
+
     MedicalImage image = new MedicalImage();
     image.setFilePath(sPath);
-    image.setImageNumber(imageNumber(info));
+    image.setModel(modality);
+    image.setImageNumber(intForKey("0020,0013  Image Number: ", info));
+    image.setManufacturer(stringForKey("0008,0070  Manufacturer: ", info));
+    image.setModel(stringForKey("0008,1090  Manufacturer's Model Name: ", info));
+    image.setRows(intForKey("0028,0010  Rows: ", info));
+    image.setColumns(intForKey("0028,0011  Columns: ", info));
+    image.setkVp(intForKey("0018,0060  kVp: ", info));
+    image.setSliceLocation(doubleForKey("0020,1041  Slice Location: ", info));
+    image.setPatientId(stringForKey("0010,0020  Patient ID: ", info));
+    image.setSeriesInstanceUID(stringForKey("0020,000E  Series Instance UID: ", info));
+    image.setBitsAllocated(intForKey("0028,0100  Bits Allocated: ", info));
+    image.setBitsStored(intForKey("0028,0101  Bits Stored: ", info));
+    image.setHighBit(intForKey("0028,0102  High Bit: ", info));
 
     ds.save(image);
   }
 
-  private int imageNumber(String info) {
-    String key = "0020,0013  Image Number: ";
-    return Integer.parseInt(valueForKey(key, info));
+  /**
+   * Used regex to get the integer value for the key.
+   *
+   * @param key all the text in the line of info before the actual value that is required.
+   * @param info info obtained using {@link DICOM#getInfo(String)}.
+   * @return the integer value for the key.
+   */
+  private Integer intForKey(String key, String info) {
+    return Integer.parseInt(stringForKey(key, info));
+  }
+
+  /**
+   * Used regex to get the double value for the key.
+   *
+   * @param key all the text in the line of info before the actual value that is required.
+   * @param info info obtained using {@link DICOM#getInfo(String)}.
+   * @return the double value for the key.
+   */
+  private Double doubleForKey(String key, String info) {
+    return Double.parseDouble(stringForKey(key, info));
   }
 
   /**
@@ -99,7 +133,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
    * @param info info obtained using {@link DICOM#getInfo(String)}.
    * @return the value for the key.
    */
-  private String valueForKey(String key, String info) {
+  private String stringForKey(String key, String info) {
     Matcher m = Pattern.compile(key + ".*").matcher(info);
 
     String line = null;
@@ -113,6 +147,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
     if (counter != 1) {
       throw new IllegalStateException(counter + " lines with \"" + key + "\" not 1");
     }
+
     return line.substring(key.length()).trim();
   }
 
