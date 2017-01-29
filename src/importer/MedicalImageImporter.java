@@ -66,6 +66,8 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
         }
       }
 
+      LOGGER.info("Finished importing MedicalImages");
+
     } catch (IOException e) {
       throw new LungsException("Failed to import models", e);
     }
