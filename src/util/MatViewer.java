@@ -96,7 +96,7 @@ public class MatViewer {
     // Listen for key presses that are used to change the image being displayed
     frame.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
           currentImage += 1;
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
