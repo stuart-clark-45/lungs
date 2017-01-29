@@ -10,7 +10,7 @@ import util.LungsException;
 import util.MongoHelper;
 
 /**
- * Should be extended by classes that are used to import data into MongoDB
+ * Should be extended by classes that are used to import data into MongoDB.
  *
  * @author Stuart Clark
  */
