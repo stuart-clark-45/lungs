@@ -100,6 +100,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
     slice.setBitsAllocated(intForKey("0028,0100  Bits Allocated: ", info));
     slice.setBitsStored(intForKey("0028,0101  Bits Stored: ", info));
     slice.setHighBit(intForKey("0028,0102  High Bit: ", info));
+    slice.setImageSopUID(stringForKey("0008,0018  SOP Instance UID: ", info));
 
     ds.save(slice);
   }
