@@ -6,12 +6,12 @@ import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 
 /**
- * Model used to hold information about single medical image.
+ * Model used to hold information about single cross section from a CT scan.
  *
  * @author Stuart Clark
  */
 @Entity
-public class MedicalImage {
+public class CTSlice {
 
   @Id
   private ObjectId id;

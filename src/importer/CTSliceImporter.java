@@ -15,19 +15,19 @@ import org.slf4j.LoggerFactory;
 
 import config.Mode;
 import ij.plugin.DICOM;
-import model.MedicalImage;
+import model.CTSlice;
 import util.ConfigHelper;
 import util.LungsException;
 import util.MongoHelper;
 
 /**
- * Used to import information about medical images into the database
+ * Used to import information about CT cross sections into the database.
  *
  * @author Stuart Clark
  */
-public class MedicalImageImporter extends Importer<MedicalImage> {
+public class CTSliceImporter extends Importer<CTSlice> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MedicalImageImporter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CTSliceImporter.class);
 
   private static final String PROD_PATH = "./resource/DOI";
   private static final String TEST_PATH = "./testres/medical-image-importer";
@@ -36,8 +36,8 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
   private String path;
   private Datastore ds;
 
-  public MedicalImageImporter() {
-    super(MedicalImage.class);
+  public CTSliceImporter() {
+    super(CTSlice.class);
 
     Mode.VALUE mode = ConfigHelper.getMode();
     if (mode == Mode.VALUE.PROD) {
@@ -66,7 +66,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
         }
       }
 
-      LOGGER.info("Finished importing MedicalImages");
+      LOGGER.info("Finished importing CTSlices");
 
     } catch (IOException e) {
       throw new LungsException("Failed to import models", e);
@@ -85,23 +85,23 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
       return;
     }
 
-    MedicalImage image = new MedicalImage();
-    image.setFilePath(sPath);
-    image.setModel(modality);
-    image.setImageNumber(intForKey("0020,0013  Image Number: ", info));
-    image.setManufacturer(stringForKey("0008,0070  Manufacturer: ", info));
-    image.setModel(stringForKey("0008,1090  Manufacturer's Model Name: ", info));
-    image.setRows(intForKey("0028,0010  Rows: ", info));
-    image.setColumns(intForKey("0028,0011  Columns: ", info));
-    image.setkVp(intForKey("0018,0060  kVp: ", info));
-    image.setSliceLocation(doubleForKey("0020,1041  Slice Location: ", info));
-    image.setPatientId(stringForKey("0010,0020  Patient ID: ", info));
-    image.setSeriesInstanceUID(stringForKey("0020,000E  Series Instance UID: ", info));
-    image.setBitsAllocated(intForKey("0028,0100  Bits Allocated: ", info));
-    image.setBitsStored(intForKey("0028,0101  Bits Stored: ", info));
-    image.setHighBit(intForKey("0028,0102  High Bit: ", info));
+    CTSlice slice = new CTSlice();
+    slice.setFilePath(sPath);
+    slice.setModel(modality);
+    slice.setImageNumber(intForKey("0020,0013  Image Number: ", info));
+    slice.setManufacturer(stringForKey("0008,0070  Manufacturer: ", info));
+    slice.setModel(stringForKey("0008,1090  Manufacturer's Model Name: ", info));
+    slice.setRows(intForKey("0028,0010  Rows: ", info));
+    slice.setColumns(intForKey("0028,0011  Columns: ", info));
+    slice.setkVp(intForKey("0018,0060  kVp: ", info));
+    slice.setSliceLocation(doubleForKey("0020,1041  Slice Location: ", info));
+    slice.setPatientId(stringForKey("0010,0020  Patient ID: ", info));
+    slice.setSeriesInstanceUID(stringForKey("0020,000E  Series Instance UID: ", info));
+    slice.setBitsAllocated(intForKey("0028,0100  Bits Allocated: ", info));
+    slice.setBitsStored(intForKey("0028,0101  Bits Stored: ", info));
+    slice.setHighBit(intForKey("0028,0102  High Bit: ", info));
 
-    ds.save(image);
+    ds.save(slice);
   }
 
   /**
@@ -152,7 +152,7 @@ public class MedicalImageImporter extends Importer<MedicalImage> {
   }
 
   public static void main(String[] args) throws Exception {
-    new MedicalImageImporter().run();
+    new CTSliceImporter().run();
   }
 
 }

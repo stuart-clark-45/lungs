@@ -8,12 +8,12 @@ import org.mongodb.morphia.Datastore;
 import com.mongodb.DBCollection;
 
 import model.CTStack;
-import model.MedicalImage;
+import model.CTSlice;
 import util.MongoHelper;
 
 /**
  * Generate {@link CTStack}s for each of the series of images that are present in the
- * {@link MedicalImage} collection.
+ * {@link CTSlice} collection.
  *
  * @author Stuart Clark
  */
@@ -33,17 +33,17 @@ public class CTStackGenerator implements Runnable {
     collection.dropIndexes();
 
     // Get each series instance UID
-    List uids = ds.getCollection(MedicalImage.class).distinct("seriesInstanceUID");
+    List uids = ds.getCollection(CTSlice.class).distinct("seriesInstanceUID");
     for (Object o : uids) {
       String uid = (String) o;
 
-      // Get all the images for the stack
-      List<MedicalImage> images =
-          ds.createQuery(MedicalImage.class).field("seriesInstanceUID").equal(uid).asList();
+      // Get all the slices for the stack
+      List<CTSlice> images =
+          ds.createQuery(CTSlice.class).field("seriesInstanceUID").equal(uid).asList();
 
       // Sort them and create the stack
       CTStack stack = new CTStack();
-      images.stream().sorted(Comparator.comparingInt(MedicalImage::getImageNumber))
+      images.stream().sorted(Comparator.comparingInt(CTSlice::getImageNumber))
           .forEach(stack::addSlice);
 
       ds.save(stack);

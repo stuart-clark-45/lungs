@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import model.MedicalImage;
+import model.CTSlice;
 import util.MongoHelper;
 import util.PreTest;
 
@@ -13,14 +13,14 @@ import util.PreTest;
  * @author Stuart Clark
  */
 @RunWith(PreTest.class)
-public class MedicalImageImporterTest {
+public class CTSliceImporterTest {
 
   @Test
   public void test() throws Exception {
-    new MedicalImageImporter().run();
+    new CTSliceImporter().run();
 
     // Should only be one as only one of the images is a CT scan
-    assertEquals(1, MongoHelper.getDataStore().createQuery(MedicalImage.class).count());
+    assertEquals(1, MongoHelper.getDataStore().createQuery(CTSlice.class).count());
   }
 
 }

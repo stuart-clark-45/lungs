@@ -19,7 +19,7 @@ public class CTStack {
   @Id
   private ObjectId id;
 
-  private List<MedicalImage> slices;
+  private List<CTSlice> slices;
 
   public CTStack() {
     slices = new ArrayList<>();
@@ -29,20 +29,20 @@ public class CTStack {
     return id;
   }
 
-  public List<MedicalImage> getSlices() {
+  public List<CTSlice> getSlices() {
     return slices;
   }
 
-  public void setSlices(List<MedicalImage> slices) {
+  public void setSlices(List<CTSlice> slices) {
     this.slices = slices;
   }
 
-  public void addSlice(MedicalImage mi) {
+  public void addSlice(CTSlice mi) {
     slices.add(mi);
   }
 
   public List<String> getPaths() {
-    return slices.stream().map(MedicalImage::getFilePath).collect(Collectors.toList());
+    return slices.stream().map(CTSlice::getFilePath).collect(Collectors.toList());
   }
 
 }

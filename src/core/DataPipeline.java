@@ -1,7 +1,7 @@
 package core;
 
 import generator.CTStackGenerator;
-import importer.MedicalImageImporter;
+import importer.CTSliceImporter;
 
 /**
  * Used to import and aggregate all of the data required for the system to be run.
@@ -11,7 +11,7 @@ import importer.MedicalImageImporter;
 public class DataPipeline {
 
   public static void main(String[] args) {
-    new MedicalImageImporter().run();
+    new CTSliceImporter().run();
     new CTStackGenerator().run();
   }
 
