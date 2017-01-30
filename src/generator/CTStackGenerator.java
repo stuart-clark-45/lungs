@@ -9,6 +9,8 @@ import com.mongodb.DBCollection;
 
 import model.CTStack;
 import model.CTSlice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import util.MongoHelper;
 
 /**
@@ -19,6 +21,8 @@ import util.MongoHelper;
  */
 public class CTStackGenerator implements Runnable {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(CTStackGenerator.class);
+
   private Datastore ds;
 
   public CTStackGenerator() {
@@ -27,6 +31,8 @@ public class CTStackGenerator implements Runnable {
 
   @Override
   public void run() {
+    LOGGER.info("Generating CTStacks...");
+
     // Drop collection and indexes
     DBCollection collection = ds.getCollection(CTStack.class);
     collection.drop();
@@ -51,6 +57,8 @@ public class CTStackGenerator implements Runnable {
 
     // index collection
     ds.ensureIndexes(CTStack.class);
+
+    LOGGER.info("Finished generating CTStacks");
   }
 
   public static void main(String[] args) throws Exception {
