@@ -57,6 +57,9 @@ public class CTSlice {
   @Indexed
   private String seriesInstanceUID;
 
+  @Indexed
+  private String imageSopUID;
+
   private Double sliceLocation;
 
   private Integer bitsAllocated;
@@ -205,5 +208,17 @@ public class CTSlice {
 
   public void setSliceLocation(Double sliceLocation) {
     this.sliceLocation = sliceLocation;
+  }
+
+  public void setStudyInstanceUID(String studyInstanceUID) {
+    this.studyInstanceUID = studyInstanceUID;
+  }
+
+  public String getImageSopUID() {
+    return imageSopUID;
+  }
+
+  public void setImageSopUID(String imageSopUID) {
+    this.imageSopUID = imageSopUID;
   }
 }
