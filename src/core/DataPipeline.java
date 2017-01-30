@@ -1,7 +1,7 @@
 package core;
 
-import generator.CTStackGenerator;
-import importer.CTSliceImporter;
+import data.CTSliceImporter;
+import data.CTStackGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

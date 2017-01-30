@@ -1,6 +1,4 @@
-package importer;
-
-import java.util.concurrent.Callable;
+package data;
 
 import org.mongodb.morphia.Datastore;
 

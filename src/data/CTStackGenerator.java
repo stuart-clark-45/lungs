@@ -1,4 +1,4 @@
-package generator;
+package data;
 
 import java.util.Comparator;
 import java.util.List;
