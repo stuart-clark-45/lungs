@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Indexed;
 
 /**
  * A stack of images for a single CT scan.
@@ -18,6 +19,9 @@ public class CTStack {
 
   @Id
   private ObjectId id;
+
+  @Indexed
+  private String seriesInstanceUID;
 
   private List<CTSlice> slices;
 
@@ -45,4 +49,11 @@ public class CTStack {
     return slices.stream().map(CTSlice::getFilePath).collect(Collectors.toList());
   }
 
+  public String getSeriesInstanceUID() {
+    return seriesInstanceUID;
+  }
+
+  public void setSeriesInstanceUID(String seriesInstanceUID) {
+    this.seriesInstanceUID = seriesInstanceUID;
+  }
 }
