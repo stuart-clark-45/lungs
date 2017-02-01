@@ -5,6 +5,7 @@ import java.util.List;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 
 /**
@@ -40,8 +41,10 @@ public class ReadingROI {
    * This id will be the same for all {@link ReadingROI}s that correspond to the same nodule or
    * non-nodule.
    */
+  @Indexed
   private ObjectId groupId;
 
+  @Indexed
   private Type type;
 
   private Point centroid;
@@ -54,6 +57,7 @@ public class ReadingROI {
   /**
    * Used to link {@code this} to the corresponding {@code ImageSlice}.
    */
+  @Indexed
   private String imageSopUID;
 
   private List<Point> edgePoints;
