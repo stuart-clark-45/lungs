@@ -26,8 +26,6 @@ public class Lungs {
       mats.add(MatUtils.fromDICOM(dicom));
     }
 
-    import readings seperatley not just as fields of images
-
     new MatViewer(mats).display();
   }
 
