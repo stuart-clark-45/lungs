@@ -4,13 +4,13 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.mongodb.morphia.Datastore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.DBCollection;
 
-import model.CTStack;
 import model.CTSlice;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import model.CTStack;
 import util.MongoHelper;
 
 /**
@@ -51,6 +51,7 @@ public class CTStackGenerator implements Runnable {
       CTStack stack = new CTStack();
       images.stream().sorted(Comparator.comparingInt(CTSlice::getImageNumber))
           .forEach(stack::addSlice);
+      stack.setSeriesInstanceUID(images.get(0).getSeriesInstanceUID());
 
       ds.save(stack);
     }
