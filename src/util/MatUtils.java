@@ -2,7 +2,6 @@ package util;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.util.Arrays;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -61,9 +60,8 @@ public class MatUtils {
 
     for (int i = 0; i < mat.rows(); i++) {
       for (int j = 0; j < mat.cols(); j++) {
-        double[] rgbValues = new double[3];
-        Arrays.fill(rgbValues, mat.get(i, j)[0]);
-        rgb.put(i, j, rgbValues);
+        double val = mat.get(i, j)[0];
+        rgb.put(i, j, val, val, val);
       }
     }
 
