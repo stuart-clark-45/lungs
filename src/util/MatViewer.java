@@ -119,7 +119,6 @@ public class MatViewer {
             annotationsOn = !annotationsOn;
             break;
           case KeyEvent.VK_ESCAPE:
-            frame.setVisible(false);
             frame.dispose();
             break;
         }
