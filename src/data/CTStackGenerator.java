@@ -51,7 +51,9 @@ public class CTStackGenerator implements Runnable {
       CTStack stack = new CTStack();
       images.stream().sorted(Comparator.comparingInt(CTSlice::getImageNumber))
           .forEach(stack::addSlice);
-      stack.setSeriesInstanceUID(images.get(0).getSeriesInstanceUID());
+      CTSlice first = images.get(0);
+      stack.setSeriesInstanceUID(first.getSeriesInstanceUID());
+      stack.setModel(first.getModel());
 
       ds.save(stack);
     }
