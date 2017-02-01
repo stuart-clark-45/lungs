@@ -97,10 +97,17 @@ public class MatViewer {
     frame.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          currentImage += 1;
-        } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-          currentImage -= 1;
+        switch (e.getKeyCode()) {
+          case KeyEvent.VK_RIGHT:
+            currentImage += 1;
+            break;
+          case KeyEvent.VK_LEFT:
+            currentImage -= 1;
+            break;
+          case KeyEvent.VK_ESCAPE:
+            frame.setVisible(false); // you can't see me!
+            frame.dispose();
+            break;
         }
 
         frame.setTitle(matTitles.get(currentImage));
