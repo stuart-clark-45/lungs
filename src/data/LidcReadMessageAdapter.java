@@ -35,8 +35,6 @@ public class LidcReadMessageAdapter extends XmlAdapter<String, LidcReadMessage> 
 
   @Override
   public LidcReadMessage unmarshal(String v) throws Exception {
-
-
     // Init the unmarshaller
     JAXBContext jaxb = JAXBContext.newInstance(ReadingSession.class);
     Unmarshaller unmarshaller = jaxb.createUnmarshaller();
@@ -62,7 +60,7 @@ public class LidcReadMessageAdapter extends XmlAdapter<String, LidcReadMessage> 
     return readMessage;
   }
 
-  private static String nodeToString(Node node) throws TransformerException {
+  private String nodeToString(Node node) throws TransformerException {
     StringWriter sw = new StringWriter();
     Transformer t = TransformerFactory.newInstance().newTransformer();
     t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
