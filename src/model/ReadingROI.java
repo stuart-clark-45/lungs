@@ -17,15 +17,39 @@ import org.opencv.core.Point;
 public class ReadingROI {
 
   public enum Type {
-    NODULE, NON_NODULE
+    /**
+     * Greater than or equal to 3mm.
+     */
+    BIG_NODULE,
+
+    /**
+     * Less than 3mm.
+     */
+    SMALL_NODULE,
+
+    /**
+     * Greater than or equal to 3mm. If smaller than not included.
+     */
+    NON_NODULE
   }
 
   @Id
   private ObjectId id;
 
+  /**
+   * This id will be the same for all {@link ReadingROI}s that correspond to the same nodule or
+   * non-nodule.
+   */
+  private ObjectId groupId;
+
   private Type type;
 
   private Point centroid;
+
+  /**
+   * True if the {@code edgePoints} are included in area/volume defined, false otherwise.
+   */
+  private boolean inclusive;
 
   /**
    * Used to link {@code this} to the corresponding {@code ImageSlice}.
@@ -34,12 +58,12 @@ public class ReadingROI {
 
   private List<Point> edgePoints;
 
-  public ReadingROI(Type type) {
-    this.type = type;
-  }
-
   public ObjectId getId() {
     return id;
+  }
+
+  public void setType(Type type) {
+    this.type = type;
   }
 
   public Type getType() {
@@ -68,6 +92,22 @@ public class ReadingROI {
 
   public void setEdgePoints(List<Point> edgePoints) {
     this.edgePoints = edgePoints;
+  }
+
+  public ObjectId getGroupId() {
+    return groupId;
+  }
+
+  public void setGroupId(ObjectId groupId) {
+    this.groupId = groupId;
+  }
+
+  public boolean isInclusive() {
+    return inclusive;
+  }
+
+  public void setInclusive(boolean inclusive) {
+    this.inclusive = inclusive;
   }
 
 }
