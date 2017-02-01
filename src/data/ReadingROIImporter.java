@@ -90,6 +90,8 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
   @Override
   protected void importModels(Datastore ds) throws LungsException {
     try {
+      LOGGER.info("Importing ReadingROIs...");
+
       // Recursively find all the xml files
       List<Path> xmlFiles =
           Files.find(Paths.get(path), Integer.MAX_VALUE,
@@ -115,6 +117,7 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
 
       LOGGER.info(numFiles + "/" + numFiles + " xml files processed");
       LOGGER.info(rejected + "/" + numFiles + " xml files were rejected");
+      LOGGER.info("Finished importing ReadingROIs");
 
     } catch (Exception e) {
       throw new LungsException("Failed to import ReadingROIs", e);
