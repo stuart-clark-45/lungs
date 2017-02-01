@@ -25,7 +25,7 @@ import util.LungsException;
 public class CTSliceImporter extends Importer<CTSlice> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CTSliceImporter.class);
-  private static final int LOG_INTERVAL = 100;
+  private static final int LOG_INTERVAL = 1000;
 
   public CTSliceImporter() {
     super(CTSlice.class);
@@ -43,8 +43,9 @@ public class CTSliceImporter extends Importer<CTSlice> {
 
   @Override
   protected void importModels(Datastore ds) throws LungsException {
-
     try {
+      LOGGER.info("Importing CTSlices...");
+
       List<Path> dicomFiles =
           Files.find(Paths.get(path), Integer.MAX_VALUE,
               (p, bfa) -> bfa.isRegularFile() && p.getFileName().toString().endsWith(".dcm"))
@@ -54,12 +55,11 @@ public class CTSliceImporter extends Importer<CTSlice> {
       for (Path dicomFile : dicomFiles) {
         parseAndSave(dicomFile, ds);
         if (counter++ % LOG_INTERVAL == 0) {
-          LOGGER.info(counter + "/" + dicomFiles.size() + " imported");
+          LOGGER.info(counter + "/" + dicomFiles.size() + " CTSlices imported");
         }
       }
 
       LOGGER.info("Finished importing CTSlices");
-
     } catch (IOException e) {
       throw new LungsException("Failed to import models", e);
     }
