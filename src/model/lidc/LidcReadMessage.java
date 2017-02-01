@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
-import data.LidcReadMessageAdapter;
 
 /**
  * Class for top level element of the LIDC xml files.
@@ -14,7 +11,6 @@ import data.LidcReadMessageAdapter;
  * @author Stuart Clark
  */
 @XmlRootElement(name = "LidcReadMessage")
-@XmlJavaTypeAdapter(LidcReadMessageAdapter.class)
 public class LidcReadMessage {
 
   protected List<ReadingSession> readingSessions;
