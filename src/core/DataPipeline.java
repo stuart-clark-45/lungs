@@ -23,6 +23,10 @@ public class DataPipeline {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataPipeline.class);
 
+  private DataPipeline() {
+    // Hide the constructor
+  }
+
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     LOGGER.info("Running DataPineLine");
 
