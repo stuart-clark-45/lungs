@@ -48,13 +48,17 @@ public class LidcReadMessageAdapter extends XmlAdapter<String, LidcReadMessage> 
     // Create LidcReadMessage
     LidcReadMessage readMessage = new LidcReadMessage();
     List<ReadingSession> sessions = readMessage.getReadingSessions();
-    NodeList nodes = doc.getChildNodes().item(0).getChildNodes();
-    for (int i = 0; i < nodes.getLength(); i++) {
-      Node nodeChild = nodes.item(i);
-      if (nodeChild.getNodeName().equals("readingSession")) {
-        String nodeAsString = nodeToString(nodeChild);
+
+    // Populate sessions list
+    NodeList children = doc.getFirstChild().getChildNodes();
+    for (int i = 0; i < children.getLength(); i++) {
+      Node child = children.item(i);
+
+      if (child.getNodeName().equals("readingSession")) {
+        String nodeAsString = nodeToString(child);
         sessions.add((ReadingSession) unmarshaller.unmarshal(new StringReader(nodeAsString)));
       }
+      
     }
 
     return readMessage;
