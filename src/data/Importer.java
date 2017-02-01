@@ -4,6 +4,8 @@ import org.mongodb.morphia.Datastore;
 
 import com.mongodb.DBCollection;
 
+import config.Mode;
+import util.ConfigHelper;
 import util.LungsException;
 import util.MongoHelper;
 
@@ -15,6 +17,11 @@ import util.MongoHelper;
 public abstract class Importer<T> implements Runnable {
 
   /**
+   * The path to use when importing files
+   */
+  protected final String path;
+
+  /**
    * The class of the model that your will parse your data into.
    */
   private Class<T> clazz;
@@ -24,6 +31,13 @@ public abstract class Importer<T> implements Runnable {
    */
   public Importer(Class<T> clazz) {
     this.clazz = clazz;
+    Mode.VALUE mode = ConfigHelper.getMode();
+    if (mode == Mode.VALUE.PROD) {
+      path = prodPath();
+    } else {
+      path = testPath();
+    }
+
   }
 
   /**
@@ -45,6 +59,18 @@ public abstract class Importer<T> implements Runnable {
       throw new IllegalStateException("Failed to import models", e);
     }
   }
+
+  /**
+   * @return the path that should be used mode is set to {@link config.Mode.VALUE#TEST}. Simply
+   *         return {@code null} file is not used to import models.
+   */
+  protected abstract String testPath();
+
+  /**
+   * @return the path that should be used mode is set to {@link config.Mode.VALUE#PROD}. Simply
+   *         return {@code null} file is not used to import models.
+   */
+  protected abstract String prodPath();
 
   protected abstract void importModels(Datastore ds) throws LungsException;
 
