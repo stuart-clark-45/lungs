@@ -13,12 +13,9 @@ import org.mongodb.morphia.Datastore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.Mode;
 import ij.plugin.DICOM;
 import model.CTSlice;
-import util.ConfigHelper;
 import util.LungsException;
-import util.MongoHelper;
 
 /**
  * Used to import information about CT cross sections into the database.
@@ -28,25 +25,20 @@ import util.MongoHelper;
 public class CTSliceImporter extends Importer<CTSlice> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CTSliceImporter.class);
-
-  private static final String PROD_PATH = "./resource/DOI";
-  private static final String TEST_PATH = "./testres/medical-image-importer";
   private static final int LOG_INTERVAL = 100;
-
-  private String path;
-  private Datastore ds;
 
   public CTSliceImporter() {
     super(CTSlice.class);
+  }
 
-    Mode.VALUE mode = ConfigHelper.getMode();
-    if (mode == Mode.VALUE.PROD) {
-      path = PROD_PATH;
-    } else {
-      path = TEST_PATH;
-    }
+  @Override
+  protected String testPath() {
+    return "./testres/medical-image-importer";
+  }
 
-    ds = MongoHelper.getDataStore();
+  @Override
+  protected String prodPath() {
+    return "./resource/DOI";
   }
 
   @Override
@@ -60,7 +52,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
 
       int counter = 0;
       for (Path dicomFile : dicomFiles) {
-        parseAndSave(dicomFile);
+        parseAndSave(dicomFile, ds);
         if (counter++ % LOG_INTERVAL == 0) {
           LOGGER.info(counter + "/" + dicomFiles.size() + " imported");
         }
@@ -74,7 +66,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
 
   }
 
-  private void parseAndSave(Path path) {
+  private void parseAndSave(Path path, Datastore ds) {
     String sPath = path.toString();
 
     DICOM dicom = new DICOM();
