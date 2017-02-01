@@ -1,5 +1,6 @@
 package util;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opencv.core.Mat;
@@ -15,6 +16,7 @@ import java.util.List;
 public class MatViewerTest {
 
   @Test
+  @Ignore
   public void test() throws Exception {
     List<Mat> mats = new ArrayList<>();
 
