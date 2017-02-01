@@ -25,6 +25,9 @@ public class CTStack {
 
   private List<CTSlice> slices;
 
+  @Indexed
+  private String model;
+
   public CTStack() {
     slices = new ArrayList<>();
   }
@@ -56,4 +59,13 @@ public class CTStack {
   public void setSeriesInstanceUID(String seriesInstanceUID) {
     this.seriesInstanceUID = seriesInstanceUID;
   }
+
+  public String getModel() {
+    return model;
+  }
+
+  public void setModel(String model) {
+    this.model = model;
+  }
+
 }
