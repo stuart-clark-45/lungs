@@ -22,32 +22,42 @@ import org.opencv.core.Mat;
  */
 public class MatViewer {
 
-  private CircularList<BufferedImage> images;
+  private CircularList<BufferedImage> unannotated;
+  private CircularList<BufferedImage> annotated;
   private List<String> matTitles;
   private Object lock;
-  public int currentImage;
-
+  private int currentImage;
+  private boolean annotationsOn;
 
   public MatViewer(List<Mat> mats) {
-    this(mats, defaultTitles(mats.size()));
+    this(mats, mats);
   }
 
-  public MatViewer(List<Mat> mats, List<String> matTitles) {
-    this.images =
+  public MatViewer(List<Mat> mats, List<Mat> annotated) {
+    this.unannotated =
         new CircularList<>(mats.parallelStream().map(MatUtils::toBufferedImage)
             .collect(Collectors.toList()));
-    this.matTitles = new CircularList<>(matTitles);
+    this.annotated =
+        new CircularList<>(annotated.parallelStream().map(MatUtils::toBufferedImage)
+            .collect(Collectors.toList()));
+    this.annotationsOn = true;
+    this.matTitles = new CircularList<>(defaultTitles(mats.size()));
     this.lock = new Object();
   }
 
+  public void setMatTitles(List<String> matTitles) {
+    this.matTitles = matTitles;
+  }
+
   /**
-   * Display the images. N.B. This method is blocking.
+   * Display the unannotated. N.B. This method is blocking.
    */
   public void display() {
     // Create a panel for the image
     final JPanel panel = new JPanel() {
       @Override
       protected void paintComponent(Graphics g) {
+        CircularList<BufferedImage> images = annotationsOn ? annotated : unannotated;
         Graphics g2 = g.create();
         g2.drawImage(images.get(currentImage), 0, 0, getWidth(), getHeight(), null);
         g2.dispose();
@@ -55,6 +65,7 @@ public class MatViewer {
 
       @Override
       public Dimension getPreferredSize() {
+        CircularList<BufferedImage> images = annotationsOn ? annotated : unannotated;
         BufferedImage img = images.get(currentImage);
         return new Dimension(img.getWidth(), img.getHeight());
       }
@@ -62,7 +73,7 @@ public class MatViewer {
 
     // Add the panel to a JFrame
     final JFrame frame = new JFrame();
-    frame.setTitle(matTitles.get(currentImage));
+    frame.setTitle(getTitle());
     frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     frame.add(panel);
@@ -104,13 +115,16 @@ public class MatViewer {
           case KeyEvent.VK_LEFT:
             currentImage -= 1;
             break;
+          case KeyEvent.VK_SPACE:
+            annotationsOn = !annotationsOn;
+            break;
           case KeyEvent.VK_ESCAPE:
-            frame.setVisible(false); // you can't see me!
+            frame.setVisible(false);
             frame.dispose();
             break;
         }
 
-        frame.setTitle(matTitles.get(currentImage));
+        frame.setTitle(getTitle());
         frame.repaint();
       }
     });
@@ -124,6 +138,10 @@ public class MatViewer {
       throw new RuntimeException(e);
     }
 
+  }
+
+  private String getTitle() {
+    return matTitles.get(currentImage) + " - Annotations " + (annotationsOn ? "on" : "off");
   }
 
   /**
