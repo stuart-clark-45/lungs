@@ -6,6 +6,7 @@ import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
@@ -34,18 +35,15 @@ public class Lungs {
     ds = MongoHelper.getDataStore();
   }
 
-  public void run() {
-    CTStack ctStack = ds.createQuery(CTStack.class).get();
+  private void groundTruth() {
+    CTStack stack = ds.createQuery(CTStack.class).get();
+    // CTStack ctStack = ds.createQuery(CTStack.class).field("model").equal("LightSpeed16").get(new
+    // FindOptions().skip(1));
 
-    List<Mat> greyMats = new ArrayList<>();
-    List<Mat> annotatedMats = new ArrayList<>();
-
-    for (CTSlice slice : ctStack.getSlices()) {
-      // Load the slice
-      DICOM dicom = new DICOM();
-      dicom.open(slice.getFilePath());
-      Mat grey = MatUtils.fromDICOM(dicom);
-
+    List<Mat> greyMats = new ArrayList<>(stack.size());
+    List<Mat> annotatedMats = new ArrayList<>(stack.size());
+    for (CTSlice slice : stack.getSlices()) {
+      Mat grey = getSliceMat(slice);
       greyMats.add(grey);
 
       Mat annotated = MatUtils.grey2RGB(grey);
@@ -78,6 +76,23 @@ public class Lungs {
           break;
       }
     }
+
+  /**
+   * @param stack
+   * @return List of grey-scale {@link Mat} for the given stack.
+   */
+  private List<Mat> getStackMats(CTStack stack) {
+    return stack.getSlices().parallelStream().map(this::getSliceMat).collect(Collectors.toList());
+  }
+
+  /**
+   * @param slice
+   * @return a grey-scale {@link Mat} for the given slice.
+   */
+  private Mat getSliceMat(CTSlice slice) {
+    DICOM dicom = new DICOM();
+    dicom.open(slice.getFilePath());
+    return MatUtils.fromDICOM(dicom);
   }
 
   public static void main(String[] args) {
