@@ -1,5 +1,8 @@
 package core;
 
+import static model.ReadingROI.Type.BIG_NODULE;
+import static model.ReadingROI.Type.NON_NODULE;
+import static model.ReadingROI.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
@@ -15,11 +18,13 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
+import config.Annotation;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
 import model.ReadingROI;
 import util.ColourBGR;
+import util.ConfigHelper;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
@@ -54,27 +59,46 @@ public class Lungs {
     new MatViewer(greyMats, annotatedMats).display();
   }
 
+  /**
+   * Annotate {@code rgb} with the appropriate annotations for the {@code slice} if they are allowed
+   * by the system configuration (see ./conf/application.conf).
+   *
+   * @param rgb
+   * @param slice
+   */
   private void annotate(Mat rgb, CTSlice slice) {
     List<ReadingROI> rois =
         ds.createQuery(ReadingROI.class).field("imageSopUID").equal(slice.getImageSopUID())
             .asList();
 
     for (ReadingROI roi : rois) {
-      switch (roi.getType()) {
-        case BIG_NODULE:
-          for (Point point : roi.getEdgePoints()) {
-            Imgproc.drawMarker(rgb, point, new Scalar(ColourBGR.RED), MARKER_SQUARE, 1, 1, LINE_4);
-          }
-          break;
-        case SMALL_NODULE:
-          Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.RED),
-              MARKER_TILTED_CROSS, CROSS_SIZE, CROSS_THICKNESS, LINE_4);
-          break;
-        case NON_NODULE:
-          Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.GREEN),
-              MARKER_TILTED_CROSS, CROSS_SIZE, 1, LINE_4);
-          break;
+      annotate(rgb, roi);
+    }
+
+  }
+
+  /**
+   * Annotate {@code rgb} with the appropriate annotations for the {@code roi} if they are allowed
+   * by the system configuration (see ./conf/application.conf).
+   * 
+   * @param rgb
+   * @param roi
+   */
+  private void annotate(Mat rgb, ReadingROI roi) {
+    ReadingROI.Type type = roi.getType();
+
+    if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
+      for (Point point : roi.getEdgePoints()) {
+        Imgproc.drawMarker(rgb, point, new Scalar(ColourBGR.RED), MARKER_SQUARE, 1, 1, LINE_4);
       }
+
+    } else if (type == SMALL_NODULE && ConfigHelper.getBoolean(Annotation.SMALL_NODULE)) {
+      Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
+          CROSS_SIZE, CROSS_THICKNESS, LINE_4);
+
+    } else if (type == NON_NODULE && ConfigHelper.getBoolean(Annotation.NON_NODULE)) {
+      Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
+          CROSS_SIZE, 1, LINE_4);
     }
 
   /**
