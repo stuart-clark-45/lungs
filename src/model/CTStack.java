@@ -36,6 +36,10 @@ public class CTStack {
     return id;
   }
 
+  public int size() {
+    return slices.size();
+  }
+
   public List<CTSlice> getSlices() {
     return slices;
   }
