@@ -6,6 +6,7 @@ import static model.ReadingROI.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
+import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import config.Annotation;
 import ij.plugin.DICOM;
@@ -31,6 +34,7 @@ import util.MongoHelper;
 
 public class Lungs {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(Lungs.class);
   private static final int CROSS_SIZE = 5;
   private static final int CROSS_THICKNESS = 1;
 
@@ -101,6 +105,36 @@ public class Lungs {
           CROSS_SIZE, 1, LINE_4);
     }
 
+  }
+
+  private void segment() {
+    CTStack stack = ds.createQuery(CTStack.class).get();
+    int numSlices = stack.size();
+    List<Mat> original = getStackMats(stack);
+
+    List<Mat> annotated = new ArrayList<>(numSlices);
+    List<CTSlice> slices = stack.getSlices();
+
+    for (int i = 0; i < numSlices; i++) {
+      Mat orig = original.get(i);
+
+      Mat filtered = MatUtils.similarMat(orig);
+      double sigma = 20d;
+      Imgproc.bilateralFilter(orig, filtered, -1, sigma, sigma);
+
+      Mat seg = MatUtils.similarMat(filtered);
+      Imgproc.threshold(orig, seg, 60, 255, THRESH_BINARY);
+
+      Mat rgb = MatUtils.grey2RGB(seg);
+      annotate(rgb, slices.get(i));
+      annotated.add(rgb);
+
+      LOGGER.info(i + 1 + "/" + numSlices + " processed");
+    }
+
+    new MatViewer(original, annotated).display();
+  }
+
   /**
    * @param stack
    * @return List of grey-scale {@link Mat} for the given stack.
@@ -121,7 +155,9 @@ public class Lungs {
 
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    new Lungs().run();
+    Lungs lungs = new Lungs();
+    // lungs.groundTruth();
+    lungs.segment();
   }
 
 }
