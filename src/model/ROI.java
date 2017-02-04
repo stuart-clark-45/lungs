@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 
 /**
@@ -18,6 +19,9 @@ public class ROI {
   private ObjectId id;
 
   private List<Point> points;
+
+  @Indexed
+  private String imageSopUID;
 
   public ROI() {
     points = new ArrayList<>();
@@ -37,6 +41,14 @@ public class ROI {
 
   public void addPoint(Point point) {
     points.add(point);
+  }
+
+  public String getImageSopUID() {
+    return imageSopUID;
+  }
+
+  public void setImageSopUID(String imageSopUID) {
+    this.imageSopUID = imageSopUID;
   }
 
 }
