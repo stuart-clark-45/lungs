@@ -44,23 +44,23 @@ public class Lungs {
     ds = MongoHelper.getDataStore();
   }
 
-  private void groundTruth() {
-    CTStack stack = ds.createQuery(CTStack.class).get();
-    // CTStack ctStack = ds.createQuery(CTStack.class).field("model").equal("LightSpeed16").get(new
-    // FindOptions().skip(1));
+  /**
+   * @param slices the slices to annotations.
+   * @param original the corresponding {@link Mat}s for the {@code slices}.
+   * @return the {@code original} {@link Mat}s with the ground truth annotated upon then.
+   */
+  private List<Mat> groundTruth(List<CTSlice> slices, List<Mat> original) {
+    List<Mat> annotated = new ArrayList<>(slices.size());
 
-    List<Mat> greyMats = new ArrayList<>(stack.size());
-    List<Mat> annotatedMats = new ArrayList<>(stack.size());
-    for (CTSlice slice : stack.getSlices()) {
-      Mat grey = getSliceMat(slice);
-      greyMats.add(grey);
-
-      Mat annotated = MatUtils.grey2RGB(grey);
-      annotate(annotated, slice);
-      annotatedMats.add(annotated);
+    for (int i = 0; i < slices.size(); i++) {
+      CTSlice slice = slices.get(i);
+      Mat mat = original.get(i);
+      Mat rgb = MatUtils.grey2RGB(mat);
+      annotate(rgb, slice);
+      annotated.add(rgb);
     }
 
-    new MatViewer(greyMats, annotatedMats).display();
+    return annotated;
   }
 
   /**
@@ -107,15 +107,17 @@ public class Lungs {
 
   }
 
-  private void segment() {
-    CTStack stack = ds.createQuery(CTStack.class).get();
-    int numSlices = stack.size();
-    List<Mat> original = getStackMats(stack);
+  /**
+   * // TODO complete this javadoc when method had been decided upon.
+   *
+   * @param original the {@link Mat}s to segment.
+   * @return the segmented {@link Mat}s.
+   */
+  private List<Mat> segment(List<Mat> original) {
+    int numMat = original.size();
+    List<Mat> segmented = new ArrayList<>(numMat);
 
-    List<Mat> annotated = new ArrayList<>(numSlices);
-    List<CTSlice> slices = stack.getSlices();
-
-    for (int i = 0; i < numSlices; i++) {
+    for (int i = 0; i < numMat; i++) {
       Mat orig = original.get(i);
 
       Mat filtered = MatUtils.similarMat(orig);
@@ -124,30 +126,27 @@ public class Lungs {
 
       Mat seg = MatUtils.similarMat(filtered);
       Imgproc.threshold(orig, seg, 60, 255, THRESH_BINARY);
+      segmented.add(seg);
 
-      Mat rgb = MatUtils.grey2RGB(seg);
-      annotate(rgb, slices.get(i));
-      annotated.add(rgb);
-
-      LOGGER.info(i + 1 + "/" + numSlices + " processed");
+      LOGGER.info(i + 1 + "/" + numMat + " segmented");
     }
 
-    new MatViewer(original, annotated).display();
+    return segmented;
   }
 
   /**
    * @param stack
    * @return List of grey-scale {@link Mat} for the given stack.
    */
-  private List<Mat> getStackMats(CTStack stack) {
-    return stack.getSlices().parallelStream().map(this::getSliceMat).collect(Collectors.toList());
+  private static List<Mat> getStackMats(CTStack stack) {
+    return stack.getSlices().parallelStream().map(Lungs::getSliceMat).collect(Collectors.toList());
   }
 
   /**
    * @param slice
    * @return a grey-scale {@link Mat} for the given slice.
    */
-  private Mat getSliceMat(CTSlice slice) {
+  private static Mat getSliceMat(CTSlice slice) {
     DICOM dicom = new DICOM();
     dicom.open(slice.getFilePath());
     return MatUtils.fromDICOM(dicom);
@@ -155,9 +154,16 @@ public class Lungs {
 
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+    // Load the images
+    CTStack stack = MongoHelper.getDataStore().createQuery(CTStack.class).get();
+    List<Mat> original = getStackMats(stack);
+
     Lungs lungs = new Lungs();
-    // lungs.groundTruth();
-    lungs.segment();
+    List<Mat> segmented = lungs.segment(original);
+    List<Mat> annotated = lungs.groundTruth(stack.getSlices(), segmented);
+
+    new MatViewer(segmented, annotated).display();
   }
 
 }
