@@ -25,18 +25,34 @@ import config.Annotation;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
+import model.ROI;
 import model.ReadingROI;
 import util.ColourBGR;
 import util.ConfigHelper;
+import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
+import vision.ROIExtractor;
 
 public class Lungs {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Lungs.class);
+
+  /**
+   * The size of the cross used for annotations.
+   */
   private static final int CROSS_SIZE = 5;
+
+  /**
+   * The thickness of the cross used for annotations.
+   */
   private static final int CROSS_THICKNESS = 1;
+
+  /**
+   * The value used to represent the foreground in segmented images.
+   */
+  private static final int FOREGROUND = 255;
 
   private Datastore ds;
 
@@ -125,13 +141,39 @@ public class Lungs {
       Imgproc.bilateralFilter(orig, filtered, -1, sigma, sigma);
 
       Mat seg = MatUtils.similarMat(filtered);
-      Imgproc.threshold(orig, seg, 60, 255, THRESH_BINARY);
+      Imgproc.threshold(orig, seg, 60, FOREGROUND, THRESH_BINARY);
       segmented.add(seg);
 
       LOGGER.info(i + 1 + "/" + numMat + " segmented");
     }
 
     return segmented;
+  }
+
+  /**
+   * Extract the {@link ROI}s for the segmented images and save them to the database.
+   * 
+   * @param slices
+   * @param segmented
+   * @throws LungsException
+   */
+  public void roiExtraction(List<CTSlice> slices, List<Mat> segmented) throws LungsException {
+    int numMat = segmented.size();
+    ROIExtractor extractor = new ROIExtractor(FOREGROUND);
+
+    // Iterate over mats
+    for (int i = 0; i < numMat; i++) {
+      Mat mat = segmented.get(i);
+      String imageSopUID = slices.get(i).getImageSopUID();
+
+      // Set the imageSopUID for each of the ROIs and save them
+      for (ROI roi : extractor.extract(mat)) {
+        roi.setImageSopUID(imageSopUID);
+        ds.save(roi);
+      }
+
+      LOGGER.info(i + 1 + "/" + numMat + " had ROIs extracted");
+    }
   }
 
   /**
@@ -152,7 +194,7 @@ public class Lungs {
     return MatUtils.fromDICOM(dicom);
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Load the images
@@ -160,7 +202,11 @@ public class Lungs {
     List<Mat> original = getStackMats(stack);
 
     Lungs lungs = new Lungs();
+
     List<Mat> segmented = lungs.segment(original);
+
+    lungs.roiExtraction(stack.getSlices(), segmented);
+
     List<Mat> annotated = lungs.groundTruth(stack.getSlices(), segmented);
 
     new MatViewer(segmented, annotated).display();
