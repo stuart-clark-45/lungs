@@ -73,7 +73,7 @@ public class MatUtils {
    * @return a new {@link Mat} with the same dimentions and type as {@code mat}.
    */
   public static Mat similarMat(Mat mat) {
-    return new Mat(mat.rows(), mat.cols(), mat.type());
+    return Mat.zeros(mat.rows(), mat.cols(), mat.type());
   }
 
 }
