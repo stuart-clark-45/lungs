@@ -195,6 +195,13 @@ public class Lungs {
     return MatUtils.fromDICOM(dicom);
   }
 
+  /**
+   * Should be run with the following VM args
+   * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
+   *
+   * @param args
+   * @throws LungsException
+   */
   public static void main(String[] args) throws LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
