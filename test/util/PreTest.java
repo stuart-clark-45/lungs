@@ -27,7 +27,7 @@ public class PreTest extends BlockJUnit4ClassRunner {
     String dbName = "junitdb";
     LOGGER.info("Using " + dbName + "as database");
     ConfigHelper.getProps().put("db", dbName);
-    MongoHelper.getDataStore().getDB().dropDatabase();
+    drop();
 
     // Set application mode
     ConfigHelper.getProps().put(Mode.KEY, Mode.VALUE.TEST.name());
@@ -42,6 +42,13 @@ public class PreTest extends BlockJUnit4ClassRunner {
    */
   public PreTest(Class<?> clazz) throws InitializationError {
     super(clazz);
+  }
+
+  /**
+   * Drop the database.
+   */
+  public static void drop() {
+    MongoHelper.getDataStore().getDB().dropDatabase();
   }
 
 }

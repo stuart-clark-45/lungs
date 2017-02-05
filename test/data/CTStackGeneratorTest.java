@@ -32,8 +32,7 @@ public class CTStackGeneratorTest {
 
   @After
   public void tearDown() throws Exception {
-    ds.getCollection(CTSlice.class).drop();
-    ds.getCollection(CTStack.class).drop();
+    PreTest.drop();
   }
 
   @Test
