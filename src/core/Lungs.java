@@ -147,7 +147,6 @@ public class Lungs {
       Imgproc.threshold(orig, seg, 60, FOREGROUND, THRESH_BINARY);
       segmented.add(seg);
 
-      LOGGER.info(i + 1 + "/" + numMat + " segmented");
     }
 
     return segmented;
@@ -175,7 +174,6 @@ public class Lungs {
         ds.save(roi);
       }
 
-      LOGGER.info(i + 1 + "/" + numMat + " had ROIs extracted");
     }
   }
 
