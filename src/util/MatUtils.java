@@ -5,6 +5,7 @@ import java.awt.image.DataBufferByte;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 
 import ij.plugin.DICOM;
 
@@ -66,6 +67,15 @@ public class MatUtils {
     }
 
     return rgb;
+  }
+
+  /**
+   * @param grey a single channel {@code Mat}.
+   * @param point
+   * @return the intensity of the pixel in {@code grey} at {@code point}.
+   */
+  public static double getIntensity(Mat grey, Point point) {
+    return grey.get((int) point.x, (int) point.y)[0];
   }
 
   /**
