@@ -56,7 +56,7 @@ public class ROIGenerator extends Importer<ROI> {
 
   @Override
   protected void importModels(Datastore ds) throws LungsException {
-    LOGGER.info("Generating ROIs...");
+    LOGGER.info("Generating ROIs this may take some time...");
 
     Lungs lungs = new Lungs();
 
