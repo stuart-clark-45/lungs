@@ -15,7 +15,7 @@ import config.Mode;
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class ConfigHelperTest {
 
   private static final String TESTING123 = "testing123";

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class MatViewerTest {
 
   @Test

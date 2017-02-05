@@ -14,12 +14,12 @@ import org.opencv.core.Point;
 
 import model.lidc.EdgeMap;
 import model.lidc.LidcReadMessage;
-import util.PreTest;
+import util.Testing;
 
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class ReadingROIImporterTest {
 
   private ReadingROIImporter importer;

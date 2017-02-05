@@ -13,12 +13,12 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import model.ROI;
 import util.MatUtils;
-import util.PreTest;
+import util.Testing;
 
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class ROIExtractorTest {
 
   private static final int FOREGROUND = 255;

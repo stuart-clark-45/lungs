@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 import config.Mode;
 
 /**
- * Runs code to be exectuded before all tests
+ * Runs code to be executed before all tests. And provides generic testing utilities.
  *
  * @author Stuart Clark.
  */
-public class PreTest extends BlockJUnit4ClassRunner {
+public class Testing extends BlockJUnit4ClassRunner {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(PreTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Testing.class);
 
   static {
     // Load OpenCV
@@ -40,7 +40,7 @@ public class PreTest extends BlockJUnit4ClassRunner {
    * @param clazz
    * @throws InitializationError if the test class is malformed.
    */
-  public PreTest(Class<?> clazz) throws InitializationError {
+  public Testing(Class<?> clazz) throws InitializationError {
     super(clazz);
   }
 

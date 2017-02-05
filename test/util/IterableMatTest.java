@@ -13,7 +13,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class IterableMatTest {
 
   @Test

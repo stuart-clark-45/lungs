@@ -14,12 +14,12 @@ import org.mongodb.morphia.Datastore;
 import model.CTSlice;
 import model.CTStack;
 import util.MongoHelper;
-import util.PreTest;
+import util.Testing;
 
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class CTStackGeneratorTest {
 
   private Datastore ds;
@@ -32,7 +32,7 @@ public class CTStackGeneratorTest {
 
   @After
   public void tearDown() throws Exception {
-    PreTest.drop();
+    Testing.drop();
   }
 
   @Test

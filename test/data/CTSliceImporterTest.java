@@ -7,12 +7,12 @@ import org.junit.runner.RunWith;
 
 import model.CTSlice;
 import util.MongoHelper;
-import util.PreTest;
+import util.Testing;
 
 /**
  * @author Stuart Clark
  */
-@RunWith(PreTest.class)
+@RunWith(Testing.class)
 public class CTSliceImporterTest {
 
   @Test
