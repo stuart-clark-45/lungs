@@ -140,8 +140,9 @@ public class Lungs {
       Mat orig = original.get(i);
 
       Mat filtered = MatUtils.similarMat(orig);
-      double sigma = 20d;
-      Imgproc.bilateralFilter(orig, filtered, -1, sigma, sigma);
+      double sigma = 5d;
+      int kernelSize = 3;
+      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigma, sigma);
 
       Mat seg = MatUtils.similarMat(filtered);
       Imgproc.threshold(orig, seg, 60, FOREGROUND, THRESH_BINARY);
