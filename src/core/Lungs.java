@@ -132,7 +132,7 @@ public class Lungs {
    * @param original the {@link Mat}s to segment.
    * @return the segmented {@link Mat}s.
    */
-  private List<Mat> segment(List<Mat> original) {
+  public List<Mat> segment(List<Mat> original) {
     int numMat = original.size();
     List<Mat> segmented = new ArrayList<>(numMat);
 
