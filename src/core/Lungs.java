@@ -107,15 +107,18 @@ public class Lungs {
   private void annotate(Mat rgb, ReadingROI roi) {
     ReadingROI.Type type = roi.getType();
 
+    // Annotate big nodules
     if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
       for (Point point : roi.getEdgePoints()) {
         Imgproc.drawMarker(rgb, point, new Scalar(ColourBGR.RED), MARKER_SQUARE, 1, 1, LINE_4);
       }
 
+      // Annotate small nodules
     } else if (type == SMALL_NODULE && ConfigHelper.getBoolean(Annotation.SMALL_NODULE)) {
       Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
           CROSS_SIZE, CROSS_THICKNESS, LINE_4);
 
+      // Annotate non nodules
     } else if (type == NON_NODULE && ConfigHelper.getBoolean(Annotation.NON_NODULE)) {
       Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
           CROSS_SIZE, 1, LINE_4);
