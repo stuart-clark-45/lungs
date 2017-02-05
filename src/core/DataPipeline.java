@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,7 @@ public class DataPipeline {
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     LOGGER.info("Running DataPineLine");
+    long start = System.currentTimeMillis();
 
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -40,7 +42,7 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running importers");
+    LOGGER.info("Finished running importers in " + timeToString(start));
 
     // Generators (Must be run after importers)
     LOGGER.info("Running Generators...");
@@ -49,9 +51,18 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running Generators");
+    LOGGER.info("Finished running Generators in " + timeToString(start));
 
     LOGGER.info("DataPineLine complete.");
+  }
+
+  private static String timeToString(long start) {
+    long elapsed = System.currentTimeMillis() - start;
+    return String.format(
+        "%d min, %d sec",
+        TimeUnit.MILLISECONDS.toMinutes(elapsed),
+        TimeUnit.MILLISECONDS.toSeconds(elapsed)
+            - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsed)));
   }
 
 }
