@@ -1,8 +1,11 @@
 package data;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.StreamSupport;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
@@ -31,15 +34,19 @@ public class ROIGenerator extends Importer<ROI> {
    */
   private Query<CTSlice> query;
 
-  public ROIGenerator() {
-    this(MongoHelper.getDataStore().createQuery(CTSlice.class).field("model").equal("Sensation 16"));
+  private ExecutorService es;
+
+  public ROIGenerator(ExecutorService es) {
+    this(es, MongoHelper.getDataStore().createQuery(CTSlice.class).field("model")
+        .equal("Sensation 16"));
+    this.es = es;
   }
 
   /**
    * @param query the {@link Query} used to obtain the {@link CTSlice}s that {@link ROI}s should be
    *        generated for.
    */
-  public ROIGenerator(Query<CTSlice> query) {
+  public ROIGenerator(ExecutorService es, Query<CTSlice> query) {
     super(ROI.class);
     this.query = query;
   }
@@ -60,15 +67,55 @@ public class ROIGenerator extends Importer<ROI> {
 
     Lungs lungs = new Lungs();
 
-    StreamSupport.stream(query.spliterator(), true).forEach(slice -> {
-      Mat mat = Lungs.getSliceMat(slice);
-      List<Mat> segmented = lungs.segment(Collections.singletonList(mat));
-      try {
-        lungs.roiExtraction(Collections.singletonList(slice), segmented);
-      } catch (LungsException e) {
-        LOGGER.error("Failed to extract ROI for stack with SOP UID: " + slice.getImageSopUID(), e);
+    // Submit a runnable for slice that is used to extract the ROIs
+    List<Future> futures = new ArrayList<>();
+    for (CTSlice slice : query) {
+      futures
+          .add(es.submit(() -> {
+            Mat mat = Lungs.getSliceMat(slice);
+            List<Mat> segmented = lungs.segment(Collections.singletonList(mat));
+            try {
+              lungs.roiExtraction(Collections.singletonList(slice), segmented);
+            } catch (LungsException e) {
+              LOGGER.error(
+                  "Failed to extract ROI for stack with SOP UID: " + slice.getImageSopUID(), e);
+            }
+          }));
+    }
+
+    // Create and start a monitor thread
+    new Thread(() -> {
+      int counter = 0;
+      while (counter < futures.size()) {
+
+        // Count the number of futures that are complete
+        counter = 0;
+        for (Future future : futures) {
+          if (future.isDone()) {
+            counter++;
+          }
+        }
+
+        // Logging
+        LOGGER.info(counter + "/" + futures.size() + " slices have had ROIs extracted");
+
+        // Sleep for 6s
+        try {
+          Thread.sleep(10000);
+        } catch (InterruptedException e) {
+          LOGGER.error("Logging thread interrupted", e);
+        }
       }
-    });
+    }).start();
+
+    // Wait for all the futures to complete
+    for (Future future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        LOGGER.error("Failed to get Future", e);
+      }
+    }
 
     LOGGER.info("Finished generating ROIs");
   }
