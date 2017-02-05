@@ -12,6 +12,7 @@
         <dependency org="gov.nih.imagej" name="imagej" rev="1.47"/>
         <dependency org="org.mongodb.morphia" name="morphia" rev="1.3.1"/>
         <dependency org="commons-configuration" name="commons-configuration" rev="1.10"/>
+        <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
 
         <!-- runtime dependencies -->
         <dependency org="org.slf4j" name="slf4j-simple" rev="1.6.4" conf="runtime->default"/>
