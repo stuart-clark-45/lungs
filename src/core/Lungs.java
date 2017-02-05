@@ -191,7 +191,7 @@ public class Lungs {
    * @param slice
    * @return a grey-scale {@link Mat} for the given slice.
    */
-  private static Mat getSliceMat(CTSlice slice) {
+  public static Mat getSliceMat(CTSlice slice) {
     DICOM dicom = new DICOM();
     dicom.open(slice.getFilePath());
     return MatUtils.fromDICOM(dicom);
