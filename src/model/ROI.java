@@ -23,7 +23,7 @@ public class ROI {
   @Indexed
   private String imageSopUID;
 
-  private double meanIntensity;
+  private Double meanIntensity;
 
   public ROI() {
     points = new ArrayList<>();
@@ -53,11 +53,11 @@ public class ROI {
     this.imageSopUID = imageSopUID;
   }
 
-  public double getMeanIntensity() {
+  public Double getMeanIntensity() {
     return meanIntensity;
   }
 
-  public void setMeanIntensity(double meanIntensity) {
+  public void setMeanIntensity(Double meanIntensity) {
     this.meanIntensity = meanIntensity;
   }
 
