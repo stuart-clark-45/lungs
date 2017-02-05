@@ -69,7 +69,7 @@ public class ROIExtractor {
   private void labelPixel(Mat segmented, Mat objects, int row, int col, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
     if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
-      roi.addPoint(new Point(row, col));
+      roi.addPoint(new Point(col , row));
       objects.put(row, col, LABELLED);
 
       // Label pixel up and left from current
