@@ -19,6 +19,8 @@ public class ROIExtractor {
 
   private static final int NOT_LABELLED = 0;
   private static final int LABELLED = 1;
+  // TODO optimise this value
+  private static final int SIZE_LIMIT = 150;
 
   /**
    * The intensity value for pixels that are in the foreground.
@@ -58,7 +60,9 @@ public class ROIExtractor {
         if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
           ROI roi = new ROI();
           labelPixel(segmented, objects, row, col, roi);
-          rois.add(roi);
+          if (roi.getPoints().size() > SIZE_LIMIT) {
+            rois.add(roi);
+          }
         }
       }
     }
@@ -69,7 +73,7 @@ public class ROIExtractor {
   private void labelPixel(Mat segmented, Mat objects, int row, int col, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
     if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
-      roi.addPoint(new Point(col , row));
+      roi.addPoint(new Point(col, row));
       objects.put(row, col, LABELLED);
 
       // Label pixel up and left from current
