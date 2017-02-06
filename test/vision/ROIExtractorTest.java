@@ -36,7 +36,7 @@ public class ROIExtractorTest {
     Mat rebuilt = MatUtils.similarMat(segmented);
     for (ROI roi : rois) {
       for (Point point : roi.getPoints()) {
-        rebuilt.put((int) point.x, (int) point.y, (double) FOREGROUND);
+        rebuilt.put((int) point.y, (int) point.x, (double) FOREGROUND);
       }
     }
 
