@@ -9,13 +9,12 @@ import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 
 /**
- * Used to hold information about a single region of interest identified by a radiologist(s) in a
- * given ground truth.
+ * Used to hold information about a single region of interest identified by a radiologist(s).
  *
  * @author Stuart Clark
  */
 @Entity
-public class ReadingROI {
+public class GroundTruth {
 
   public enum Type {
     /**
@@ -38,7 +37,7 @@ public class ReadingROI {
   private ObjectId id;
 
   /**
-   * This id will be the same for all {@link ReadingROI}s that correspond to the same nodule or
+   * This id will be the same for all {@link GroundTruth}s that correspond to the same nodule or
    * non-nodule.
    */
   @Indexed

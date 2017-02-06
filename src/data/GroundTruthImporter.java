@@ -1,8 +1,8 @@
 package data;
 
-import static model.ReadingROI.Type.BIG_NODULE;
-import static model.ReadingROI.Type.NON_NODULE;
-import static model.ReadingROI.Type.SMALL_NODULE;
+import static model.GroundTruth.Type.BIG_NODULE;
+import static model.GroundTruth.Type.NON_NODULE;
+import static model.GroundTruth.Type.SMALL_NODULE;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -33,7 +33,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import model.ReadingROI;
+import model.GroundTruth;
 import model.lidc.EdgeMap;
 import model.lidc.LidcReadMessage;
 import model.lidc.Locus;
@@ -44,13 +44,13 @@ import model.lidc.UnblindedReadNodule;
 import util.LungsException;
 
 /**
- * Used to CT scan readings created by radiologists.
+ * Used to import CT scan readings created by radiologists.
  *
  * @author Stuart Clark
  */
-public class ReadingROIImporter extends Importer<ReadingROI> {
+public class GroundTruthImporter extends Importer<GroundTruth> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ReadingROIImporter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GroundTruthImporter.class);
   private static final int LOG_INTERVAL = 100;
 
   /**
@@ -73,13 +73,13 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
    */
   private int numNonNodule;
 
-  public ReadingROIImporter() {
-    super(ReadingROI.class);
+  public GroundTruthImporter() {
+    super(GroundTruth.class);
   }
 
   @Override
   protected String testPath() {
-    return "./testres/reading-roi-importer";
+    return "./testres/ground-truth-importer";
   }
 
   @Override
@@ -90,7 +90,7 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
   @Override
   protected void importModels(Datastore ds) throws LungsException {
     try {
-      LOGGER.info("Importing ReadingROIs...");
+      LOGGER.info("Importing GroundTruths...");
 
       // Recursively find all the xml files
       List<Path> xmlFiles =
@@ -117,10 +117,10 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
 
       LOGGER.info(numFiles + "/" + numFiles + " xml files processed");
       LOGGER.info(rejected + "/" + numFiles + " xml files were rejected");
-      LOGGER.info("Finished importing ReadingROIs");
+      LOGGER.info("Finished importing GroundTruths");
 
     } catch (Exception e) {
-      throw new LungsException("Failed to import ReadingROIs", e);
+      throw new LungsException("Failed to import GroundTruths", e);
     }
 
   }
@@ -179,6 +179,13 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
     return sw.toString();
   }
 
+  /**
+   * Parse {@code read} to a {@link GroundTruth} and save it to the database.
+   * 
+   * @param read
+   * @param ds
+   * @throws LungsException
+   */
   private void parseAndSaveReading(LidcReadMessage read, Datastore ds) throws LungsException {
     for (ReadingSession session : read.getReadingSessions()) {
 
@@ -196,7 +203,7 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
   }
 
   /**
-   * Parse {@code nodule} to {@link ReadingROI}s and save them to the database.
+   * Parse {@code nodule} to {@link GroundTruth}s and save them to the database.
    *
    * @param nodule
    * @param ds
@@ -204,36 +211,36 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
   private void parseAndSaveNodule(UnblindedReadNodule nodule, Datastore ds) throws LungsException {
     ObjectId groupId = new ObjectId();
 
-    // Create a ReadingROI for each of the rois given by {@code nodule}
+    // Create a GroundTruth for each of the rois given by {@code nodule}
     for (Roi roi : nodule.getRoi()) {
 
-      // Create the ReadingROI and set some fields
-      ReadingROI readingROI = new ReadingROI();
-      readingROI.setGroupId(groupId);
-      readingROI.setImageSopUID(roi.getImageSOPUID());
-      readingROI.setInclusive(Boolean.parseBoolean(roi.getInclusion()));
+      // Create the GroundTruth and set some fields
+      GroundTruth groundTruth = new GroundTruth();
+      groundTruth.setGroupId(groupId);
+      groundTruth.setImageSopUID(roi.getImageSOPUID());
+      groundTruth.setInclusive(Boolean.parseBoolean(roi.getInclusion()));
 
       // Covert edge map onto points
       List<Point> points = edgeMapsToEdgePoints(roi.getEdgeMap());
 
       // Set type and centroid (and edge points if big nodule)
       if (points.size() == 1) {
-        readingROI.setType(SMALL_NODULE);
-        readingROI.setCentroid(points.get(0));
+        groundTruth.setType(SMALL_NODULE);
+        groundTruth.setCentroid(points.get(0));
         numSmallNodule++;
       } else {
-        readingROI.setType(BIG_NODULE);
-        readingROI.setEdgePoints(points);
-        readingROI.setCentroid(calculateCentroid(points));
+        groundTruth.setType(BIG_NODULE);
+        groundTruth.setEdgePoints(points);
+        groundTruth.setCentroid(calculateCentroid(points));
         numBigNodule++;
       }
 
-      ds.save(readingROI);
+      ds.save(groundTruth);
     }
   }
 
   /**
-   * Parse {@code nonNodule} to a {@link ReadingROI} and save it to the database.
+   * Parse {@code nonNodule} to a {@link GroundTruth} and save it to the database.
    * 
    * @param nonNodule
    * @param ds
@@ -241,16 +248,16 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
   private void parseAndSaveNonNodule(NonNodule nonNodule, Datastore ds) {
     ObjectId groupId = new ObjectId();
 
-    ReadingROI readingROI = new ReadingROI();
-    readingROI.setType(NON_NODULE);
-    readingROI.setGroupId(groupId);
-    readingROI.setImageSopUID(nonNodule.getImageSOPUID());
+    GroundTruth groundTruth = new GroundTruth();
+    groundTruth.setType(NON_NODULE);
+    groundTruth.setGroupId(groupId);
+    groundTruth.setImageSopUID(nonNodule.getImageSOPUID());
     Locus locus = nonNodule.getLocus();
-    readingROI.setCentroid(new Point(locus.getXCoord().doubleValue(), locus.getYCoord()
+    groundTruth.setCentroid(new Point(locus.getXCoord().doubleValue(), locus.getYCoord()
         .doubleValue()));
     numNonNodule++;
 
-    ds.save(readingROI);
+    ds.save(groundTruth);
   }
 
   /**
@@ -286,24 +293,24 @@ public class ReadingROIImporter extends Importer<ReadingROI> {
     return new Point(x, y);
   }
 
-  public int getRejected() {
+  int getRejected() {
     return rejected;
   }
 
-  public int getNumBigNodule() {
+  int getNumBigNodule() {
     return numBigNodule;
   }
 
-  public int getNumSmallNodule() {
+  int getNumSmallNodule() {
     return numSmallNodule;
   }
 
-  public int getNumNonNodule() {
+  int getNumNonNodule() {
     return numNonNodule;
   }
 
   public static void main(String[] args) {
-    new ReadingROIImporter().run();
+    new GroundTruthImporter().run();
   }
 
 }

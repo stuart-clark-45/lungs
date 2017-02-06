@@ -20,13 +20,13 @@ import util.Testing;
  * @author Stuart Clark
  */
 @RunWith(Testing.class)
-public class ReadingROIImporterTest {
+public class GroundTruthImporterTest {
 
-  private ReadingROIImporter importer;
+  private GroundTruthImporter importer;
 
   @Before
   public void setUp() throws Exception {
-    importer = new ReadingROIImporter();
+    importer = new GroundTruthImporter();
   }
 
   @Test
@@ -41,7 +41,7 @@ public class ReadingROIImporterTest {
   @Test
   public void testUnmarshall() throws Exception {
     LidcReadMessage readMessage =
-        new ReadingROIImporter().unmarshal(Paths.get("./testres/read-message.xml"));
+        new GroundTruthImporter().unmarshal(Paths.get("./testres/read-message.xml"));
     assertEquals(4, readMessage.getReadingSessions().size());
   }
 

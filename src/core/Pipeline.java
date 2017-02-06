@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import data.CTSliceImporter;
 import data.CTStackGenerator;
 import data.ROIGenerator;
-import data.ReadingROIImporter;
+import data.GroundTruthImporter;
 import feature.FeatureEngine;
 
 /**
@@ -44,7 +44,7 @@ public class Pipeline {
     LOGGER.info("Running Importers...");
     List<Future> futures = new ArrayList<>();
     futures.add(es.submit(new CTSliceImporter()));
-    futures.add(es.submit(new ReadingROIImporter()));
+    futures.add(es.submit(new GroundTruthImporter()));
     for (Future f : futures) {
       f.get();
     }

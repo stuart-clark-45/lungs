@@ -1,8 +1,8 @@
 package core;
 
-import static model.ReadingROI.Type.BIG_NODULE;
-import static model.ReadingROI.Type.NON_NODULE;
-import static model.ReadingROI.Type.SMALL_NODULE;
+import static model.GroundTruth.Type.BIG_NODULE;
+import static model.GroundTruth.Type.NON_NODULE;
+import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
@@ -27,7 +27,7 @@ import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
 import model.ROI;
-import model.ReadingROI;
+import model.GroundTruth;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.LungsException;
@@ -88,40 +88,40 @@ public class Lungs {
    * @param slice
    */
   private void annotate(Mat rgb, CTSlice slice) {
-    List<ReadingROI> rois =
-        ds.createQuery(ReadingROI.class).field("imageSopUID").equal(slice.getImageSopUID())
+    List<GroundTruth> groundTruths =
+        ds.createQuery(GroundTruth.class).field("imageSopUID").equal(slice.getImageSopUID())
             .asList();
 
-    for (ReadingROI roi : rois) {
-      annotate(rgb, roi);
+    for (GroundTruth gt : groundTruths) {
+      annotate(rgb, gt);
     }
 
   }
 
   /**
-   * Annotate {@code rgb} with the appropriate annotations for the {@code roi} if they are allowed
+   * Annotate {@code rgb} with the appropriate annotations for the {@code gt} if they are allowed
    * by the system configuration (see ./conf/application.conf).
    * 
    * @param rgb
-   * @param roi
+   * @param gt
    */
-  private void annotate(Mat rgb, ReadingROI roi) {
-    ReadingROI.Type type = roi.getType();
+  private void annotate(Mat rgb, GroundTruth gt) {
+    GroundTruth.Type type = gt.getType();
 
     // Annotate big nodules
     if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
-      for (Point point : roi.getEdgePoints()) {
+      for (Point point : gt.getEdgePoints()) {
         Imgproc.drawMarker(rgb, point, new Scalar(ColourBGR.RED), MARKER_SQUARE, 1, 1, LINE_4);
       }
 
       // Annotate small nodules
     } else if (type == SMALL_NODULE && ConfigHelper.getBoolean(Annotation.SMALL_NODULE)) {
-      Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
+      Imgproc.drawMarker(rgb, gt.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
           CROSS_SIZE, CROSS_THICKNESS, LINE_4);
 
       // Annotate non nodules
     } else if (type == NON_NODULE && ConfigHelper.getBoolean(Annotation.NON_NODULE)) {
-      Imgproc.drawMarker(rgb, roi.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
+      Imgproc.drawMarker(rgb, gt.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
           CROSS_SIZE, 1, LINE_4);
     }
 
