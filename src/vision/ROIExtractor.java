@@ -32,15 +32,21 @@ public class ROIExtractor {
     this.foreground = foreground;
   }
 
+  public List<ROI> extract(Mat segmented) throws LungsException {
+    return extract(segmented, 0, 0);
+  }
+
   /**
    * Returns a list of {@link ROI}s obtained from {@code segmented} using an implementation of the
    * connected-component labeling algorithm.
    *
    * @param segmented
+   * @param startX the x-coordinate to start the search at.
+   * @param startY the y-coordinate to start the search at.
    * @return
    * @throws LungsException
    */
-  public List<ROI> extract(Mat segmented) throws LungsException {
+  public List<ROI> extract(Mat segmented, int startX, int startY) throws LungsException {
     if (segmented.channels() != 1) {
       throw new LungsException("The Mat must have only one channel");
     }
@@ -52,8 +58,8 @@ public class ROIExtractor {
     Mat objects = Mat.zeros(segmented.rows(), segmented.cols(), CvType.CV_8UC1);
 
     // Label the objects in mat
-    for (int row = 0; row < segmented.rows(); row++) {
-      for (int col = 0; col < segmented.cols(); col++) {
+    for (int row = startY; row < segmented.rows(); row++) {
+      for (int col = startX; col < segmented.cols(); col++) {
         // If the pixel is white and has not been accepted as part of an ROI yet
         if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
           ROI roi = new ROI();
@@ -69,7 +75,7 @@ public class ROIExtractor {
   private void labelPixel(Mat segmented, Mat objects, int row, int col, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
     if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
-      roi.addPoint(new Point(col , row));
+      roi.addPoint(new Point(col, row));
       objects.put(row, col, LABELLED);
 
       // Label pixel up and left from current
