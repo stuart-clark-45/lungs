@@ -86,6 +86,7 @@ public class ROIGenerator extends Importer<ROI> {
           }));
     }
 
+    // Monitor the progress of the Futures
     FutureMonitor monitor = new FutureMonitor(futures);
     monitor.setLogString("slices have had ROIs extracted");
     monitor.monitor();
