@@ -5,10 +5,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import core.Lungs;
 import model.CTSlice;
 import model.ROI;
+import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;
 
@@ -39,7 +42,6 @@ public class ROIGenerator extends Importer<ROI> {
   public ROIGenerator(ExecutorService es) {
     this(es, MongoHelper.getDataStore().createQuery(CTSlice.class).field("model")
         .equal("Sensation 16"));
-    this.es = es;
   }
 
   /**
@@ -49,6 +51,7 @@ public class ROIGenerator extends Importer<ROI> {
   public ROIGenerator(ExecutorService es, Query<CTSlice> query) {
     super(ROI.class);
     this.query = query;
+    this.es = es;
   }
 
   @Override
@@ -83,40 +86,19 @@ public class ROIGenerator extends Importer<ROI> {
           }));
     }
 
-    // Create and start a monitor thread
-    new Thread(() -> {
-      int counter = 0;
-      while (counter < futures.size()) {
-
-        // Count the number of futures that are complete
-        counter = 0;
-        for (Future future : futures) {
-          if (future.isDone()) {
-            counter++;
-          }
-        }
-
-        // Logging
-        LOGGER.info(counter + "/" + futures.size() + " slices have had ROIs extracted");
-
-        // Sleep for 6s
-        try {
-          Thread.sleep(10000);
-        } catch (InterruptedException e) {
-          LOGGER.error("Logging thread interrupted", e);
-        }
-      }
-    }).start();
-
-    // Wait for all the futures to complete
-    for (Future future : futures) {
-      try {
-        future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        LOGGER.error("Failed to get Future", e);
-      }
-    }
+    FutureMonitor monitor = new FutureMonitor(futures);
+    monitor.setLogString("slices have had ROIs extracted");
+    monitor.monitor();
 
     LOGGER.info("Finished generating ROIs");
+  }
+
+  public static void main(String[] args) {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    Datastore ds = MongoHelper.getDataStore();
+    Query<CTSlice> query = ds.createQuery(CTSlice.class).field("seriesInstanceUID")
+        .equal("1.3.6.1.4.1.14519.5.2.1.6279.6001.137773550852881583165286615668");
+    new ROIGenerator(es, query).run();
   }
 }
