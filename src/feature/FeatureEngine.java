@@ -6,6 +6,7 @@ import java.util.stream.StreamSupport;
 
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
 import core.Lungs;
@@ -60,6 +61,7 @@ public class FeatureEngine implements Runnable {
   }
 
   public static void main(String[] args) {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     new FeatureEngine().run();
   }
 
