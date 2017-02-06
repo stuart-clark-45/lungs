@@ -1,12 +1,14 @@
 package feature;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -26,6 +28,7 @@ public class FeatureEngine implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FeatureEngine.class);
   private static final int LOG_INTERVAL = 1000;
+  private static final String IMAGE_SOP_UID = "imageSopUID";
 
   private ExecutorService es;
   private List<Feature> features;
@@ -47,32 +50,44 @@ public class FeatureEngine implements Runnable {
   public void run() {
     LOGGER.info("Computing Features this may take some time...");
 
-    // TODO process image by image not ROI by ROI that way image only needs to be loaded oncefor
-    // many ROIs
+    // Find all the distinct SOP UIDs for the ROIs we want to compute feature values for
+    Iterator<Result> sopUIDs =
+        ds.createAggregation(ROI.class).match(query).group(IMAGE_SOP_UID).aggregate(Result.class);
 
-    LOGGER.info("Creating futures...");
     List<Future> futures = new ArrayList<>();
     int counter = 0;
     long numROI = query.count();
-    for (ROI roi : query) {
-      futures.add(es.submit(() -> {
-        // Get the slice for the feature
-          CTSlice slice =
-              ds.createQuery(CTSlice.class).field("imageSopUID").equal(roi.getImageSopUID()).get();
-          Mat mat = Lungs.getSliceMat(slice);
+
+    // For each of the SOP UIDs
+    LOGGER.info("Creating futures...");
+    while (sopUIDs.hasNext()) {
+      String sopUID = sopUIDs.next().id;
+
+      // Load the Mat
+      CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
+      Mat mat = Lungs.getSliceMat(slice);
+
+      // Get all the ROIs for the sopUID
+      Query<ROI> rois = ds.createQuery(ROI.class).field(IMAGE_SOP_UID).equal(sopUID);
+
+      // Create a future for each of the ROIs and add it to the list
+      for (ROI roi : rois) {
+        futures.add(es.submit(() -> {
 
           // Compute all the features for the ROI
-          for (Feature feature : features) {
-            feature.compute(roi, mat);
-          }
+            for (Feature feature : features) {
+              feature.compute(roi, mat);
+            }
 
-          // Update the ROI
-          ds.save(roi);
-        }));
+            // Update the ROI
+            ds.save(roi);
+          }));
 
-      if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numROI + " futures created");
+        if (++counter % LOG_INTERVAL == 0) {
+          LOGGER.info(counter + "/" + numROI + " futures created");
+        }
       }
+
     }
 
     // Monitor the progress of the Futures
@@ -96,6 +111,23 @@ public class FeatureEngine implements Runnable {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     new FeatureEngine(es).run();
+  }
+
+  /**
+   * Used to obtain the results of the aggregation completed above.
+   */
+  private static class Result {
+
+    @Id
+    private String id;
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
   }
 
 }
