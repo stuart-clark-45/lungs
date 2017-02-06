@@ -46,8 +46,15 @@ public class ConfigHelperTest {
   @Test
   public void testGetDouble() throws Exception {
     double value = 0.5;
-    props.put(TESTING123, value);
+    props.put(TESTING123, String.valueOf(value));
     assertEquals(Double.valueOf(value), Double.valueOf(ConfigHelper.getDouble(TESTING123)));
+  }
+
+  @Test
+  public void testGetInt() throws Exception {
+    int value = 1;
+    props.put(TESTING123,  String.valueOf(value));
+    assertEquals(Integer.valueOf(value), Integer.valueOf(ConfigHelper.getInt(TESTING123)));
   }
 
   @Test(expected = IllegalStateException.class)
