@@ -3,6 +3,8 @@ package feature;
 import static junit.framework.TestCase.assertNotNull;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.bson.types.ObjectId;
 import org.junit.After;
@@ -53,9 +55,10 @@ public class FeatureEngineTest {
 
   @Test
   public void test() throws Exception {
+    ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     Query<ROI> query = ds.createQuery(ROI.class).field("_id").equal(roiId);
 
-    new FeatureEngine(Collections.singletonList(new MeanIntensity()), query).run();
+    new FeatureEngine(es, Collections.singletonList(new MeanIntensity()), query).run();
 
     ROI roi = query.get();
 
