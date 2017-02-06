@@ -61,6 +61,8 @@ public class GroundTruth {
 
   private List<Point> edgePoints;
 
+  private List<Point> region;
+
   public ObjectId getId() {
     return id;
   }
@@ -111,6 +113,14 @@ public class GroundTruth {
 
   public void setInclusive(boolean inclusive) {
     this.inclusive = inclusive;
+  }
+
+  public List<Point> getRegion() {
+    return region;
+  }
+
+  public void setRegion(List<Point> region) {
+    this.region = region;
   }
 
 }
