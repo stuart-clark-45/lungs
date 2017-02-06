@@ -8,11 +8,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import data.CTSliceImporter;
 import data.CTStackGenerator;
+import data.ROIGenerator;
 import data.ReadingROIImporter;
 
 /**
@@ -29,6 +31,8 @@ public class DataPipeline {
   }
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
     LOGGER.info("Running DataPineLine");
     long start = System.currentTimeMillis();
 
@@ -42,7 +46,7 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running importers in " + timeToString(start));
+    LOGGER.info("Finished running importers. Time elapsed: " + timeToString(start));
 
     // Generators (Must be run after importers)
     LOGGER.info("Running Generators...");
@@ -51,7 +55,9 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running Generators in " + timeToString(start));
+    new ROIGenerator(es).run();
+
+    LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
 
     LOGGER.info("DataPineLine complete.");
   }
