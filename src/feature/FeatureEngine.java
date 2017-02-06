@@ -25,6 +25,7 @@ import util.MongoHelper;
 public class FeatureEngine implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FeatureEngine.class);
+  private static final int LOG_INTERVAL = 1000;
 
   private ExecutorService es;
   private List<Feature> features;
@@ -49,7 +50,10 @@ public class FeatureEngine implements Runnable {
     // TODO process image by image not ROI by ROI that way image only needs to be loaded oncefor
     // many ROIs
 
+    LOGGER.info("Creating futures...");
     List<Future> futures = new ArrayList<>();
+    int counter = 0;
+    long numROI = query.count();
     for (ROI roi : query) {
       futures.add(es.submit(() -> {
         // Get the slice for the feature
@@ -65,12 +69,15 @@ public class FeatureEngine implements Runnable {
           // Update the ROI
           ds.save(roi);
         }));
-    }
 
+      if (++counter % LOG_INTERVAL == 0) {
+        LOGGER.info(counter + "/" + numROI + " futures created");
+      }
+    }
 
     // Monitor the progress of the Futures
     FutureMonitor monitor = new FutureMonitor(futures);
-    monitor.setLogString("ROIs features computed");
+    monitor.setLogString("ROI's features computed");
     monitor.monitor();
 
     LOGGER.info("Finished computing features");
