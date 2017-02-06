@@ -16,17 +16,19 @@ import data.CTSliceImporter;
 import data.CTStackGenerator;
 import data.ROIGenerator;
 import data.ReadingROIImporter;
+import feature.FeatureEngine;
 
 /**
- * Used to import and aggregate all of the data required for the system to be run.
+ * Used to import and aggregate all of the data and perform any pre-computation required for the
+ * system to be run.
  *
  * @author Stuart Clark
  */
-public class DataPipeline {
+public class Pipeline {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataPipeline.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Pipeline.class);
 
-  private DataPipeline() {
+  private Pipeline() {
     // Hide the constructor
   }
 
@@ -58,6 +60,9 @@ public class DataPipeline {
     new ROIGenerator(es).run();
 
     LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
+
+    // Feature Engine
+    new FeatureEngine(es).run();
 
     LOGGER.info("DataPineLine complete.");
   }
