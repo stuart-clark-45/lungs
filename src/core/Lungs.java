@@ -26,8 +26,8 @@ import config.Annotation;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
-import model.ROI;
 import model.GroundTruth;
+import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.LungsException;
@@ -99,8 +99,8 @@ public class Lungs {
   }
 
   /**
-   * Annotate {@code rgb} with the appropriate annotations for the {@code gt} if they are allowed
-   * by the system configuration (see ./conf/application.conf).
+   * Annotate {@code rgb} with the appropriate annotations for the {@code gt} if they are allowed by
+   * the system configuration (see ./conf/application.conf).
    * 
    * @param rgb
    * @param gt
@@ -162,15 +162,15 @@ public class Lungs {
   }
 
   /**
-   * Extract the {@link ROI}s for the segmented images and save them to the database.
-   * 
    * @param slices
    * @param segmented
+   * @return the {@link ROI}s for the segmented images
    * @throws LungsException
    */
-  public void roiExtraction(List<CTSlice> slices, List<Mat> segmented) throws LungsException {
+  public List<ROI> roiExtraction(List<CTSlice> slices, List<Mat> segmented) throws LungsException {
     int numMat = segmented.size();
     ROIExtractor extractor = new ROIExtractor(FOREGROUND);
+    List<ROI> rois = new ArrayList<>();
 
     // Iterate over mats
     for (int i = 0; i < numMat; i++) {
@@ -180,10 +180,12 @@ public class Lungs {
       // Set the imageSopUID for each of the ROIs and save them
       for (ROI roi : extractor.extract(mat)) {
         roi.setImageSopUID(imageSopUID);
-        ds.save(roi);
+        rois.add(roi);
       }
 
     }
+
+    return rois;
   }
 
   /**
