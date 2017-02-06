@@ -137,9 +137,7 @@ public class Lungs {
     int numMat = original.size();
     List<Mat> segmented = new ArrayList<>(numMat);
 
-    for (int i = 0; i < numMat; i++) {
-      Mat orig = original.get(i);
-
+    for (Mat orig : original) {
       // Filter the image
       Mat filtered = MatUtils.similarMat(orig);
       double sigma = 5d;
