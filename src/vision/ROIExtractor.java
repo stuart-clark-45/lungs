@@ -66,10 +66,25 @@ public class ROIExtractor {
     return rois;
   }
 
+  /**
+   * Returns a single {@link ROI}s obtained from {@code segmented} using an implementation of the
+   * connected-component labeling algorithm.
+   * 
+   * @param segmented
+   * @param seed the point to use as a seed for growing the {@link ROI}.
+   * @return
+   */
+  public ROI extractOne(Mat segmented, Point seed) {
+    ROI roi = new ROI();
+    Mat objects = Mat.zeros(segmented.rows(), segmented.cols(), CvType.CV_8UC1);
+    labelPixel(segmented, objects, (int) seed.y, (int) seed.x, roi);
+    return roi;
+  }
+
   private void labelPixel(Mat segmented, Mat objects, int row, int col, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
     if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
-      roi.addPoint(new Point(col , row));
+      roi.addPoint(new Point(col, row));
       objects.put(row, col, LABELLED);
 
       // Label pixel up and left from current
