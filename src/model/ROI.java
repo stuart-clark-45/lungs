@@ -8,6 +8,8 @@ import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 
+import core.ROIClassifier;
+
 /**
  * Model used to hold information about single region of interest in a matrix.
  *
@@ -24,6 +26,8 @@ public class ROI {
   private String imageSopUID;
 
   private Double meanIntensity;
+
+  private ROIClassifier.Class classificaiton;
 
   public ROI() {
     points = new ArrayList<>();
@@ -61,4 +65,11 @@ public class ROI {
     this.meanIntensity = meanIntensity;
   }
 
+  public ROIClassifier.Class getClassificaiton() {
+    return classificaiton;
+  }
+
+  public void setClassificaiton(ROIClassifier.Class classificaiton) {
+    this.classificaiton = classificaiton;
+  }
 }
