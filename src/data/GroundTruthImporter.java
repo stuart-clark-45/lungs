@@ -26,6 +26,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.opencv.core.Core;
 import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ import model.lidc.ReadingSession;
 import model.lidc.Roi;
 import model.lidc.UnblindedReadNodule;
 import util.LungsException;
+import util.PointUtils;
 
 /**
  * Used to import CT scan readings created by radiologists.
@@ -218,7 +220,8 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       GroundTruth groundTruth = new GroundTruth();
       groundTruth.setGroupId(groupId);
       groundTruth.setImageSopUID(roi.getImageSOPUID());
-      groundTruth.setInclusive(Boolean.parseBoolean(roi.getInclusion()));
+      boolean inclusive = Boolean.parseBoolean(roi.getInclusion());
+      groundTruth.setInclusive(inclusive);
 
       // Covert edge map onto points
       List<Point> points = edgeMapsToEdgePoints(roi.getEdgeMap());
@@ -232,6 +235,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         groundTruth.setType(BIG_NODULE);
         groundTruth.setEdgePoints(points);
         groundTruth.setCentroid(calculateCentroid(points));
+        groundTruth.setRegion(PointUtils.perim2Region(points, inclusive));
         numBigNodule++;
       }
 
@@ -310,6 +314,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
   }
 
   public static void main(String[] args) {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     new GroundTruthImporter().run();
   }
 
