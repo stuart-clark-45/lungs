@@ -7,6 +7,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,14 @@ public class MatViewer {
   private Object lock;
   private int currentImage;
   private boolean annotationsOn;
+
+  public MatViewer(Mat mat) {
+    this(Collections.singletonList(mat));
+  }
+
+  public MatViewer(Mat mat1, Mat mat2) {
+    this(Collections.singletonList(mat1), Collections.singletonList(mat2));
+  }
 
   public MatViewer(List<Mat> mats) {
     this(mats, mats);
