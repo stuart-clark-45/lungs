@@ -222,8 +222,6 @@ public class Lungs {
 
     List<Mat> segmented = lungs.segment(original);
 
-    lungs.roiExtraction(stack.getSlices(), segmented);
-
     List<Mat> annotated = lungs.groundTruth(stack.getSlices(), segmented);
 
     new MatViewer(segmented, annotated).display();
