@@ -60,6 +60,21 @@ public class ConfigHelper {
   }
 
   /**
+   * @param key a key with a double value.
+   * @return the value for the key.
+   * @throws IllegalStateException if key not present
+   * @throws NumberFormatException if value not a double
+   */
+  public static double getDouble(String key) {
+    // Check the key
+    assertKeySet(key);
+
+    String value = (String) getProps().get(key);
+
+    return Double.parseDouble(value);
+  }
+
+  /**
    * @param key a key with a string value.
    * @return the value for the key.
    * @throws IllegalStateException if key not present.

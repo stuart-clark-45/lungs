@@ -43,6 +43,13 @@ public class ConfigHelperTest {
     assertFalse(ConfigHelper.getBoolean(TESTING456));
   }
 
+  @Test
+  public void testGetDouble() throws Exception {
+    double value = 0.5;
+    props.put(TESTING123, value);
+    assertEquals(Double.valueOf(value), Double.valueOf(ConfigHelper.getDouble(TESTING123)));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testBadGetBoolean() throws Exception {
     props.put(TESTING123, "not true or false");
