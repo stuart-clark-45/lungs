@@ -1,14 +1,12 @@
 package feature;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -32,17 +30,15 @@ public class FeatureEngine implements Runnable {
 
   private ExecutorService es;
   private List<Feature> features;
-  private Query<ROI> query;
   private Datastore ds;
 
   public FeatureEngine(ExecutorService es) {
-    this(es, defaultFeatures(), MongoHelper.getDataStore().createQuery(ROI.class));
+    this(es, defaultFeatures());
   }
 
-  public FeatureEngine(ExecutorService es, List<Feature> features, Query<ROI> query) {
+  public FeatureEngine(ExecutorService es, List<Feature> features) {
     this.es = es;
     this.features = features;
-    this.query = query;
     this.ds = MongoHelper.getDataStore();
   }
 
@@ -50,18 +46,17 @@ public class FeatureEngine implements Runnable {
   public void run() {
     LOGGER.info("Computing Features this may take some time...");
 
-    // Find all the distinct SOP UIDs for the ROIs we want to compute feature values for
-    Iterator<Result> sopUIDs =
-        ds.createAggregation(ROI.class).match(query).group(IMAGE_SOP_UID).aggregate(Result.class);
+    // Find all the distinct SOP UIDs for the ROIs
+    List sopUIDs = ds.getCollection(ROI.class).distinct(IMAGE_SOP_UID);
 
     List<Future> futures = new ArrayList<>();
     int counter = 0;
-    long numROI = query.count();
+    long numROI = ds.createQuery(ROI.class).count();
 
     // For each of the SOP UIDs
     LOGGER.info("Creating futures...");
-    while (sopUIDs.hasNext()) {
-      String sopUID = sopUIDs.next().id;
+    for (Object obj : sopUIDs) {
+      String sopUID = (String) obj;
 
       // Load the Mat
       CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
@@ -112,22 +107,4 @@ public class FeatureEngine implements Runnable {
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     new FeatureEngine(es).run();
   }
-
-  /**
-   * Used to obtain the results of the aggregation completed above.
-   */
-  private static class Result {
-
-    @Id
-    private String id;
-
-    public String getId() {
-      return id;
-    }
-
-    public void setId(String id) {
-      this.id = id;
-    }
-  }
-
 }
