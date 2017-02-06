@@ -17,6 +17,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,15 +140,22 @@ public class Lungs {
     for (int i = 0; i < numMat; i++) {
       Mat orig = original.get(i);
 
+      // Filter the image
       Mat filtered = MatUtils.similarMat(orig);
       double sigma = 5d;
       int kernelSize = 3;
       Imgproc.bilateralFilter(orig, filtered, kernelSize, sigma, sigma);
 
+      // Segment it
       Mat seg = MatUtils.similarMat(filtered);
       Imgproc.threshold(orig, seg, 60, FOREGROUND, THRESH_BINARY);
-      segmented.add(seg);
 
+      // Apply opening
+      Mat opened = MatUtils.similarMat(seg);
+      Imgproc.morphologyEx(seg, opened, Imgproc.MORPH_OPEN,
+          Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(3, 3)));
+
+      segmented.add(opened);
     }
 
     return segmented;
