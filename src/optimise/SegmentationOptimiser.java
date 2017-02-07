@@ -1,5 +1,6 @@
 package optimise;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +37,6 @@ import vision.ROIExtractor;
 public class SegmentationOptimiser {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SegmentationOptimiser.class);
-  private static final int NUM_STACKS = 1;
 
   /*
    * Indexes in genotype for parameters to be optimised
@@ -50,12 +50,20 @@ public class SegmentationOptimiser {
   private static final int OPENING_KERNEL = 6;
 
   private final int generations;
+  private final int stagnationLimit;
   private Engine<IntegerGene, Double> engine;
   private List<Mat> mats;
   private List<List<Point>> groundTruths;
 
-  public SegmentationOptimiser(int generations) {
+  /**
+   * @param generations the maximum number of generations that should be used.
+   * @param stagnationLimit the maximum number of times deltaFitness can be 0 before the GA is
+   *        stopped.
+   * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
+   */
+  public SegmentationOptimiser(int generations, int stagnationLimit, int numStacks) {
     this.generations = generations;
+    this.stagnationLimit = stagnationLimit;
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
 
@@ -63,7 +71,7 @@ public class SegmentationOptimiser {
     Datastore ds = MongoHelper.getDataStore();
     List<CTStack> stacks =
         ds.createQuery(CTStack.class).field("model").equal("Sensation 16")
-            .asList(new FindOptions().limit(NUM_STACKS));
+            .asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
     for (CTStack stack : stacks) {
@@ -123,26 +131,65 @@ public class SegmentationOptimiser {
     LOGGER.info("Running SegmentationOptimiser...");
 
     Iterator<EvolutionResult<IntegerGene, Double>> iterator = engine.iterator();
-    for (int i = 1; i <= generations; i++) {
+
+    // Hold the fitness of the previous generation
+    double lastFitness = 0.0;
+    // Used to count the number of generations that deltaFitness has been 0.0
+    int stagnation = 0;
+    // Used to count the number of generations
+    int counter = 0;
+
+    // Run the GA
+    while (stagnation < stagnationLimit && ++counter <= generations) {
       // Process generation
-      logResult(iterator.next(), i);
+      EvolutionResult<IntegerGene, Double> result = iterator.next();
+
+      // Check if stagnating
+      Double fitness = result.getBestFitness();
+      double deltaFitness = fitness - lastFitness;
+      if (deltaFitness == 0.0) {
+        stagnation++;
+      } else {
+        stagnation = 0;
+      }
+      lastFitness = fitness;
+
+      // Logging
+      LOGGER.info("Generation " + counter + "/" + generations + " complete with best fitness of: "
+          + fitness + " delta fitness of: " + deltaFitness);
+      Genotype<IntegerGene> gt = result.getBestPhenotype().getGenotype();
+      String s =
+          "# Size of the kernel used by the bilateral filter\n"
+              + "segmentation.filter.kernelsize = "
+              + getInt(gt, KERNEL_SIZE)
+              + "\n"
+              + "# Sigma for colour used by the bilateral filter\n"
+              + "segmentation.filter.sigmacolor = "
+              + getInt(gt, SIGMA_COLOUR)
+              + "\n"
+              + "# Sigma for space used by the bilateral filter\n"
+              + "segmentation.filter.sigmaspace = "
+              + getInt(gt, SIGMA_SPACE)
+              + "\n"
+              + "# The threshold used\n"
+              + "segmentation.threshold = "
+              + getInt(gt, THRESHOLD)
+              + "\n"
+              + "# The type of kernel to use MORPH_RECT = 0, MORPH_CROSS = 1, MORPH_ELLIPSE = 2\n"
+              + "segmentation.opening.kernel = "
+              + getInt(gt, OPENING_KERNEL)
+              + "\n"
+              + "# The width of the kernel to use\n"
+              + "segmentation.opening.width = "
+              + getInt(gt, OPENING_WIDTH)
+              + "\n"
+              + "# The height of the kernel to use\n"
+              + "segmentation.opening.height = " + getInt(gt, OPENING_HEIGHT);
+      LOGGER.info(s);
     }
 
     LOGGER.info("SegmentationOptimiser Finished");
-  }
-
-  private void logResult(EvolutionResult<IntegerGene, Double> result, int i) {
-    LOGGER.info("Generation " + i + "/" + generations + " complete with best fitness of: "
-        + result.getBestFitness());
-    Genotype<IntegerGene> gt = result.getBestPhenotype().getGenotype();
-    String s =
-        "Optimised Parameters:\n" + "Sigma Colour: " + getInt(gt, SIGMA_COLOUR) + "\n"
-            + "Sigma Space: " + getInt(gt, SIGMA_SPACE) + "\n" + "Filter Kernel Size: "
-            + getInt(gt, KERNEL_SIZE) + "\n" + "Threshold: " + getInt(gt, THRESHOLD) + "\n"
-            + "Opening Width: " + getInt(gt, OPENING_WIDTH) + "\n" + "Opening Height: "
-            + getInt(gt, OPENING_HEIGHT) + "\n" + "Opening Kernel: " + getInt(gt, OPENING_KERNEL)
-            + "\n";
-    LOGGER.info(s);
+    Toolkit.getDefaultToolkit().beep();
   }
 
   /**
@@ -195,6 +242,6 @@ public class SegmentationOptimiser {
 
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    new SegmentationOptimiser(200).run();
+    new SegmentationOptimiser(200, 5, 10).run();
   }
 }
