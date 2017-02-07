@@ -26,16 +26,19 @@ public class MatcherTest {
 
     ROI roi = new ROI();
     roi.setPoints(points1);
-    GroundTruth gt = new GroundTruth();
-    gt.setRegion(points1);
-    assertEquals(Double.valueOf(1), Double.valueOf(Matcher.match(roi, gt)));
+    GroundTruth gt1 = new GroundTruth();
+    gt1.setRegion(points1);
+    assertEquals(Double.valueOf(1), Double.valueOf(Matcher.match(roi, gt1)));
 
     List<Point> points2 = new ArrayList<>();
     points2.add(new Point(2, 1));
     points2.add(new Point(3, 1));
     points2.add(new Point(2, 2));
     points2.add(new Point(3, 2));
-    assertEquals(Double.valueOf(2.0 / 6.0), Double.valueOf(Matcher.match(points1, points2)));
+
+    GroundTruth gt2 = new GroundTruth();
+    gt2.setRegion(points2);
+    assertEquals(Double.valueOf(2.0 / 6.0), Double.valueOf(Matcher.match(gt1, gt2)));
   }
 
 }

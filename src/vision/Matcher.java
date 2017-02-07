@@ -17,6 +17,17 @@ import model.ROI;
 public class Matcher {
 
   /**
+   * Calculate the degree to which a two {@link GroundTruth}s match.
+   *
+   * @param gt1
+   * @param gt2
+   * @return a value between 0 and 1 inclusive. 1 is a perfect match, 0 is no match at all.
+   */
+  public static double match(GroundTruth gt1, GroundTruth gt2) {
+    return match(gt1.getRegion(), gt2.getRegion());
+  }
+
+  /**
    * Calculate the degree to which a {@link ROI} and {@link GroundTruth} match.
    *
    * @param roi
