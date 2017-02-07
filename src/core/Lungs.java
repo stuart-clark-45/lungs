@@ -1,5 +1,12 @@
 package core;
 
+import static config.Segmentation.Opening;
+import static config.Segmentation.THRESHOLD;
+import static config.Segmentation.Filter.KERNEL_SIZE;
+import static config.Segmentation.Filter.SIGMA_COLOUR;
+import static config.Segmentation.Filter.SIGMA_SPACE;
+import static config.Segmentation.Opening.HEIGHT;
+import static config.Segmentation.Opening.WIDTH;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
@@ -7,6 +14,7 @@ import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
+import static util.ConfigHelper.getInt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +61,32 @@ public class Lungs {
   /**
    * The value used to represent the foreground in segmented images.
    */
-  private static final int FOREGROUND = 255;
+  public static final int FOREGROUND = 255;
 
   private Datastore ds;
+  private int sigmaColour;
+  private int sigmaSpace;
+  private int kernelSize;
+  private int threshold;
+  private int openingWidth;
+  private int openingHeight;
+  private int openingKernel;
 
   public Lungs() {
-    ds = MongoHelper.getDataStore();
+    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE), getInt(THRESHOLD),
+        getInt(WIDTH), getInt(HEIGHT), getInt(Opening.KERNEL));
+  }
+
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int threshold, int openingWidth,
+      int openingHeight, int openingKernel) {
+    this.ds = MongoHelper.getDataStore();
+    this.sigmaColour = sigmaColour;
+    this.sigmaSpace = sigmaSpace;
+    this.kernelSize = kernelSize;
+    this.threshold = threshold;
+    this.openingWidth = openingWidth;
+    this.openingHeight = openingHeight;
+    this.openingKernel = openingKernel;
   }
 
   /**
@@ -140,18 +168,16 @@ public class Lungs {
     for (Mat orig : original) {
       // Filter the image
       Mat filtered = MatUtils.similarMat(orig);
-      double sigma = 5d;
-      int kernelSize = 3;
-      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigma, sigma);
+      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigmaColour, sigmaSpace);
 
       // Segment it
       Mat seg = MatUtils.similarMat(filtered);
-      Imgproc.threshold(orig, seg, 60, FOREGROUND, THRESH_BINARY);
+      Imgproc.threshold(orig, seg, threshold, FOREGROUND, THRESH_BINARY);
 
       // Apply opening
       Mat opened = MatUtils.similarMat(seg);
       Imgproc.morphologyEx(seg, opened, Imgproc.MORPH_OPEN,
-          Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(3, 3)));
+          Imgproc.getStructuringElement(openingKernel, new Size(openingWidth, openingHeight)));
 
       segmented.add(opened);
     }
@@ -190,7 +216,7 @@ public class Lungs {
    * @param stack
    * @return List of grey-scale {@link Mat} for the given stack.
    */
-  private static List<Mat> getStackMats(CTStack stack) {
+  public static List<Mat> getStackMats(CTStack stack) {
     return stack.getSlices().parallelStream().map(Lungs::getSliceMat).collect(Collectors.toList());
   }
 
