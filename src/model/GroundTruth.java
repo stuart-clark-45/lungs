@@ -63,6 +63,9 @@ public class GroundTruth {
 
   private List<Point> region;
 
+  @Indexed
+  private String seriesInstanceUID;
+
   public ObjectId getId() {
     return id;
   }
@@ -123,4 +126,11 @@ public class GroundTruth {
     this.region = region;
   }
 
+  public String getSeriesInstanceUID() {
+    return seriesInstanceUID;
+  }
+
+  public void setSeriesInstanceUID(String seriesInstanceUID) {
+    this.seriesInstanceUID = seriesInstanceUID;
+  }
 }
