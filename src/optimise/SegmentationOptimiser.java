@@ -1,6 +1,8 @@
 package optimise;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,9 +10,11 @@ import java.util.List;
 import org.jenetics.Genotype;
 import org.jenetics.IntegerChromosome;
 import org.jenetics.IntegerGene;
+import org.jenetics.Population;
 import org.jenetics.engine.Engine;
 import org.jenetics.engine.EvolutionResult;
 import org.jenetics.util.Factory;
+import org.jenetics.util.IO;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.FindOptions;
 import org.opencv.core.Core;
@@ -37,6 +41,7 @@ import vision.ROIExtractor;
 public class SegmentationOptimiser {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SegmentationOptimiser.class);
+  private static final String POPULATION_FILE = "seg-opt-population.xml";
 
   /*
    * Indexes in genotype for parameters to be optimised
@@ -49,11 +54,35 @@ public class SegmentationOptimiser {
   private static final int OPENING_HEIGHT = 5;
   private static final int OPENING_KERNEL = 6;
 
+  /**
+   * The maximum number of generations that should be used.
+   */
   private final int generations;
+
+  /**
+   * the maximum number of times deltaFitness can be 0 before the GA is stopped.
+   */
   private final int stagnationLimit;
+
+  /**
+   * The GA engine.
+   */
   private Engine<IntegerGene, Double> engine;
+
+  /**
+   * The {@link Mat}s to segment.
+   */
   private List<Mat> mats;
+
+  /**
+   * The points list of {@link Point}s that must be included in the segmentation.
+   */
   private List<List<Point>> groundTruths;
+
+  /**
+   * The current population.
+   */
+  private Population<IntegerGene, Double> population;
 
   /**
    * @param generations the maximum number of generations that should be used.
@@ -130,7 +159,13 @@ public class SegmentationOptimiser {
   public void run() {
     LOGGER.info("Running SegmentationOptimiser...");
 
-    Iterator<EvolutionResult<IntegerGene, Double>> iterator = engine.iterator();
+    // Load population or create new one
+    Iterator<EvolutionResult<IntegerGene, Double>> iterator;
+    if (population != null) {
+      iterator = engine.iterator(population);
+    } else {
+      iterator = engine.iterator();
+    }
 
     // Hold the fitness of the previous generation
     double lastFitness = 0.0;
@@ -143,6 +178,7 @@ public class SegmentationOptimiser {
     while (stagnation < stagnationLimit && ++counter <= generations) {
       // Process generation
       EvolutionResult<IntegerGene, Double> result = iterator.next();
+      population = result.getPopulation();
 
       // Check if stagnating
       Double fitness = result.getBestFitness();
@@ -159,7 +195,7 @@ public class SegmentationOptimiser {
           + fitness + " delta fitness of: " + deltaFitness);
       Genotype<IntegerGene> gt = result.getBestPhenotype().getGenotype();
       String s =
-          "# Size of the kernel used by the bilateral filter\n"
+          "\n# Size of the kernel used by the bilateral filter\n"
               + "segmentation.filter.kernelsize = "
               + getInt(gt, KERNEL_SIZE)
               + "\n"
@@ -240,8 +276,41 @@ public class SegmentationOptimiser {
     return gt.getChromosome(index).getGene().intValue();
   }
 
-  public static void main(String[] args) {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    new SegmentationOptimiser(200, 5, 10).run();
+  public void savePopulation() {
+    try {
+      IO.jaxb.write(population, new File(POPULATION_FILE));
+      LOGGER.info("Saved population to " + POPULATION_FILE);
+    } catch (IOException e) {
+      LOGGER.error("Failed to write population to " + POPULATION_FILE);
+    }
   }
+
+  @SuppressWarnings("unchecked")
+  public void loadPopulation() throws IOException {
+    final File file = new File(POPULATION_FILE);
+    if (file.exists()) {
+      this.population = (Population<IntegerGene, Double>) IO.jaxb.read(file);
+      LOGGER.info("Loaded population from " + POPULATION_FILE);
+    } else {
+      LOGGER.info("There is no population to load will generate a new one");
+    }
+  }
+
+  public static void main(String[] args) throws IOException {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    SegmentationOptimiser optimiser = new SegmentationOptimiser(20000, 5, 10);
+
+    // Load the persisted population if there is one
+    optimiser.loadPopulation();
+
+    // Save population if interrupted
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      LOGGER.info("Executing shutdown hook");
+      optimiser.savePopulation();
+    }));
+
+    // Run the optimiser
+    optimiser.run();
+  }
+
 }
