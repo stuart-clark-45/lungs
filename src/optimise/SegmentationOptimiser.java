@@ -149,7 +149,7 @@ public class SegmentationOptimiser {
         // Sigma Space
         IntegerChromosome.of(1, 10),
         // Kernel Size
-        IntegerChromosome.of(3, 9),
+        IntegerChromosome.of(3, 5),
         // Threshold Value
         IntegerChromosome.of(0, 255),
         // Threshold Method
@@ -159,14 +159,14 @@ public class SegmentationOptimiser {
         // Adaptive Threshold C
         IntegerChromosome.of(-255, 255),
         // Opening Width
-        IntegerChromosome.of(1, 10),
+        IntegerChromosome.of(1, 5),
         // Opening Height
-        IntegerChromosome.of(1, 10),
+        IntegerChromosome.of(1, 5),
         // Opening Kernel
         IntegerChromosome.of(1, 2));
 
     // Create the execution environment
-    this.engine = Engine.builder(this::eval, gtf).build();
+    this.engine = Engine.builder(this::eval, gtf).populationSize(100).build();
 
     LOGGER.info("Population size of: " + this.engine.getPopulationSize());
   }
@@ -215,7 +215,7 @@ public class SegmentationOptimiser {
       Genotype<IntegerGene> gt = result.getBestPhenotype().getGenotype();
 
       String s =
-          "\n+" + "# Size of the kernel used by the bilateral filter\n"
+          "\n" + "# Size of the kernel used by the bilateral filter\n"
               + "segmentation.filter.size = "
               + getInt(gt, KERNEL_SIZE)
               + "\n"
@@ -295,7 +295,7 @@ public class SegmentationOptimiser {
     double inclusion = noduleInclusion(allROIs);
 
     double fitness = inclusion;
-    if (inclusion > 0.8) {
+    if (inclusion > 0.7) {
       fitness += Double.MAX_VALUE / 2;
       fitness -= numROIs;
     }
@@ -345,7 +345,7 @@ public class SegmentationOptimiser {
    */
   private int getThresholdSize(Genotype<IntegerGene> gt) {
     int val = getInt(gt, THRESHOLD_SIZE);
-    if(val % 2 == 0){
+    if (val % 2 == 0) {
       val++;
     }
     return val;
@@ -386,14 +386,14 @@ public class SegmentationOptimiser {
     // Create optimiser
     int generations = 20000;
     int stagnationLimit = generations + 1;
-    // int numStacks = 10;
-    int numStacks = 1;
+//    int numStacks = 10;
+     int numStacks = 1;
     int readingNumber = 0;
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(generations, stagnationLimit, numStacks, readingNumber);
 
     // Load the persisted population if there is one
-    // optimiser.loadPopulation();
+//    optimiser.loadPopulation();
 
     // Save population if interrupted
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
