@@ -16,19 +16,12 @@ public class Segmentation {
   public static class Filter {
     private Filter() {}
 
-    public static final String SIZE = "segmentation.filter.size";
+    public static final String KERNEL_SIZE = "segmentation.filter.kernelsize";
     public static final String SIGMA_COLOUR = "segmentation.filter.sigmacolor";
     public static final String SIGMA_SPACE = "segmentation.filter.sigmaspace";
   }
 
-  public static class Threshold {
-    private Threshold() {}
-
-    public static final String VAL = "segmentation.threshold.val";
-    public static final String METHOD = "segmentation.threshold.method";
-    public static final String SIZE = "segmentation.threshold.size";
-    public static final String C = "segmentation.threshold.c";
-  }
+  public static final String THRESHOLD = "segmentation.threshold";
 
   public static class Opening {
     private Opening() {}
