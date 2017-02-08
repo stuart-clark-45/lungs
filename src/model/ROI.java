@@ -27,6 +27,7 @@ public class ROI {
 
   private Double meanIntensity;
 
+  @Indexed
   private ROIClassifier.Class classificaiton;
 
   public ROI() {
