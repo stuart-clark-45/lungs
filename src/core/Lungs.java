@@ -225,9 +225,14 @@ public class Lungs {
    * @return a grey-scale {@link Mat} for the given slice.
    */
   public static Mat getSliceMat(CTSlice slice) {
-    DICOM dicom = new DICOM();
-    dicom.open(slice.getFilePath());
-    return MatUtils.fromDICOM(dicom);
+    try {
+      DICOM dicom = new DICOM();
+      dicom.open(slice.getFilePath());
+      return MatUtils.fromDICOM(dicom);
+    }catch (Exception e){
+      LOGGER.error("failed to get slice with id " + slice.getId(), e);
+      throw e;
+    }
   }
 
   /**
