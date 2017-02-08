@@ -15,6 +15,7 @@ import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
+import static util.DataFilter.filter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -229,7 +230,7 @@ public class Lungs {
       DICOM dicom = new DICOM();
       dicom.open(slice.getFilePath());
       return MatUtils.fromDICOM(dicom);
-    }catch (Exception e){
+    } catch (Exception e) {
       LOGGER.error("failed to get slice with id " + slice.getId(), e);
       throw e;
     }
@@ -246,7 +247,8 @@ public class Lungs {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Load the images
-    CTStack stack = MongoHelper.getDataStore().createQuery(CTStack.class).get();
+    Datastore ds = MongoHelper.getDataStore();
+    CTStack stack = filter(ds.createQuery(CTStack.class)).get();
     List<Mat> original = getStackMats(stack);
 
     Lungs lungs = new Lungs();
