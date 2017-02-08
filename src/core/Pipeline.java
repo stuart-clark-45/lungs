@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import data.CTSliceImporter;
 import data.CTStackGenerator;
-import data.ROIGenerator;
 import data.GroundTruthImporter;
+import data.ROIGenerator;
 import feature.FeatureEngine;
 
 /**
@@ -57,11 +57,12 @@ public class Pipeline {
     for (Future f : futures) {
       f.get();
     }
+    // Run on it's own as has internal threading
     new ROIGenerator(es).run();
 
     LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
 
-    // Feature Engine
+    // Feature Engine run on it's own as has internal threading
     new FeatureEngine(es).run();
 
     LOGGER.info("DataPineLine complete.");
