@@ -24,6 +24,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import model.lidc.ResponseHeader;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
@@ -135,9 +136,9 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
    * @throws Exception
    */
   LidcReadMessage unmarshal(Path xmlPath) throws Exception {
-    // Init the unmarshaller
-    JAXBContext jaxb = JAXBContext.newInstance(ReadingSession.class);
-    Unmarshaller unmarshaller = jaxb.createUnmarshaller();
+    // Init the unmarshallers
+    Unmarshaller sessionParser = JAXBContext.newInstance(ReadingSession.class).createUnmarshaller();
+    Unmarshaller headerParser = JAXBContext.newInstance(ResponseHeader.class).createUnmarshaller();
 
     // Parse the document
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -148,14 +149,19 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
     LidcReadMessage readMessage = new LidcReadMessage();
     List<ReadingSession> sessions = readMessage.getReadingSessions();
 
-    // Populate sessions list
+    // Build readMessage
     NodeList children = doc.getFirstChild().getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
       Node child = children.item(i);
 
       if (child.getNodeName().equals("readingSession")) {
         String nodeAsString = nodeToString(child);
-        sessions.add((ReadingSession) unmarshaller.unmarshal(new StringReader(nodeAsString)));
+        sessions.add((ReadingSession) sessionParser.unmarshal(new StringReader(nodeAsString)));
+      }
+
+      if (child.getNodeName().equals("ResponseHeader")) {
+        String nodeAsString = nodeToString(child);
+        readMessage.setResponseHeader((ResponseHeader) headerParser.unmarshal(new StringReader(nodeAsString)));
       }
 
     }
@@ -189,16 +195,20 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
    * @throws LungsException
    */
   private void parseAndSaveReading(LidcReadMessage read, Datastore ds) throws LungsException {
-    for (ReadingSession session : read.getReadingSessions()) {
+    List<ReadingSession> readingSessions = read.getReadingSessions();
+    for (int i = 0; i < readingSessions.size(); i++) {
+      ReadingSession session = readingSessions.get(i);
+      String studyInstanceUID = read.getResponseHeader().getStudyInstanceUID();
 
       // Parse and save nodules
       for (UnblindedReadNodule nodule : session.getUnblindedReadNodule()) {
-        parseAndSaveNodule(nodule, ds);
+
+        parseAndSaveNodule(nodule, ds, i, studyInstanceUID);
       }
 
       // Parse and save non-nodules
       for (NonNodule nonNodule : session.getNonNodule()) {
-        parseAndSaveNonNodule(nonNodule, ds);
+        parseAndSaveNonNodule(nonNodule, ds, i, studyInstanceUID);
       }
 
     }
@@ -206,11 +216,14 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
 
   /**
    * Parse {@code nodule} to {@link GroundTruth}s and save them to the database.
-   *
+   * 
    * @param nodule
    * @param ds
+   * @param readingNumber
+   * @param studyInstanceUID
    */
-  private void parseAndSaveNodule(UnblindedReadNodule nodule, Datastore ds) throws LungsException {
+  private void parseAndSaveNodule(UnblindedReadNodule nodule, Datastore ds, int readingNumber,
+      String studyInstanceUID) throws LungsException {
     ObjectId groupId = new ObjectId();
 
     // Create a GroundTruth for each of the rois given by {@code nodule}
@@ -220,6 +233,8 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       GroundTruth groundTruth = new GroundTruth();
       groundTruth.setGroupId(groupId);
       groundTruth.setImageSopUID(roi.getImageSOPUID());
+      groundTruth.setReadingNumber(readingNumber);
+      groundTruth.setSeriesInstanceUID(studyInstanceUID);
       boolean inclusive = Boolean.parseBoolean(roi.getInclusion());
       groundTruth.setInclusive(inclusive);
 
@@ -248,14 +263,19 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
    * 
    * @param nonNodule
    * @param ds
+   * @param readingNumber
+   * @param studyInstanceUID
    */
-  private void parseAndSaveNonNodule(NonNodule nonNodule, Datastore ds) {
+  private void parseAndSaveNonNodule(NonNodule nonNodule, Datastore ds, int readingNumber,
+      String studyInstanceUID) {
     ObjectId groupId = new ObjectId();
 
     GroundTruth groundTruth = new GroundTruth();
     groundTruth.setType(NON_NODULE);
     groundTruth.setGroupId(groupId);
     groundTruth.setImageSopUID(nonNodule.getImageSOPUID());
+    groundTruth.setReadingNumber(readingNumber);
+    groundTruth.setSeriesInstanceUID(studyInstanceUID);
     Locus locus = nonNodule.getLocus();
     groundTruth.setCentroid(new Point(locus.getXCoord().doubleValue(), locus.getYCoord()
         .doubleValue()));
