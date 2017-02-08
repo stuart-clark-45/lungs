@@ -69,7 +69,6 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int filterSize;
-  private int thresholdVal;
   private int thresholdMethod;
   private int thresholdSize;
   private int thresholdC;
@@ -78,14 +77,12 @@ public class Lungs {
   private int openingKernel;
 
   public Lungs() {
-    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(SIZE), getInt(Threshold.VAL),
-        getInt(METHOD), getInt(Threshold.SIZE), getInt(C), getInt(WIDTH), getInt(HEIGHT),
-        getInt(Opening.KERNEL));
+    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(SIZE), getInt(METHOD),
+        getInt(Threshold.SIZE), getInt(C), getInt(WIDTH), getInt(HEIGHT), getInt(Opening.KERNEL));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int filterSize, int thresholdVal,
-      int thresholdMethod, int thresholdSize, int thresholdC, int openingWidth, int openingHeight,
-      int openingKernel) {
+  public Lungs(int sigmaColour, int sigmaSpace, int filterSize, int thresholdMethod,
+      int thresholdSize, int thresholdC, int openingWidth, int openingHeight, int openingKernel) {
     this.thresholdMethod = thresholdMethod;
     this.thresholdSize = thresholdSize;
     this.thresholdC = thresholdC;
@@ -93,7 +90,6 @@ public class Lungs {
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.filterSize = filterSize;
-    this.thresholdVal = thresholdVal;
     this.openingWidth = openingWidth;
     this.openingHeight = openingHeight;
     this.openingKernel = openingKernel;
@@ -182,12 +178,8 @@ public class Lungs {
 
       // Threshold it
       Mat seg = MatUtils.similarMat(filtered);
-      if (thresholdMethod == -1) {
-        Imgproc.threshold(orig, seg, thresholdVal, FOREGROUND, THRESH_BINARY);
-      } else {
-        Imgproc.adaptiveThreshold(orig, seg, FOREGROUND, thresholdMethod, THRESH_BINARY,
-            thresholdSize, thresholdC);
-      }
+      Imgproc.adaptiveThreshold(orig, seg, FOREGROUND, thresholdMethod, THRESH_BINARY,
+          thresholdSize, thresholdC);
 
       // Apply opening
       Mat opened = MatUtils.similarMat(seg);
