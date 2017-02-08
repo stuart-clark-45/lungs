@@ -147,7 +147,7 @@ public class SegmentationOptimiser {
         // Sigma Space
         IntegerChromosome.of(1, 10),
         // Kernel Size
-        IntegerChromosome.of(3, 6),
+        IntegerChromosome.of(3, 5),
         // Threshold
         IntegerChromosome.of(0, 255),
         // Opening Width
@@ -272,7 +272,7 @@ public class SegmentationOptimiser {
     double inclusion = noduleInclusion(allROIs);
 
     double fitness = inclusion;
-    if (inclusion > 0.8) {
+    if (inclusion > 0.7) {
       fitness += Double.MAX_VALUE / 2;
       fitness -= numROIs;
     }
@@ -330,7 +330,7 @@ public class SegmentationOptimiser {
       IO.jaxb.write(population, new File(POPULATION_FILE));
       LOGGER.info("Saved population to " + POPULATION_FILE);
     } catch (IOException e) {
-      LOGGER.error("Failed to write population to " + POPULATION_FILE);
+      LOGGER.error("Failed to save population to " + POPULATION_FILE);
     }
   }
 
@@ -350,15 +350,16 @@ public class SegmentationOptimiser {
 
     // Create optimiser
     int generations = 20000;
-    int stagnationLimit = 5;
-//    int numStacks = 10;
-    int numStacks = 1;
+    int stagnationLimit = generations;
+    // int stagnationLimit = 5;
+    int numStacks = 10;
+    // int numStacks = 1;
     int readingNumber = 0;
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(generations, stagnationLimit, numStacks, readingNumber);
 
     // Load the persisted population if there is one
-//    optimiser.loadPopulation();
+    // optimiser.loadPopulation();
 
     // Save population if interrupted
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
