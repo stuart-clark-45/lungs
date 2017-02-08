@@ -66,6 +66,12 @@ public class GroundTruth {
   @Indexed
   private String seriesInstanceUID;
 
+  /**
+   * If multiple readings have been made for the same image this value can be used to distinguish
+   * them.
+   */
+  private Integer readingNumber;
+
   public ObjectId getId() {
     return id;
   }
@@ -132,5 +138,13 @@ public class GroundTruth {
 
   public void setSeriesInstanceUID(String seriesInstanceUID) {
     this.seriesInstanceUID = seriesInstanceUID;
+  }
+
+  public Integer getReadingNumber() {
+    return readingNumber;
+  }
+
+  public void setReadingNumber(Integer readingNumber) {
+    this.readingNumber = readingNumber;
   }
 }
