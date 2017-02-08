@@ -50,6 +50,7 @@ public class SegmentationOptimiser {
   private static final int SIGMA_COLOUR = I++;
   private static final int SIGMA_SPACE = I++;
   private static final int KERNEL_SIZE = I++;
+  private static final int THRESHOLD_VAL = I++;
   private static final int THRESHOLD_METHOD = I++;
   private static final int THRESHOLD_SIZE = I++;
   private static final int THRESHOLD_C = I++;
@@ -149,10 +150,12 @@ public class SegmentationOptimiser {
         IntegerChromosome.of(1, 10),
         // Kernel Size
         IntegerChromosome.of(3, 5),
+        // Threshold Value
+        IntegerChromosome.of(0, 255),
         // Threshold Method
-        IntegerChromosome.of(0, 1),
+        IntegerChromosome.of(-1, 1),
         // Adaptive Threshold Size
-        IntegerChromosome.of(3, 5),
+        IntegerChromosome.of(3, 9),
         // Adaptive Threshold C
         IntegerChromosome.of(-255, 255),
         // Opening Width
@@ -163,7 +166,7 @@ public class SegmentationOptimiser {
         IntegerChromosome.of(1, 2));
 
     // Create the execution environment
-    this.engine = Engine.builder(this::eval, gtf).populationSize(50).build();
+    this.engine = Engine.builder(this::eval, gtf).populationSize(100).build();
 
     LOGGER.info("Population size of: " + this.engine.getPopulationSize());
   }
@@ -224,11 +227,15 @@ public class SegmentationOptimiser {
               + "segmentation.filter.sigmaspace = "
               + getInt(gt, SIGMA_SPACE)
               + "\n"
-              + "# Addaptive thresholding method: ADAPTIVE_THRESH_MEAN_C = 0, ADAPTIVE_THRESH_GAUSSIAN_C = 1\n"
+              + "# The threshold value used\n"
+              + "segmentation.threshold.val = "
+              + getInt(gt, THRESHOLD_VAL)
+              + "\n"
+              + "# Addaptive thresholding method: -1 = NONE, ADAPTIVE_THRESH_MEAN_C = 0, ADAPTIVE_THRESH_GAUSSIAN_C = 1\n"
               + "segmentation.threshold.method = "
               + getInt(gt, THRESHOLD_METHOD)
               + "\n"
-              + "# Neighbour hood size for adaptive thresholding must be 3, 5, 7 ...\n"
+              + "# Neighbour hood size for addaptive thresholding must be 3, 5, 7 ...\n"
               + "segmentation.threshold.size = "
               + getThresholdSize(gt)
               + "\n"
@@ -264,8 +271,9 @@ public class SegmentationOptimiser {
     // Segment the Mats
     Lungs lungs =
         new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
-            getInt(gt, THRESHOLD_METHOD), getThresholdSize(gt), getInt(gt, THRESHOLD_C), getInt(gt,
-                OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(gt, OPENING_KERNEL));
+            getInt(gt, THRESHOLD_VAL), getInt(gt, THRESHOLD_METHOD), getThresholdSize(gt), getInt(
+                gt, THRESHOLD_C), getInt(gt, OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(gt,
+                OPENING_KERNEL));
     List<Mat> segmented = lungs.segment(mats);
 
     // Extract the ROIs for the mats
@@ -377,15 +385,15 @@ public class SegmentationOptimiser {
 
     // Create optimiser
     int generations = 20000;
-    int stagnationLimit = 10;
-    int numStacks = 10;
-    // int numStacks = 1;
+    int stagnationLimit = generations + 1;
+//    int numStacks = 10;
+     int numStacks = 1;
     int readingNumber = 0;
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(generations, stagnationLimit, numStacks, readingNumber);
 
     // Load the persisted population if there is one
-    // optimiser.loadPopulation();
+//    optimiser.loadPopulation();
 
     // Save population if interrupted
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {

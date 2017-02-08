@@ -24,6 +24,7 @@ public class Segmentation {
   public static class Threshold {
     private Threshold() {}
 
+    public static final String VAL = "segmentation.threshold.val";
     public static final String METHOD = "segmentation.threshold.method";
     public static final String SIZE = "segmentation.threshold.size";
     public static final String C = "segmentation.threshold.c";
