@@ -1,12 +1,13 @@
 package core;
 
 import static config.Segmentation.Opening;
-import static config.Segmentation.THRESHOLD;
-import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
+import static config.Segmentation.Filter.SIZE;
 import static config.Segmentation.Opening.HEIGHT;
 import static config.Segmentation.Opening.WIDTH;
+import static config.Segmentation.Threshold.C;
+import static config.Segmentation.Threshold.METHOD;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
+import config.Segmentation.Threshold;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
@@ -66,24 +68,32 @@ public class Lungs {
   private Datastore ds;
   private int sigmaColour;
   private int sigmaSpace;
-  private int kernelSize;
-  private int threshold;
+  private int filterSize;
+  private int thresholdVal;
+  private int thresholdMethod;
+  private int thresholdSize;
+  private int thresholdC;
   private int openingWidth;
   private int openingHeight;
   private int openingKernel;
 
   public Lungs() {
-    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE), getInt(THRESHOLD),
-        getInt(WIDTH), getInt(HEIGHT), getInt(Opening.KERNEL));
+    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(SIZE), getInt(Threshold.VAL),
+        getInt(METHOD), getInt(Threshold.SIZE), getInt(C), getInt(WIDTH), getInt(HEIGHT),
+        getInt(Opening.KERNEL));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int threshold, int openingWidth,
-      int openingHeight, int openingKernel) {
+  public Lungs(int sigmaColour, int sigmaSpace, int filterSize, int thresholdVal,
+      int thresholdMethod, int thresholdSize, int thresholdC, int openingWidth, int openingHeight,
+      int openingKernel) {
+    this.thresholdMethod = thresholdMethod;
+    this.thresholdSize = thresholdSize;
+    this.thresholdC = thresholdC;
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
-    this.kernelSize = kernelSize;
-    this.threshold = threshold;
+    this.filterSize = filterSize;
+    this.thresholdVal = thresholdVal;
     this.openingWidth = openingWidth;
     this.openingHeight = openingHeight;
     this.openingKernel = openingKernel;
@@ -168,11 +178,16 @@ public class Lungs {
     for (Mat orig : original) {
       // Filter the image
       Mat filtered = MatUtils.similarMat(orig);
-      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigmaColour, sigmaSpace);
+      Imgproc.bilateralFilter(orig, filtered, filterSize, sigmaColour, sigmaSpace);
 
-      // Segment it
+      // Threshold it
       Mat seg = MatUtils.similarMat(filtered);
-      Imgproc.threshold(orig, seg, threshold, FOREGROUND, THRESH_BINARY);
+      if (thresholdMethod == -1) {
+        Imgproc.threshold(orig, seg, thresholdVal, FOREGROUND, THRESH_BINARY);
+      } else {
+        Imgproc.adaptiveThreshold(orig, seg, FOREGROUND, thresholdMethod, THRESH_BINARY,
+            thresholdSize, thresholdC);
+      }
 
       // Apply opening
       Mat opened = MatUtils.similarMat(seg);
