@@ -139,6 +139,9 @@ public class ROIGenerator extends Importer<ROI> {
     } else {
       roi.setClassificaiton(NON_NODULE);
     }
+
+    // Set the match threshold used
+    roi.setMatchThreshold(MATCH_THRESHOLD);
   }
 
   public static void main(String[] args) {
