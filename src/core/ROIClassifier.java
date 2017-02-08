@@ -1,6 +1,7 @@
 package core;
 
 import org.opencv.ml.SVM;
+import org.opencv.ml.TrainData;
 
 /**
  * Used to to classify ROIs as one of the {@link Class}.
@@ -9,10 +10,21 @@ import org.opencv.ml.SVM;
  */
 public class ROIClassifier {
 
+  private static final String FILE_NAME = "roi-classifier.xml";
+
   private SVM svm;
 
-  public ROIClassifier() {
-    this.svm = SVM.create();
+  public void train(TrainData data) {
+    svm = SVM.create();
+    svm.train(data);
+  }
+
+  public void save() {
+    svm.save(FILE_NAME);
+  }
+
+  public void load() {
+    svm = SVM.load(FILE_NAME);
   }
 
   /**
@@ -33,5 +45,7 @@ public class ROIClassifier {
     }
 
   }
+
+
 
 }
