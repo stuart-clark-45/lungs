@@ -46,13 +46,17 @@ public class SegmentationOptimiser {
   /*
    * Indexes in genotype for parameters to be optimised
    */
-  private static final int SIGMA_COLOUR = 0;
-  private static final int SIGMA_SPACE = 1;
-  private static final int KERNEL_SIZE = 2;
-  private static final int THRESHOLD = 3;
-  private static final int OPENING_WIDTH = 4;
-  private static final int OPENING_HEIGHT = 5;
-  private static final int OPENING_KERNEL = 6;
+  private static int I = 0;
+  private static final int SIGMA_COLOUR = I++;
+  private static final int SIGMA_SPACE = I++;
+  private static final int KERNEL_SIZE = I++;
+  private static final int THRESHOLD_VAL = I++;
+  private static final int THRESHOLD_METHOD = I++;
+  private static final int THRESHOLD_SIZE = I++;
+  private static final int THRESHOLD_C = I++;
+  private static final int OPENING_WIDTH = I++;
+  private static final int OPENING_HEIGHT = I++;
+  private static final int OPENING_KERNEL = I++;
 
   /**
    * The maximum number of generations that should be used.
@@ -145,9 +149,15 @@ public class SegmentationOptimiser {
         // Sigma Space
         IntegerChromosome.of(1, 10),
         // Kernel Size
-        IntegerChromosome.of(3, 6),
-        // Threshold
+        IntegerChromosome.of(3, 9),
+        // Threshold Value
         IntegerChromosome.of(0, 255),
+        // Threshold Method
+        IntegerChromosome.of(-1, 1),
+        // Adaptive Threshold Size
+        IntegerChromosome.of(3, 9),
+        // Adaptive Threshold C
+        IntegerChromosome.of(-255, 255),
         // Opening Width
         IntegerChromosome.of(1, 10),
         // Opening Height
@@ -203,9 +213,10 @@ public class SegmentationOptimiser {
       LOGGER.info("Generation " + counter + "/" + generations + " complete with best fitness of: "
           + fitness + " delta fitness of: " + deltaFitness);
       Genotype<IntegerGene> gt = result.getBestPhenotype().getGenotype();
+
       String s =
-          "\n# Size of the kernel used by the bilateral filter\n"
-              + "segmentation.filter.kernelsize = "
+          "\n+" + "# Size of the kernel used by the bilateral filter\n"
+              + "segmentation.filter.size = "
               + getInt(gt, KERNEL_SIZE)
               + "\n"
               + "# Sigma for colour used by the bilateral filter\n"
@@ -216,11 +227,23 @@ public class SegmentationOptimiser {
               + "segmentation.filter.sigmaspace = "
               + getInt(gt, SIGMA_SPACE)
               + "\n"
-              + "# The threshold used\n"
-              + "segmentation.threshold = "
-              + getInt(gt, THRESHOLD)
+              + "# The threshold value used\n"
+              + "segmentation.threshold.val = "
+              + getInt(gt, THRESHOLD_VAL)
               + "\n"
-              + "# The type of kernel to use MORPH_RECT = 0, MORPH_CROSS = 1, MORPH_ELLIPSE = 2\n"
+              + "# Addaptive thresholding method: -1 = NONE, ADAPTIVE_THRESH_MEAN_C = 0, ADAPTIVE_THRESH_GAUSSIAN_C = 1\n"
+              + "segmentation.threshold.method = "
+              + getInt(gt, THRESHOLD_METHOD)
+              + "\n"
+              + "# Neighbour hood size for addaptive thresholding must be 3, 5, 7 ...\n"
+              + "segmentation.threshold.size = "
+              + getThresholdSize(gt)
+              + "\n"
+              + "# Constant subtracted from the mean or weighted mean when using adative thresholding\n"
+              + "segmentation.threshold.c = "
+              + getInt(gt, THRESHOLD_C)
+              + "\n"
+              + "# The type of kernel to use: MORPH_RECT = 0, MORPH_CROSS = 1, MORPH_ELLIPSE = 2\n"
               + "segmentation.opening.kernel = "
               + getInt(gt, OPENING_KERNEL)
               + "\n"
@@ -230,6 +253,7 @@ public class SegmentationOptimiser {
               + "\n"
               + "# The height of the kernel to use\n"
               + "segmentation.opening.height = " + getInt(gt, OPENING_HEIGHT);
+
       LOGGER.info(s);
     }
 
@@ -247,8 +271,9 @@ public class SegmentationOptimiser {
     // Segment the Mats
     Lungs lungs =
         new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
-            getInt(gt, THRESHOLD), getInt(gt, OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(
-                gt, OPENING_KERNEL));
+            getInt(gt, THRESHOLD_VAL), getInt(gt, THRESHOLD_METHOD), getThresholdSize(gt), getInt(
+                gt, THRESHOLD_C), getInt(gt, OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(gt,
+                OPENING_KERNEL));
     List<Mat> segmented = lungs.segment(mats);
 
     // Extract the ROIs for the mats
@@ -316,6 +341,18 @@ public class SegmentationOptimiser {
 
   /**
    * @param gt
+   * @return the value for the threshold size chromosome. (With one added if it is even)
+   */
+  private int getThresholdSize(Genotype<IntegerGene> gt) {
+    int val = getInt(gt, THRESHOLD_SIZE);
+    if(val % 2 == 0){
+      val++;
+    }
+    return val;
+  }
+
+  /**
+   * @param gt
    * @param index
    * @return the integer value for the chromosome at {@code index}.
    */
@@ -348,15 +385,15 @@ public class SegmentationOptimiser {
 
     // Create optimiser
     int generations = 20000;
-    int stagnationLimit = 5;
-//    int numStacks = 10;
+    int stagnationLimit = generations + 1;
+    // int numStacks = 10;
     int numStacks = 1;
     int readingNumber = 0;
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(generations, stagnationLimit, numStacks, readingNumber);
 
     // Load the persisted population if there is one
-//    optimiser.loadPopulation();
+    // optimiser.loadPopulation();
 
     // Save population if interrupted
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
