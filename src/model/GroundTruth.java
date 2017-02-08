@@ -70,6 +70,7 @@ public class GroundTruth {
    * If multiple readings have been made for the same image this value can be used to distinguish
    * them.
    */
+  @Indexed
   private Integer readingNumber;
 
   public ObjectId getId() {
