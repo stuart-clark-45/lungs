@@ -2,6 +2,7 @@ package data;
 
 import static core.ROIClassifier.Class.NODULE;
 import static core.ROIClassifier.Class.NON_NODULE;
+import static util.DataFilter.filter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
@@ -38,26 +38,10 @@ public class ROIGenerator extends Importer<ROI> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
   private static final double MATCH_THRESHOLD = ConfigHelper.getDouble(Misc.MATCH_THRESHOLD);
 
-  /**
-   * The {@link Query} used to obtain the {@link CTSlice}s that {@link ROI}s should be generated
-   * for.
-   */
-  private Query<CTSlice> query;
-
   private ExecutorService es;
 
   public ROIGenerator(ExecutorService es) {
-    this(es, MongoHelper.getDataStore().createQuery(CTSlice.class).field("model")
-        .equal("Sensation 16"));
-  }
-
-  /**
-   * @param query the {@link Query} used to obtain the {@link CTSlice}s that {@link ROI}s should be
-   *        generated for.
-   */
-  public ROIGenerator(ExecutorService es, Query<CTSlice> query) {
     super(ROI.class);
-    this.query = query;
     this.es = es;
   }
 
@@ -79,7 +63,7 @@ public class ROIGenerator extends Importer<ROI> {
 
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
-    for (CTSlice slice : query) {
+    for (CTSlice slice : filter(MongoHelper.getDataStore().createQuery(CTSlice.class))) {
       futures.add(es.submit(() -> {
 
         // Load slice mat
@@ -147,11 +131,7 @@ public class ROIGenerator extends Importer<ROI> {
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    Datastore ds = MongoHelper.getDataStore();
-    Query<CTSlice> query =
-        ds.createQuery(CTSlice.class).field("seriesInstanceUID")
-            .equal("1.3.6.1.4.1.14519.5.2.1.6279.6001.137773550852881583165286615668");
-    new ROIGenerator(es, query).run();
+    new ROIGenerator(es).run();
   }
 
 }
