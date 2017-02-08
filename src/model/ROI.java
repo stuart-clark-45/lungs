@@ -30,6 +30,12 @@ public class ROI {
   @Indexed
   private ROIClassifier.Class classificaiton;
 
+  /**
+   * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
+   * {@link data.ROIGenerator}.
+   */
+  private Double matchThreshold;
+
   public ROI() {
     points = new ArrayList<>();
   }
@@ -72,5 +78,13 @@ public class ROI {
 
   public void setClassificaiton(ROIClassifier.Class classificaiton) {
     this.classificaiton = classificaiton;
+  }
+
+  public Double getMatchThreshold() {
+    return matchThreshold;
+  }
+
+  public void setMatchThreshold(Double matchThreshold) {
+    this.matchThreshold = matchThreshold;
   }
 }
