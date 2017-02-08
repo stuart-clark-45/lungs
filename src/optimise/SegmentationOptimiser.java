@@ -77,7 +77,7 @@ public class SegmentationOptimiser {
   /**
    * The points list of {@link Point}s that must be included in the segmentation.
    */
-  private List<List<Point>> groundTruths;
+  private List<List<GroundTruth>> groundTruths;
 
   /**
    * The current population.
@@ -85,12 +85,20 @@ public class SegmentationOptimiser {
   private Population<IntegerGene, Double> population;
 
   /**
+   * The total number of {@link GroundTruth}s used in the fitness function.
+   */
+  private int totalGTs;
+
+  /**
    * @param generations the maximum number of generations that should be used.
    * @param stagnationLimit the maximum number of times deltaFitness can be 0 before the GA is
    *        stopped.
    * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
+   * @param readingNumber The reading number that should be used when selecting ground truths. See
+   *        documentation at {@link GroundTruth#readingNumber}.
    */
-  public SegmentationOptimiser(int generations, int stagnationLimit, int numStacks) {
+  public SegmentationOptimiser(int generations, int stagnationLimit, int numStacks,
+      int readingNumber) {
     this.generations = generations;
     this.stagnationLimit = stagnationLimit;
     this.mats = new ArrayList<>();
@@ -106,10 +114,13 @@ public class SegmentationOptimiser {
     for (CTStack stack : stacks) {
       for (CTSlice slice : stack.getSlices()) {
 
-        // Find the nodules for the slice
+        // Find all the first readings for the slice that contain a nodule. Only the first reading
+        // is used as we need to know exactingly how many nodules there are in the set of Mats we
+        // will use
         List<GroundTruth> gtList =
             ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                .field("imageSopUID").equal(slice.getImageSopUID()).asList();
+                .field("imageSopUID").equal(slice.getImageSopUID()).field("readingNumber")
+                .equal(readingNumber).asList();
 
         // If there are nodules in the slice
         if (!gtList.isEmpty()) {
@@ -117,11 +128,9 @@ public class SegmentationOptimiser {
           // Add Mat for slice into list that will be used in eval(..)
           mats.add(Lungs.getSliceMat(slice));
 
-          // Combine the regions into one list of points
-          List<Point> combinedGt = new ArrayList<>();
-          gtList.stream().map(GroundTruth::getRegion).forEach(combinedGt::addAll);
-          groundTruths.add(combinedGt);
-
+          // Add gtLists to list that will be used in eval(..)
+          groundTruths.add(gtList);
+          totalGTs += gtList.size();
         }
 
       }
@@ -235,36 +244,74 @@ public class SegmentationOptimiser {
    * @return the fitness of {@code gt}.
    */
   private Double eval(Genotype<IntegerGene> gt) {
+    // Segment the Mats
     Lungs lungs =
         new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
             getInt(gt, THRESHOLD), getInt(gt, OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(
                 gt, OPENING_KERNEL));
-
     List<Mat> segmented = lungs.segment(mats);
 
-    double fitness = 0.0;
+    // Extract the ROIs for the mats
     ROIExtractor extractor = new ROIExtractor(Lungs.FOREGROUND);
-    for (int i = 0; i < segmented.size(); i++) {
-      // Get ground truth
-      List<Point> groundTruth = groundTruths.get(i);
-
-      // Extract ROIs
+    // Each sublist contains all the ROIs for the corresponding Mat in segmented
+    List<List<ROI>> allROIs = new ArrayList<>();
+    int numROIs = 0;
+    for (Mat mat : segmented) {
       List<ROI> rois;
       try {
-        rois = extractor.extract(segmented.get(i));
+        rois = extractor.extract(mat);
+        allROIs.add(rois);
+        numROIs += rois.size();
       } catch (LungsException e) {
         throw new IllegalStateException("Failed to extract ROIs", e);
       }
+    }
 
-      // Combine ROIs
-      List<Point> extractedPoints = new ArrayList<>();
-      rois.stream().map(ROI::getPoints).forEach(extractedPoints::addAll);
+    double inclusion = noduleInclusion(allROIs);
 
-      // Match ground truth to ROIs
-      fitness += Matcher.match(groundTruth, extractedPoints);
+    double fitness = inclusion;
+    if (inclusion > 0.8) {
+      fitness += Double.MAX_VALUE / 2;
+      fitness -= numROIs;
     }
 
     return fitness;
+  }
+
+  /**
+   * @param allROIs a list of lists of {@link ROI}s each sublist should be all of the {@link ROI}s
+   *        for the corresponding Mat in {@code this.mats}.
+   * @return a {@code double} between 0 and 1 inclusive that indicated how well nodules were
+   *         included in the segmented Mat. 1 meaning perfect inclusion 0 meaning no inclusion at
+   *         all.
+   */
+  private double noduleInclusion(List<List<ROI>> allROIs) {
+    double noduleInclusion = 0.0;
+    for (int i = 0; i < allROIs.size(); i++) {
+      // Get ground truths for segmented mat
+      List<GroundTruth> segGts = groundTruths.get(i);
+      // Get ROIs for segmented mat
+      List<ROI> rois = allROIs.get(i);
+
+      // Find the bestScore for each of the GroundTruths using Matcher
+      for (GroundTruth segGt : segGts) {
+
+        double bestScore = 0.0;
+        for (ROI roi : rois) {
+          double score = Matcher.match(roi, segGt);
+          if (score > bestScore) {
+            bestScore = score;
+          }
+        }
+
+        // Add to noduleInclusion
+        noduleInclusion += bestScore;
+      }
+
+    }
+
+    // Normalise to value between 0 and 1 inclusive and return
+    return noduleInclusion / totalGTs;
   }
 
   /**
@@ -298,10 +345,18 @@ public class SegmentationOptimiser {
 
   public static void main(String[] args) throws IOException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    SegmentationOptimiser optimiser = new SegmentationOptimiser(20000, 5, 10);
+
+    // Create optimiser
+    int generations = 20000;
+    int stagnationLimit = 5;
+//    int numStacks = 10;
+    int numStacks = 1;
+    int readingNumber = 0;
+    SegmentationOptimiser optimiser =
+        new SegmentationOptimiser(generations, stagnationLimit, numStacks, readingNumber);
 
     // Load the persisted population if there is one
-    optimiser.loadPopulation();
+//    optimiser.loadPopulation();
 
     // Save population if interrupted
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
