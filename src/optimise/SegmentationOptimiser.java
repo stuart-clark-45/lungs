@@ -1,5 +1,7 @@
 package optimise;
 
+import static util.DataFilter.filter;
+
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +19,7 @@ import org.jenetics.util.Factory;
 import org.jenetics.util.IO;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.FindOptions;
+import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -106,9 +109,8 @@ public class SegmentationOptimiser {
 
     // Load some stacks
     Datastore ds = MongoHelper.getDataStore();
-    List<CTStack> stacks =
-        ds.createQuery(CTStack.class).field("model").equal("Sensation 16")
-            .asList(new FindOptions().limit(numStacks));
+    Query<CTStack> query = filter(ds.createQuery(CTStack.class));
+    List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
     for (CTStack stack : stacks) {
