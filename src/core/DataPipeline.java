@@ -24,11 +24,11 @@ import feature.FeatureEngine;
  *
  * @author Stuart Clark
  */
-public class Pipeline {
+public class DataPipeline {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Pipeline.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataPipeline.class);
 
-  private Pipeline() {
+  private DataPipeline() {
     // Hide the constructor
   }
 
