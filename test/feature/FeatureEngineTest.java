@@ -55,7 +55,7 @@ public class FeatureEngineTest {
   @Test
   public void test() throws Exception {
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    new FeatureEngine(es, Collections.singletonList(new MeanIntensity())).run();
+    new FeatureEngine(Collections.singletonList(new MeanIntensity())).run(es);
     ROI roi = ds.get(ROI.class, roiId);
     assertNotNull(roi.getMeanIntensity());
   }

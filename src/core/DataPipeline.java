@@ -63,7 +63,7 @@ public class DataPipeline {
     LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
 
     // Feature Engine run on it's own as has internal threading
-    new FeatureEngine(es).run();
+    new FeatureEngine().run(es);
 
     LOGGER.info("DataPineLine complete.");
   }

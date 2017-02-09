@@ -22,31 +22,30 @@ import util.MongoHelper;
 /**
  * Used to compute {@link Feature}s for {@link ROI}s.
  */
-public class FeatureEngine implements Runnable {
+public class FeatureEngine {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FeatureEngine.class);
   private static final int LOG_INTERVAL = 1000;
   private static final String IMAGE_SOP_UID = "imageSopUID";
 
-  private ExecutorService es;
   private List<Feature> features;
   private Datastore ds;
 
-  public FeatureEngine(ExecutorService es) {
-    this(es, defaultFeatures());
+  public FeatureEngine() {
+    this(defaultFeatures());
   }
 
-  public FeatureEngine(ExecutorService es, List<Feature> features) {
-    this.es = es;
+  public FeatureEngine(List<Feature> features) {
     this.features = features;
     this.ds = MongoHelper.getDataStore();
   }
 
   /**
    * Compute features for each of the {@link ROI}s in the database.
+   * 
+   * @param es
    */
-  @Override
-  public void run() {
+  public void run(ExecutorService es) {
     LOGGER.info("Computing Features this may take some time...");
 
     // Find all the distinct SOP UIDs for the ROIs
@@ -118,6 +117,6 @@ public class FeatureEngine implements Runnable {
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    new FeatureEngine(es).run();
+    new FeatureEngine().run(es);
   }
 }
