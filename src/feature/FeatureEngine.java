@@ -42,6 +42,9 @@ public class FeatureEngine implements Runnable {
     this.ds = MongoHelper.getDataStore();
   }
 
+  /**
+   * Compute features for each of the {@link ROI}s in the database.
+   */
   @Override
   public void run() {
     LOGGER.info("Computing Features this may take some time...");
@@ -70,9 +73,7 @@ public class FeatureEngine implements Runnable {
         futures.add(es.submit(() -> {
 
           // Compute all the features for the ROI
-            for (Feature feature : features) {
-              feature.compute(roi, mat);
-            }
+            computeFeatures(roi, mat);
 
             // Update the ROI
             ds.save(roi);
@@ -91,6 +92,18 @@ public class FeatureEngine implements Runnable {
     monitor.monitor();
 
     LOGGER.info("Finished computing features");
+  }
+
+  /**
+   * Compute all features for the {@code roi}.
+   * 
+   * @param roi
+   * @param mat the {@link Mat} where the {@code roi} is found.
+   */
+  public void computeFeatures(ROI roi, Mat mat) {
+    for (Feature feature : features) {
+      feature.compute(roi, mat);
+    }
   }
 
   /**
