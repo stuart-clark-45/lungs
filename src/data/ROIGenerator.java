@@ -36,13 +36,18 @@ import vision.Matcher;
 public class ROIGenerator extends Importer<ROI> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
-  private static final double MATCH_THRESHOLD = ConfigHelper.getDouble(Misc.MATCH_THRESHOLD);
 
   private ExecutorService es;
+  private double matchThreshold;
 
   public ROIGenerator(ExecutorService es) {
+    this(es, ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
+  }
+
+  public ROIGenerator(ExecutorService es, double matchThreshold) {
     super(ROI.class);
     this.es = es;
+    this.matchThreshold = matchThreshold;
   }
 
   @Override
@@ -118,14 +123,14 @@ public class ROIGenerator extends Importer<ROI> {
     }
 
     // Set the class
-    if (bestScore > MATCH_THRESHOLD) {
+    if (bestScore > matchThreshold) {
       roi.setClassificaiton(NODULE);
     } else {
       roi.setClassificaiton(NON_NODULE);
     }
 
     // Set the match threshold used
-    roi.setMatchThreshold(MATCH_THRESHOLD);
+    roi.setMatchThreshold(matchThreshold);
   }
 
   public static void main(String[] args) {
