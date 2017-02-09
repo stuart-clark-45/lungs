@@ -1,7 +1,5 @@
 package data;
 
-import static model.ROI.Class.NODULE;
-import static model.ROI.Class.NON_NODULE;
 import static util.DataFilter.filter;
 
 import java.util.ArrayList;
@@ -17,16 +15,13 @@ import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.Misc;
 import core.Lungs;
 import model.CTSlice;
 import model.GroundTruth;
 import model.ROI;
-import util.ConfigHelper;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;
-import vision.Matcher;
 
 /**
  * Used to import {@link ROI}s detected
@@ -38,16 +33,10 @@ public class ROIGenerator extends Importer<ROI> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
 
   private ExecutorService es;
-  private double matchThreshold;
 
   public ROIGenerator(ExecutorService es) {
-    this(es, ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
-  }
-
-  public ROIGenerator(ExecutorService es, double matchThreshold) {
     super(ROI.class);
     this.es = es;
-    this.matchThreshold = matchThreshold;
   }
 
   @Override
@@ -86,10 +75,9 @@ public class ROIGenerator extends Importer<ROI> {
           try {
             List<ROI> rois = lungs.roiExtraction(Collections.singletonList(slice), segmented);
             for (ROI roi : rois) {
-              setClass(roi, groundTruths);
-              ds.save(roi);
+              ROIClassifier.setClass(roi, groundTruths);
             }
-
+            ds.save(rois);
           } catch (LungsException e) {
             LOGGER.error("Failed to extract ROI for stack with SOP UID: " + slice.getImageSopUID(),
                 e);
@@ -103,34 +91,6 @@ public class ROIGenerator extends Importer<ROI> {
     monitor.monitor();
 
     LOGGER.info("Finished generating ROIs");
-  }
-
-  /**
-   * Set the {@link ROI#classificaiton} for {@code roi} by matching the {@link ROI} to a
-   * {@link GroundTruth}.
-   * 
-   * @param roi
-   * @param groundTruths
-   */
-  private void setClass(ROI roi, List<GroundTruth> groundTruths) {
-    // Find the highest matching score
-    double bestScore = 0.0;
-    for (GroundTruth gt : groundTruths) {
-      double score = Matcher.match(roi, gt);
-      if (score > bestScore) {
-        bestScore = score;
-      }
-    }
-
-    // Set the class
-    if (bestScore > matchThreshold) {
-      roi.setClassification(NODULE);
-    } else {
-      roi.setClassification(NON_NODULE);
-    }
-
-    // Set the match threshold used
-    roi.setMatchThreshold(matchThreshold);
   }
 
   public static void main(String[] args) {
