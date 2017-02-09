@@ -1,26 +1,31 @@
 package core;
 
-import static org.opencv.ml.Ml.ROW_SAMPLE;
+import static model.ROI.Class.NODULE;
+import static model.ROI.Class.NON_NODULE;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.ml.TrainData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import model.ROI;
 import util.MongoHelper;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 
 /**
- * Used to train a classier to identify nodules. // TODO add diagnosis
+ * Used to train a classier to identify nodules.
  *
  * @author Stuart Clark
  */
@@ -28,6 +33,8 @@ public class Trainer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Trainer.class);
   private static final int LOG_INTERVAL = 5000;
+  private static final String TRAIN_FILE = "train.arff";
+  private static final String TEST_FILE = "test.arff";
 
   private Datastore ds;
 
@@ -35,55 +42,69 @@ public class Trainer {
     this.ds = MongoHelper.getDataStore();
   }
 
-  public void run() {
+  public void run() throws IOException {
     LOGGER.info("Running Trainer...");
 
     Query<ROI> rois = ds.createQuery(ROI.class);
     int numROI = (int) rois.count();
 
-    // Create a list of the functions to call to obtain values for features
-    List<Function<ROI, Double>> features = new ArrayList<>();
-    features.add(Trainer::meanIntensity);
+    // Create list if attributes and methods to access them
+    ArrayList<Attribute> attributes = new ArrayList<>();
+    List<Function<ROI, Object>> functions = new ArrayList<>();
+    // Add mean intensity
+    attributes.add(new Attribute("Mean Intensity"));
+    functions.add(ROI::getMeanIntensity);
+    // Add class
+    attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
+    functions.add(ROI::getClassificaiton);
 
-    Mat samples = new Mat(numROI, features.size(), CvType.CV_32SC1);
-    Mat labels = new Mat(numROI, 1, CvType.CV_32SC1);
+    int numAttributes = attributes.size();
 
-    LOGGER.info("Creating samples...");
-    Iterator<ROI> iterator = rois.iterator();
-    for (int row = 0; row < numROI; row++) {
+    // Create training set
+    Instances trainingSet = new Instances("Training Set", attributes, numROI);
+    trainingSet.setClassIndex(numAttributes - 1);
 
-      // Get the next ROI
-      ROI roi = iterator.next();
+    LOGGER.info("Creating Instances...");
+    int counter = 0;
+    for (ROI roi : rois) {
 
-      // Set it's label
-      labels.put(row, 1, roi.getClassificaiton().getDoubleVal());
-
-      // Fill it's row in the samples Mat
-      for (int col = 0; col < features.size(); col++) {
-        samples.put(row, col, features.get(col).apply(roi));
+      // Create the Instance
+      Instance instance = new DenseInstance(numAttributes);
+      for (int i = 0; i < numAttributes; i++) {
+        setValue(instance, attributes.get(i), functions.get(i).apply(roi));
       }
 
-      if (row % LOG_INTERVAL == 0) {
-        LOGGER.info(row + "/" + numROI + " samples created");
+      // Add to the training set
+      trainingSet.add(instance);
+
+      // Logging
+      if (++counter % LOG_INTERVAL == 0) {
+        LOGGER.info(counter + "/" + numROI + " training instances created");
       }
     }
 
-    // Train the classifier and save it to a file
-    LOGGER.info("Training classifier");
-    TrainData trainData = TrainData.create(samples, ROW_SAMPLE, labels);
-    ROIClassifier classifier = new ROIClassifier();
-    classifier.train(trainData);
-    LOGGER.info("Writing classifier to file");
-    classifier.save();
+    // Save to arff file
+    LOGGER.info("Saving training set to " + TRAIN_FILE);
+    ArffSaver saver = new ArffSaver();
+    saver.setInstances(trainingSet);
+    saver.setFile(new File(TRAIN_FILE));
+    saver.writeBatch();
 
     LOGGER.info("Training complete");
   }
 
-  private static Double meanIntensity(ROI roi) {
-    return roi.getMeanIntensity();
+  private static void setValue(Instance instance, Attribute attribute, Object value) {
+    if (value instanceof Double) {
+      instance.setValue(attribute, (Double) value);
+    } else if (value instanceof ROI.Class) {
+      instance.setValue(attribute, ((ROI.Class) value).name());
+    } else {
+      throw new IllegalStateException(value.getClass()
+          + " not yet supported by Trainer please add it");
+    }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     new Trainer().run();
