@@ -59,13 +59,12 @@ public class DataPipeline {
     }
     // Run on it's own as has internal threading
     new ROIGenerator(es).run();
-
     LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
 
     // Feature Engine run on it's own as has internal threading
     new FeatureEngine().run(es);
 
-    LOGGER.info("DataPineLine complete.");
+    LOGGER.info("DataPineLine complete. Time elapsed: " + timeToString(start));
   }
 
   private static String timeToString(long start) {
