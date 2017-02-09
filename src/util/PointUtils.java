@@ -44,10 +44,10 @@ public class PointUtils {
     perimeter = dedupe(perimeter);
 
     // Calculate the min and max and and y values
-    MinMaxXY<Double> xyMM = xyMaxMin(perimeter);
+    MinMaxXY<Double> mmXY = xyMaxMin(perimeter);
 
     // Create a mat with the filled region. +1's as there will be a 0th row and col
-    Mat filled = Mat.zeros(xyMM.maxY.intValue() + 1, xyMM.maxX.intValue() + 1, CvType.CV_8UC1);
+    Mat filled = Mat.zeros(mmXY.maxY.intValue() + 1, mmXY.maxX.intValue() + 1, CvType.CV_8UC1);
     Point[] pointArray = perimeter.toArray(new Point[perimeter.size()]);
     Imgproc.fillPoly(filled, Collections.singletonList(new MatOfPoint(pointArray)), new Scalar(
         FORE_GROUND));
