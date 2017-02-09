@@ -47,8 +47,7 @@ public class PointUtils {
     MinMaxXY<Double> xyMM = xyMaxMin(perimeter);
 
     // Create a mat with the filled region. +1's as there will be a 0th row and col
-    Mat filled =
-        Mat.zeros(xyMM.getMaxY().intValue() + 1, xyMM.getMaxX().intValue() + 1, CvType.CV_8UC1);
+    Mat filled = Mat.zeros(xyMM.maxY.intValue() + 1, xyMM.maxX.intValue() + 1, CvType.CV_8UC1);
     Point[] pointArray = perimeter.toArray(new Point[perimeter.size()]);
     Imgproc.fillPoly(filled, Collections.singletonList(new MatOfPoint(pointArray)), new Scalar(
         FORE_GROUND));
@@ -72,23 +71,23 @@ public class PointUtils {
 
     // Find max x and y values and correctly set the first point
     MinMaxXY<Double> mmXY = new MinMaxXY<>();
-    mmXY.setMinX(first.x);
-    mmXY.setMaxX(first.x);
-    mmXY.setMinY(first.y);
-    mmXY.setMinY(first.y);
+    mmXY.minX = first.x;
+    mmXY.maxX = first.x;
+    mmXY.minY = first.y;
+    mmXY.minY = first.y;
     for (int i = 1; i < points.size(); i++) {
       Point point = points.get(i);
 
-      if (point.x > mmXY.getMaxX()) {
-        mmXY.setMaxX(point.x);
-      } else if (point.x < mmXY.getMinX()) {
-        mmXY.setMinX(point.x);
+      if (point.x > mmXY.maxX) {
+        mmXY.maxX = point.x;
+      } else if (point.x < mmXY.minX) {
+        mmXY.minX = point.x;
       }
 
-      if (point.y > mmXY.getMaxY()) {
-        mmXY.setMaxY(point.y);
-      } else if (point.y < mmXY.getMinY()) {
-        mmXY.setMinY(point.y);
+      if (point.y > mmXY.maxY) {
+        mmXY.maxY = point.y;
+      } else if (point.y < mmXY.minY) {
+        mmXY.minY = point.y;
       }
 
     }
