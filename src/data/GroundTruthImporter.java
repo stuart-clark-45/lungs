@@ -198,17 +198,17 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
     List<ReadingSession> readingSessions = read.getReadingSessions();
     for (int i = 0; i < readingSessions.size(); i++) {
       ReadingSession session = readingSessions.get(i);
-      String studyInstanceUID = read.getResponseHeader().getStudyInstanceUID();
+      String seriesInstanceUid = read.getResponseHeader().getSeriesInstanceUID();
 
       // Parse and save nodules
       for (UnblindedReadNodule nodule : session.getUnblindedReadNodule()) {
 
-        parseAndSaveNodule(nodule, ds, i, studyInstanceUID);
+        parseAndSaveNodule(nodule, ds, i, seriesInstanceUid);
       }
 
       // Parse and save non-nodules
       for (NonNodule nonNodule : session.getNonNodule()) {
-        parseAndSaveNonNodule(nonNodule, ds, i, studyInstanceUID);
+        parseAndSaveNonNodule(nonNodule, ds, i, seriesInstanceUid);
       }
 
     }
@@ -220,10 +220,10 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
    * @param nodule
    * @param ds
    * @param readingNumber
-   * @param studyInstanceUID
+   * @param seriesInstanceUid
    */
   private void parseAndSaveNodule(UnblindedReadNodule nodule, Datastore ds, int readingNumber,
-      String studyInstanceUID) throws LungsException {
+      String seriesInstanceUid) throws LungsException {
     ObjectId groupId = new ObjectId();
 
     // Create a GroundTruth for each of the rois given by {@code nodule}
@@ -234,7 +234,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       groundTruth.setGroupId(groupId);
       groundTruth.setImageSopUID(roi.getImageSOPUID());
       groundTruth.setReadingNumber(readingNumber);
-      groundTruth.setSeriesInstanceUID(studyInstanceUID);
+      groundTruth.setSeriesInstanceUID(seriesInstanceUid);
       boolean inclusive = Boolean.parseBoolean(roi.getInclusion());
       groundTruth.setInclusive(inclusive);
 
@@ -264,10 +264,10 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
    * @param nonNodule
    * @param ds
    * @param readingNumber
-   * @param studyInstanceUID
+   * @param seriesInstanceUid
    */
   private void parseAndSaveNonNodule(NonNodule nonNodule, Datastore ds, int readingNumber,
-      String studyInstanceUID) {
+      String seriesInstanceUid) {
     ObjectId groupId = new ObjectId();
 
     GroundTruth groundTruth = new GroundTruth();
@@ -275,7 +275,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
     groundTruth.setGroupId(groupId);
     groundTruth.setImageSopUID(nonNodule.getImageSOPUID());
     groundTruth.setReadingNumber(readingNumber);
-    groundTruth.setSeriesInstanceUID(studyInstanceUID);
+    groundTruth.setSeriesInstanceUID(seriesInstanceUid);
     Locus locus = nonNodule.getLocus();
     groundTruth.setCentroid(new Point(locus.getXCoord().doubleValue(), locus.getYCoord()
         .doubleValue()));
