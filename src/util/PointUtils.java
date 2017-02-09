@@ -46,7 +46,7 @@ public class PointUtils {
     // Calculate the min and max and and y values
     MinMaxXY<Double> xyMM = xyMaxMin(perimeter);
 
-    // Create a mat with the filled region
+    // Create a mat with the filled region. +1's as there will be a 0th row and col
     Mat filled =
         Mat.zeros(xyMM.getMaxY().intValue() + 1, xyMM.getMaxX().intValue() + 1, CvType.CV_8UC1);
     Point[] pointArray = perimeter.toArray(new Point[perimeter.size()]);
