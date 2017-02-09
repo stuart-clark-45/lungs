@@ -15,6 +15,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
+import model.MinMaxXY;
 import vision.ROIExtractor;
 
 /**
@@ -42,34 +43,20 @@ public class PointUtils {
     // Remove duplicates if there are any
     perimeter = dedupe(perimeter);
 
-    // Get first point
-    Point first = perimeter.get(0);
-
-    // Find max x and y values and correctly set the first point
-    double xMax = first.x;
-    double yMax = first.y;
-    for (int i = 1; i < perimeter.size(); i++) {
-      Point point = perimeter.get(i);
-
-      if (point.x > xMax) {
-        xMax = point.x;
-      }
-
-      if (point.y > yMax) {
-        yMax = point.y;
-      }
-
-    }
+    // Calculate the min and max and and y values
+    MinMaxXY<Double> xyMM = xyMaxMin(perimeter);
 
     // Create a mat with the filled region
-    Mat filled = Mat.zeros((int) yMax + 1, (int) xMax + 1, CvType.CV_8UC1);
+    Mat filled =
+        Mat.zeros(xyMM.getMaxY().intValue() + 1, xyMM.getMaxX().intValue() + 1, CvType.CV_8UC1);
     Point[] pointArray = perimeter.toArray(new Point[perimeter.size()]);
     Imgproc.fillPoly(filled, Collections.singletonList(new MatOfPoint(pointArray)), new Scalar(
         FORE_GROUND));
 
     // Extract the region points
     ROIExtractor extractor = new ROIExtractor(FORE_GROUND);
-    List<Point> region = extractor.extractOne(filled, first).getPoints();
+    Point point = perimeter.get(0);
+    List<Point> region = extractor.extractOne(filled, point).getPoints();
 
     // Remove the perimeter if it was not inclusive
     if (!inclusive) {
@@ -77,6 +64,37 @@ public class PointUtils {
     }
 
     return region;
+  }
+
+  public static MinMaxXY<Double> xyMaxMin(List<Point> points) {
+    // Get first point
+    Point first = points.get(0);
+
+    // Find max x and y values and correctly set the first point
+    MinMaxXY<Double> mmXY = new MinMaxXY<>();
+    mmXY.setMinX(first.x);
+    mmXY.setMaxX(first.x);
+    mmXY.setMinY(first.y);
+    mmXY.setMinY(first.y);
+    for (int i = 1; i < points.size(); i++) {
+      Point point = points.get(i);
+
+      if (point.x > mmXY.getMaxX()) {
+        mmXY.setMaxX(point.x);
+      } else if (point.x < mmXY.getMinX()) {
+        mmXY.setMinX(point.x);
+      }
+
+      if (point.y > mmXY.getMaxY()) {
+        mmXY.setMaxY(point.y);
+      } else if (point.y < mmXY.getMinY()) {
+        mmXY.setMinY(point.y);
+      }
+
+    }
+
+    return mmXY;
+
   }
 
   /**
