@@ -25,20 +25,20 @@ import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 
 /**
- * Used to train a classier to identify nodules.
+ * Used to generate the required arff files to be used with a {@link weka.classifiers.Classifier}.
  *
  * @author Stuart Clark
  */
-public class Trainer {
+public class ArffGenerator {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Trainer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ArffGenerator.class);
   private static final int LOG_INTERVAL = 5000;
   private static final String TRAIN_FILE = "train.arff";
   private static final String TEST_FILE = "test.arff";
 
   private Datastore ds;
 
-  public Trainer() {
+  public ArffGenerator() {
     this.ds = MongoHelper.getDataStore();
   }
 
@@ -107,7 +107,7 @@ public class Trainer {
   public static void main(String[] args) throws IOException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-    new Trainer().run();
+    new ArffGenerator().run();
   }
 
 }
