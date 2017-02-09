@@ -65,6 +65,32 @@ public class PointUtils {
     return region;
   }
 
+  /**
+   * @param regionPoints as single region given as a list of all of it's {@link Point}s.
+   * @return a list of all the points that form the inclusive parameter of the region. i.e. the
+   *         points are also part of the area. List is not guaranteed to be in raster order.
+   */
+  public static List<Point> region2perim(List<Point> regionPoints) {
+    MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
+    Mat region = points2MinMat(regionPoints, mmXY);
+    List<MatOfPoint> contours = new ArrayList<>();
+    Imgproc.findContours(region, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
+    // There should only every be one contour
+    List<Point> perimeter = contours.get(0).toList();
+    // add the min vals back to each x and y
+    perimeter.forEach(p -> {
+      p.x += mmXY.minX;
+      p.y += mmXY.minY;
+    });
+
+    return perimeter;
+  }
+
+  /**
+   * @param points
+   * @return a {@link MinMaxXY<Double>} holding the minimum and maximum values for the x and y
+   *         co-ordinates given in {@code points}.
+   */
   public static MinMaxXY<Double> xyMaxMin(List<Point> points) {
     // Get first point
     Point first = points.get(0);
@@ -74,7 +100,7 @@ public class PointUtils {
     mmXY.minX = first.x;
     mmXY.maxX = first.x;
     mmXY.minY = first.y;
-    mmXY.minY = first.y;
+    mmXY.maxY = first.y;
     for (int i = 1; i < points.size(); i++) {
       Point point = points.get(i);
 
@@ -94,6 +120,40 @@ public class PointUtils {
 
     return mmXY;
 
+  }
+
+  /**
+   * @param points
+   * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
+   *         The point are offset so that the size of the Mat is reduced to the minimum size
+   *         required.
+   */
+  public static Mat points2MinMat(List<Point> points) {
+    MinMaxXY<Double> mmXY = xyMaxMin(points);
+    return points2MinMat(points, mmXY);
+  }
+
+  /**
+   * @param points
+   * @param mmXY the {@link MinMaxXY<Double>} obtained using {@link PointUtils#xyMaxMin(List)}.
+   * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
+   *         The point are offset so that the size of the Mat is reduced to the minimum size
+   *         required.
+   */
+  public static Mat points2MinMat(List<Point> points, MinMaxXY<Double> mmXY) {
+    // Get mins maxes and ranges
+    double rangeX = mmXY.maxX - mmXY.minX;
+    double rangeY = mmXY.maxY - mmXY.minY;
+
+    // Crete mat with regionPoints
+    Mat ma = Mat.zeros((int) rangeY + 1, (int) rangeX + 1, CvType.CV_8UC1);
+    for (Point point : points) {
+      int row = (int) (point.y - mmXY.minY);
+      int col = (int) (point.x - mmXY.minX);
+      ma.put(row, col, FORE_GROUND);
+    }
+
+    return ma;
   }
 
   /**
