@@ -16,7 +16,7 @@ import org.opencv.core.Point;
 public class ROI {
 
   public enum Class {
-    NODULE, NON_NODULE;
+    NODULE, NON_NODULE
   }
 
   @Id
@@ -26,6 +26,9 @@ public class ROI {
 
   @Indexed
   private String imageSopUID;
+
+  @Indexed
+  private String seriesInstanceUID;
 
   private Double meanIntensity;
 
@@ -89,4 +92,13 @@ public class ROI {
   public void setMatchThreshold(Double matchThreshold) {
     this.matchThreshold = matchThreshold;
   }
+
+  public String getSeriesInstanceUID() {
+    return seriesInstanceUID;
+  }
+
+  public void setSeriesInstanceUID(String seriesInstanceUID) {
+    this.seriesInstanceUID = seriesInstanceUID;
+  }
+
 }
