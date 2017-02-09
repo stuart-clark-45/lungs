@@ -1,7 +1,7 @@
 package data;
 
-import static core.ROIClassifier.Class.NODULE;
-import static core.ROIClassifier.Class.NON_NODULE;
+import static model.ROI.Class.NODULE;
+import static model.ROI.Class.NON_NODULE;
 import static util.DataFilter.filter;
 
 import java.util.ArrayList;
