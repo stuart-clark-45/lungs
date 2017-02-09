@@ -34,6 +34,7 @@ public class CTSlice {
   /**
    * The mmodel of the hardware used to produce the image.
    */
+  @Indexed
   private String model;
 
   /**
