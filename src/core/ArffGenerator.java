@@ -38,9 +38,9 @@ public class ArffGenerator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ArffGenerator.class);
   private static final int LOG_INTERVAL = 5000;
-  private static final String TRAIN_FILE = "train.arff";
-  private static final String TEST_FILE = "test.arff";
-  private static final String ALL_FILE = "all.arff";
+  public static final String TRAIN_FILE = "train.arff";
+  public static final String TEST_FILE = "test.arff";
+  public static final String ALL_FILE = "all.arff";
 
   private Datastore ds;
   private ArrayList<Attribute> attributes;
