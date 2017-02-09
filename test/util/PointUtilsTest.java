@@ -45,6 +45,38 @@ public class PointUtilsTest {
   }
 
   @Test
+  public void testRegion2Perim() throws Exception {
+    List<Point> region = new ArrayList<>();
+    region.add(new Point(4, 4));
+    region.add(new Point(3, 5));
+    region.add(new Point(4, 5));
+    region.add(new Point(5, 5));
+    region.add(new Point(2, 6));
+    region.add(new Point(3, 6));
+    region.add(new Point(4, 6));
+    region.add(new Point(5, 6));
+    region.add(new Point(6, 6));
+    region.add(new Point(3, 7));
+    region.add(new Point(4, 7));
+    region.add(new Point(5, 7));
+    region.add(new Point(4, 8));
+
+    List<Point> expected = new ArrayList<>();
+    expected.add(new Point(4, 4));
+    expected.add(new Point(3, 5));
+    expected.add(new Point(5, 5));
+    expected.add(new Point(2, 6));
+    expected.add(new Point(6, 6));
+    expected.add(new Point(3, 7));
+    expected.add(new Point(5, 7));
+    expected.add(new Point(4, 8));
+
+    HashSet<Point> actual = new HashSet<>(PointUtils.region2perim(region));
+
+    assertEquals(new HashSet<>(expected), actual);
+  }
+
+  @Test
   public void testXySort() throws Exception {
     List<Point> unsorted = new ArrayList<>();
     unsorted.add(new Point(2, 2));
