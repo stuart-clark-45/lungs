@@ -33,7 +33,7 @@ public class ROI {
   private Double meanIntensity;
 
   @Indexed
-  private Class classificaiton;
+  private Class classification;
 
   /**
    * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
@@ -77,12 +77,12 @@ public class ROI {
     this.meanIntensity = meanIntensity;
   }
 
-  public Class getClassificaiton() {
-    return classificaiton;
+  public Class getClassification() {
+    return classification;
   }
 
-  public void setClassificaiton(Class classificaiton) {
-    this.classificaiton = classificaiton;
+  public void setClassification(Class classification) {
+    this.classification = classification;
   }
 
   public Double getMatchThreshold() {

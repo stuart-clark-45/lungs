@@ -124,9 +124,9 @@ public class ROIGenerator extends Importer<ROI> {
 
     // Set the class
     if (bestScore > matchThreshold) {
-      roi.setClassificaiton(NODULE);
+      roi.setClassification(NODULE);
     } else {
-      roi.setClassificaiton(NON_NODULE);
+      roi.setClassification(NON_NODULE);
     }
 
     // Set the match threshold used
