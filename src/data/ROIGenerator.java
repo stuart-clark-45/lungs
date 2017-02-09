@@ -22,6 +22,7 @@ import model.ROI;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;
+import vision.ROIExtractor;
 
 /**
  * Used to import {@link ROI}s detected
@@ -31,12 +32,16 @@ import util.MongoHelper;
 public class ROIGenerator extends Importer<ROI> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
+  private final ROIExtractor extractor;
+  private final Lungs lungs;
 
   private ExecutorService es;
 
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
     this.es = es;
+    extractor = new ROIExtractor(Lungs.FOREGROUND);
+    lungs = new Lungs();
   }
 
   @Override
@@ -53,8 +58,6 @@ public class ROIGenerator extends Importer<ROI> {
   protected void importModels(Datastore ds) throws LungsException {
     LOGGER.info("Generating ROIs this may take some time...");
 
-    Lungs lungs = new Lungs();
-
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
     for (CTSlice slice : filter(MongoHelper.getDataStore().createQuery(CTSlice.class))) {
@@ -63,8 +66,8 @@ public class ROIGenerator extends Importer<ROI> {
         // Load slice mat
           Mat mat = Lungs.getSliceMat(slice);
 
-          // Segment slice
-          List<Mat> segmented = lungs.segment(Collections.singletonList(mat));
+          // Segment slice (will only ever be one returned)
+          Mat segmented = lungs.segment(Collections.singletonList(mat)).get(0);
 
           // Get ground truths for slice
           List<GroundTruth> groundTruths =
@@ -73,13 +76,19 @@ public class ROIGenerator extends Importer<ROI> {
 
           // Create ROIs and save them
           try {
-            List<ROI> rois = lungs.roiExtraction(Collections.singletonList(slice), segmented);
+            List<ROI> rois = extractor.extract(segmented);
+
+            // Set ROI fields
             for (ROI roi : rois) {
+              roi.setImageSopUID(slice.getImageSopUID());
+              roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
               ROIClassifier.setClass(roi, groundTruths);
             }
+
+            // Save rois
             ds.save(rois);
           } catch (LungsException e) {
-            LOGGER.error("Failed to extract ROI for stack with SOP UID: " + slice.getImageSopUID(),
+            LOGGER.error("Failed to extract ROI for slice with SOP UID: " + slice.getImageSopUID(),
                 e);
           }
         }));
