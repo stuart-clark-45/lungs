@@ -200,11 +200,12 @@ public class Lungs {
     // Iterate over mats
     for (int i = 0; i < numMat; i++) {
       Mat mat = segmented.get(i);
-      String imageSopUID = slices.get(i).getImageSopUID();
+      CTSlice slice = slices.get(i);
 
-      // Set the imageSopUID for each of the ROIs and save them
+      // Set fields for the ROIs and save them
       for (ROI roi : extractor.extract(mat)) {
-        roi.setImageSopUID(imageSopUID);
+        roi.setImageSopUID(slice.getImageSopUID());
+        roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
         rois.add(roi);
       }
 
