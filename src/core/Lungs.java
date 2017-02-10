@@ -187,34 +187,6 @@ public class Lungs {
   }
 
   /**
-   * @param slices
-   * @param segmented
-   * @return the {@link ROI}s for the segmented images
-   * @throws LungsException
-   */
-  public List<ROI> roiExtraction(List<CTSlice> slices, List<Mat> segmented) throws LungsException {
-    int numMat = segmented.size();
-    ROIExtractor extractor = new ROIExtractor(FOREGROUND);
-    List<ROI> rois = new ArrayList<>();
-
-    // Iterate over mats
-    for (int i = 0; i < numMat; i++) {
-      Mat mat = segmented.get(i);
-      CTSlice slice = slices.get(i);
-
-      // Set fields for the ROIs and save them
-      for (ROI roi : extractor.extract(mat)) {
-        roi.setImageSopUID(slice.getImageSopUID());
-        roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
-        rois.add(roi);
-      }
-
-    }
-
-    return rois;
-  }
-
-  /**
    * @param stack
    * @return List of grey-scale {@link Mat} for the given stack.
    */
