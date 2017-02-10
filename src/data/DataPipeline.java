@@ -8,12 +8,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import ml.ROIGenerator;
-import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ml.FeatureEngine;
+import static util.TimeUtils.milliToString;
 
 /**
  * Used to import and aggregate all of the data and perform any pre-computation required for the
@@ -30,9 +28,7 @@ public class DataPipeline {
   }
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
-    LOGGER.info("Running DataPineLine");
+    LOGGER.info("Running DataPipeLine");
     long start = System.currentTimeMillis();
 
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -45,7 +41,7 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running importers. Time elapsed: " + timeToString(start));
+    LOGGER.info("Finished running importers. Time elapsed: " + milliToString(start));
 
     // Generators (Must be run after importers)
     LOGGER.info("Running Generators...");
@@ -54,23 +50,8 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    // Run on it's own as has internal threading
-    new ROIGenerator(es).run();
-    LOGGER.info("Finished running Generators. Time elapsed: " + timeToString(start));
 
-    // Feature Engine run on it's own as has internal threading
-    new FeatureEngine().run(es);
-
-    LOGGER.info("DataPineLine complete. Time elapsed: " + timeToString(start));
-  }
-
-  private static String timeToString(long start) {
-    long elapsed = System.currentTimeMillis() - start;
-    return String.format(
-        "%d min, %d sec",
-        TimeUnit.MILLISECONDS.toMinutes(elapsed),
-        TimeUnit.MILLISECONDS.toSeconds(elapsed)
-            - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsed)));
+    LOGGER.info("DataPipeLine complete. Time elapsed: " + milliToString(start));
   }
 
 }
