@@ -29,11 +29,11 @@ public class ArffGenerator {
   public static final String ALL_FILE = "all.arff";
 
   private Datastore ds;
-  private InstanceBuilder builder;
+  private InstancesBuilder builder;
 
   public ArffGenerator() {
     ds = MongoHelper.getDataStore();
-    builder = new InstanceBuilder();
+    builder = new InstancesBuilder(true);
   }
 
   public void run() throws IOException {

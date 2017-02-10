@@ -25,13 +25,13 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 /**
- * Used to construct {@link Instances} or {@link Instance}s from {@link ROI}s.
+ * Used to construct {@link Instances} from {@link ROI}s.
  *
  * @author Stuart Clark
  */
-public class InstanceBuilder {
+public class InstancesBuilder {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(InstanceBuilder.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(InstancesBuilder.class);
   private static final int LOG_INTERVAL = 5000;
 
   private ArrayList<Attribute> attributes;
@@ -39,47 +39,45 @@ public class InstanceBuilder {
   private List<Function<ROI, Object>> functions;
   private Datastore ds;
 
-  public InstanceBuilder() {
+  /**
+   * True if the class should be set for the {@link Instance}, false otherwise
+   */
+  private boolean setClass;
+
+  public InstancesBuilder(boolean setClass) {
+    this.setClass = setClass;
     // Create list if attributes and methods to access them
-    attributes = new ArrayList<>();
-    functions = new ArrayList<>();
+    this.attributes = new ArrayList<>();
+    this.functions = new ArrayList<>();
     // Add mean intensity
-    attributes.add(new Attribute("Mean Intensity"));
-    functions.add(ROI::getMeanIntensity);
+    this.attributes.add(new Attribute("Mean Intensity"));
+    this.functions.add(ROI::getMeanIntensity);
     // Add class
-    attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
-    functions.add(ROI::getClassification);
+    this.attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
+    this.functions.add(ROI::getClassification);
 
-    numAttributes = attributes.size();
+    this.numAttributes = attributes.size();
 
-    ds = MongoHelper.getDataStore();
+    this.ds = MongoHelper.getDataStore();
   }
 
   /**
-   * @param name the name to give the set of {@link Instances}.
-   * @param query
+   * @param name the name to give the {@link Instances}.
+   * @param rois the list of {@link ROI}s to use.
+   * @return {@link Instances} for the given {@link ROI}s
+   */
+  public Instances instances(String name, List<ROI> rois) {
+    return instances(name, rois.iterator(), rois.size());
+  }
+
+  /**
+   * @param name the name to give the {@link Instances}.
+   * @param query the query to use to get the {@link ROI}s
    * @return {@link Instances} for the given {@link ROI}s
    */
   public Instances instances(String name, Query<ROI> query) {
-    int numROI = (int) query.count();
-
-
-    // Create set
-    Instances set = new Instances(name, attributes, numROI);
-    set.setClassIndex(numAttributes - 1);
-
     LOGGER.info("Creating Instances for " + name + "...");
-    int counter = 0;
-    for (ROI roi : query) {
-
-      // Add to the set
-      set.add(createInstance(roi));
-
-      // Logging
-      if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numROI + " " + name + " instances created");
-      }
-    }
+    Instances instances = instances(name, query.iterator(), (int) query.count());
 
     // Log the number of each class in the instances
     LOGGER.info(name + " created with the following number of instances");
@@ -89,20 +87,39 @@ public class InstanceBuilder {
             .aggregate(Result.class);
     results.forEachRemaining(r -> LOGGER.info(r.toString()));
 
-    return set;
+    return instances;
   }
 
   /**
-   * @param roi
-   * @return an {@link Instance} for the {@code roi}.
+   * @param name the name to give the {@link Instances}.
+   * @param rois iterator for the {@link ROI}s.
+   * @return {@link Instances} for the given {@link ROI}s
    */
-  public Instance createInstance(ROI roi) {
-    Instance instance = new DenseInstance(numAttributes);
-    for (int i = 0; i < numAttributes; i++) {
-      setValue(instance, attributes.get(i), functions.get(i).apply(roi));
+  private Instances instances(String name, Iterator<ROI> rois, int numROI) {
+    // Create instances
+    Instances instances = new Instances(name, attributes, numROI);
+    instances.setClassIndex(numAttributes - 1);
+
+    // Iterate over rois
+    int counter = 0;
+    while (rois.hasNext()) {
+
+      // Add to the instances
+      Instance instance = new DenseInstance(numAttributes);
+      // Don't try to set class if setClass if false
+      int end = setClass ? numAttributes : numAttributes - 1;
+      for (int i = 0; i < end; i++) {
+        setValue(instance, attributes.get(i), functions.get(i).apply(rois.next()));
+      }
+      instances.add(instance);
+
+      // Logging
+      if (++counter % LOG_INTERVAL == 0) {
+        LOGGER.info(counter + "/" + numROI + " " + name + " instances created");
+      }
     }
 
-    return instance;
+    return instances;
   }
 
   /**
