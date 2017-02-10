@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import data.ArffGenerator;
-import data.InstancesBuilder;
+import ml.ArffGenerator;
+import ml.InstancesBuilder;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;

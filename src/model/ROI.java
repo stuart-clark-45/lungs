@@ -3,6 +3,7 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
+import ml.ROIGenerator;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
@@ -37,7 +38,7 @@ public class ROI {
 
   /**
    * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
-   * {@link data.ROIGenerator}.
+   * {@link ROIGenerator}.
    */
   private Double matchThreshold;
 

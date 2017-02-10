@@ -1,4 +1,4 @@
-package data;
+package ml;
 
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.ROI.Class.NODULE;
