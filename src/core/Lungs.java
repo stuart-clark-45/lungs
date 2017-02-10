@@ -11,12 +11,12 @@ import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
-import static org.opencv.imgproc.Imgproc.MARKER_SQUARE;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
 import static util.DataFilter.filter;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
+import feature.FeatureEngine;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
@@ -39,11 +40,19 @@ import model.GroundTruth;
 import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
+import util.DataFilter;
 import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
+import util.PointUtils;
 import vision.ROIExtractor;
+import weka.classifiers.Classifier;
+import weka.classifiers.trees.J48;
+import weka.core.Attribute;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.ArffLoader;
 
 public class Lungs {
 
@@ -216,21 +225,76 @@ public class Lungs {
    * @param args
    * @throws LungsException
    */
-  public static void main(String[] args) throws LungsException {
+  public static void main(String[] args) throws Exception {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
-    // Load the images
-    Datastore ds = MongoHelper.getDataStore();
-    CTStack stack = filter(ds.createQuery(CTStack.class)).get();
-    List<Mat> original = getStackMats(stack);
-
     Lungs lungs = new Lungs();
 
+    // Load the images
+    LOGGER.info("Loading images");
+    Datastore ds = MongoHelper.getDataStore();
+    CTStack stack =
+        filter(ds.createQuery(CTStack.class)).field("seriesInstanceUID")
+            .equal(DataFilter.TEST_INSTANCE).get();
+    List<Mat> original = getStackMats(stack);
+
+    // Segment the images
+    LOGGER.info("Segmenting images");
     List<Mat> segmented = lungs.segment(original);
 
-    List<Mat> annotated = lungs.groundTruth(stack.getSlices(), segmented);
+    // Train classifier
+    LOGGER.info("Training classifier");
+    ArffLoader loader = new ArffLoader();
+    loader.setFile(new File(ArffGenerator.TRAIN_FILE));
+    Instances trainingData = loader.getStructure();
+    trainingData.setClassIndex(trainingData.numAttributes() - 1);
+    Classifier classifier = new J48();
+    classifier.buildClassifier(trainingData);
 
-    new MatViewer(segmented, annotated).display();
+    // Create nodule predictions
+    LOGGER.info("Creating nodule predictions for stack");
+    ROIExtractor extractor = new ROIExtractor(FOREGROUND);
+    FeatureEngine fEngine = new FeatureEngine();
+    InstancesBuilder iBuilder = new InstancesBuilder(false);
+    List<Mat> predictions =
+        original.stream().map(Mat::clone).map(MatUtils::grey2RGB).collect(Collectors.toList());
+    // For each slice
+    for (int i = 0; i < segmented.size(); i++) {
+      Mat seg = segmented.get(i);
+      Mat orig = original.get(i);
+      Mat predict = predictions.get(i);
+
+      // Create Instances
+      List<ROI> rois = extractor.extract(seg);
+      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
+      Instances instances = iBuilder.instances("Slice Instances", rois);
+      Attribute classAttribute = instances.classAttribute();
+
+      // Create predictions
+      for (int j = 0; j < instances.size(); j++) {
+
+        // Classify the instance
+        Instance instance = instances.get(j);
+        double v = classifier.classifyInstance(instance);
+        ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
+
+        // If nodule then annotate
+        // TODO class labels apear to be backwards no idea why
+        if (!classification.equals(ROI.Class.NODULE)) {
+          LOGGER.info("Nodule Found!");
+          for (Point point : PointUtils.region2perim(rois.get(j).getPoints())) {
+            predict.put((int) point.y, (int) point.x, ColourBGR.GREEN);
+          }
+        }
+
+      }
+
+      LOGGER.info((i + 1) + "/" + segmented.size() + " slices processed");
+    }
+
+    // Create ground truth
+    List<Mat> groundTruth = lungs.groundTruth(stack.getSlices(), original);
+
+    // Display Mats
+    new MatViewer(groundTruth, predictions).display();
   }
-
 }
