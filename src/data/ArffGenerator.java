@@ -1,4 +1,4 @@
-package core;
+package data;
 
 import static util.DataFilter.TEST_INSTANCE;
 import static util.DataFilter.TRAIN_INSTANCE;

@@ -1,4 +1,4 @@
-package core;
+package data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +12,6 @@ import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import data.CTSliceImporter;
-import data.CTStackGenerator;
-import data.GroundTruthImporter;
-import data.ROIGenerator;
 import feature.FeatureEngine;
 
 /**
