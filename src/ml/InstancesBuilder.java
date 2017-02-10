@@ -103,13 +103,14 @@ public class InstancesBuilder {
     // Iterate over rois
     int counter = 0;
     while (rois.hasNext()) {
-
+      ROI roi = rois.next();
+      
       // Add to the instances
       Instance instance = new DenseInstance(numAttributes);
       // Don't try to set class if setClass if false
       int end = setClass ? numAttributes : numAttributes - 1;
       for (int i = 0; i < end; i++) {
-        setValue(instance, attributes.get(i), functions.get(i).apply(rois.next()));
+        setValue(instance, attributes.get(i), functions.get(i).apply(roi));
       }
       instances.add(instance);
 
