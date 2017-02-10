@@ -1,4 +1,4 @@
-package ml;
+package ml.feature;
 
 import org.opencv.core.Mat;
 

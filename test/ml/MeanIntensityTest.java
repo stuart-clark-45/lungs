@@ -2,6 +2,7 @@ package ml;
 
 import static org.junit.Assert.assertEquals;
 
+import ml.feature.MeanIntensity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opencv.core.Mat;

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import ml.feature.MeanIntensity;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
