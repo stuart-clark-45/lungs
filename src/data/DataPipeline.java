@@ -12,7 +12,7 @@ import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import feature.FeatureEngine;
+import ml.FeatureEngine;
 
 /**
  * Used to import and aggregate all of the data and perform any pre-computation required for the
