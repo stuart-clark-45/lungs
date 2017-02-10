@@ -140,7 +140,7 @@ public class Lungs {
     // Annotate big nodules
     if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
       for (Point point : gt.getEdgePoints()) {
-        Imgproc.drawMarker(rgb, point, new Scalar(ColourBGR.RED), MARKER_SQUARE, 1, 1, LINE_4);
+        rgb.put((int) point.y, (int) point.x, ColourBGR.RED);
       }
 
       // Annotate small nodules
