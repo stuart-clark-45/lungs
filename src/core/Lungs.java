@@ -262,7 +262,8 @@ public class Lungs {
   public List<ROI> extractRois(Mat segmented) throws LungsException {
     List<ROI> rois = extractor.extract(segmented);
     // Remove the largest
-    rois.remove(largest(rois));
+    Optional<ROI> largest = largest(rois);
+    largest.ifPresent(rois::remove);
     return rois;
   }
 
