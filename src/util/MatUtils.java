@@ -64,19 +64,19 @@ public class MatUtils {
 
   /**
    * @param mat a single channel {@link Mat}.
-   * @return mat converted to an RGB mat
+   * @return mat converted to an BGR mat
    */
-  public static Mat grey2RGB(Mat mat) {
-    Mat rgb = new Mat(mat.rows(), mat.cols(), CvType.CV_8UC3);
+  public static Mat grey2BGR(Mat mat) {
+    Mat bgr = new Mat(mat.rows(), mat.cols(), CvType.CV_8UC3);
 
     for (int i = 0; i < mat.rows(); i++) {
       for (int j = 0; j < mat.cols(); j++) {
         double val = mat.get(i, j)[0];
-        rgb.put(i, j, val, val, val);
+        bgr.put(i, j, val, val, val);
       }
     }
 
-    return rgb;
+    return bgr;
   }
 
   /**
