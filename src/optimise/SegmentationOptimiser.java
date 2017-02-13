@@ -27,7 +27,6 @@ import model.ROI;
 import util.LungsException;
 import util.MongoHelper;
 import vision.Matcher;
-import vision.ROIExtractor;
 
 /**
  * Used to optimise the parameters that are used to segment
@@ -70,8 +69,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    * @param readingNumber The reading number that should be used when selecting ground truths. See
    *        documentation at {@link GroundTruth#readingNumber}.
    */
-  public SegmentationOptimiser(int popSize, int generations, int numStacks,
-      int readingNumber) {
+  public SegmentationOptimiser(int popSize, int generations, int numStacks, int readingNumber) {
     super(popSize, generations);
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
@@ -126,15 +124,14 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
                 gt, OPENING_KERNEL));
     List<Mat> segmented = lungs.segment(mats);
 
-    // Extract the ROIs for the mats
-    ROIExtractor extractor = new ROIExtractor(Lungs.FOREGROUND);
-    // Each sublist contains all the ROIs for the corresponding Mat in segmented
+    // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
+    // in segmented
     List<List<ROI>> allROIs = new ArrayList<>();
     int numROIs = 0;
     for (Mat mat : segmented) {
       List<ROI> rois;
       try {
-        rois = extractor.extract(mat);
+        rois = lungs.extractRois(mat);
         allROIs.add(rois);
         numROIs += rois.size();
       } catch (LungsException e) {
