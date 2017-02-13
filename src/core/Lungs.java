@@ -105,18 +105,17 @@ public class Lungs {
 
   /**
    * @param slices the slices to annotations.
-   * @param original the corresponding {@link Mat}s for the {@code slices}.
-   * @return the {@code original} {@link Mat}s with the ground truth annotated upon then.
+   * @param bgrs 3 channel {@link Mat}s for the {@code slices}.
+   * @return the {@code bgrs} {@link Mat}s with the ground truth annotated upon then.
    */
-  private List<Mat> groundTruth(List<CTSlice> slices, List<Mat> original) {
+  private List<Mat> groundTruth(List<CTSlice> slices, List<Mat> bgrs) {
     List<Mat> annotated = new ArrayList<>(slices.size());
 
     for (int i = 0; i < slices.size(); i++) {
       CTSlice slice = slices.get(i);
-      Mat mat = original.get(i);
-      Mat rgb = MatUtils.grey2RGB(mat);
-      annotate(rgb, slice);
-      annotated.add(rgb);
+      Mat bgr = bgrs.get(i);
+      annotate(bgr, slice);
+      annotated.add(bgr);
     }
 
     return annotated;
@@ -132,47 +131,47 @@ public class Lungs {
   }
 
   /**
-   * Annotate {@code rgb} with the appropriate annotations for the {@code slice} if they are allowed
+   * Annotate {@code bgr} with the appropriate annotations for the {@code slice} if they are allowed
    * by the system configuration (see ./conf/application.conf).
    *
-   * @param rgb
+   * @param bgr
    * @param slice
    */
-  private void annotate(Mat rgb, CTSlice slice) {
+  private void annotate(Mat bgr, CTSlice slice) {
     List<GroundTruth> groundTruths =
         ds.createQuery(GroundTruth.class).field("imageSopUID").equal(slice.getImageSopUID())
             .asList();
 
     for (GroundTruth gt : groundTruths) {
-      annotate(rgb, gt);
+      annotate(bgr, gt);
     }
 
   }
 
   /**
-   * Annotate {@code rgb} with the appropriate annotations for the {@code gt} if they are allowed by
+   * Annotate {@code bgr} with the appropriate annotations for the {@code gt} if they are allowed by
    * the system configuration (see ./conf/application.conf).
    * 
-   * @param rgb
+   * @param bgr
    * @param gt
    */
-  private void annotate(Mat rgb, GroundTruth gt) {
+  private void annotate(Mat bgr, GroundTruth gt) {
     GroundTruth.Type type = gt.getType();
 
     // Annotate big nodules
     if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
       for (Point point : gt.getEdgePoints()) {
-        rgb.put((int) point.y, (int) point.x, ColourBGR.RED);
+        bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
       }
 
       // Annotate small nodules
     } else if (type == SMALL_NODULE && ConfigHelper.getBoolean(Annotation.SMALL_NODULE)) {
-      Imgproc.drawMarker(rgb, gt.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
+      Imgproc.drawMarker(bgr, gt.getCentroid(), new Scalar(ColourBGR.RED), MARKER_TILTED_CROSS,
           CROSS_SIZE, CROSS_THICKNESS, LINE_4);
 
       // Annotate non nodules
     } else if (type == NON_NODULE && ConfigHelper.getBoolean(Annotation.NON_NODULE)) {
-      Imgproc.drawMarker(rgb, gt.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
+      Imgproc.drawMarker(bgr, gt.getCentroid(), new Scalar(ColourBGR.GREEN), MARKER_TILTED_CROSS,
           CROSS_SIZE, 1, LINE_4);
     }
 
@@ -269,7 +268,7 @@ public class Lungs {
     FeatureEngine fEngine = new FeatureEngine();
     InstancesBuilder iBuilder = new InstancesBuilder(false);
     List<Mat> predictions =
-        original.stream().map(Mat::clone).map(MatUtils::grey2RGB).collect(Collectors.toList());
+        original.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
     // For each slice
     for (int i = 0; i < segmented.size(); i++) {
       Mat seg = segmented.get(i);
