@@ -3,11 +3,12 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
-import ml.ROIGenerator;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
+
+import ml.ROIGenerator;
 
 /**
  * Model used to hold information about single region of interest in a matrix.
@@ -34,6 +35,12 @@ public class ROI {
   private Double meanIntensity;
 
   private double[] intensityHistogram;
+
+  /**
+   * Used to store the index of the next value that should be returned from
+   * {@link ROI#intensityHistogram} when {@link ROI#nextIhValue} is called.
+   */
+  private int ihIndex;
 
   @Indexed
   private Class classification;
@@ -111,5 +118,17 @@ public class ROI {
   public void setIntensityHistogram(double[] intensityHistogram) {
     this.intensityHistogram = intensityHistogram;
   }
-  
+
+  /**
+   * @return returns the next value in the {@link ROI#intensityHistogram} if there is one else
+   *         returns 0.0.
+   */
+  public double nextIhValue() {
+    if (ihIndex < intensityHistogram.length) {
+      return intensityHistogram[ihIndex++];
+    } else {
+      return 0.0;
+    }
+  }
+
 }
