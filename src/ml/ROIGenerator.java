@@ -33,7 +33,6 @@ import vision.ROIExtractor;
 public class ROIGenerator extends Importer<ROI> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
-  private final ROIExtractor extractor;
   private final Lungs lungs;
 
   private ExecutorService es;
@@ -41,7 +40,6 @@ public class ROIGenerator extends Importer<ROI> {
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
     this.es = es;
-    extractor = new ROIExtractor(Lungs.FOREGROUND);
     lungs = new Lungs();
   }
 
@@ -77,7 +75,7 @@ public class ROIGenerator extends Importer<ROI> {
 
           // Create ROIs and save them
           try {
-            List<ROI> rois = extractor.extract(segmented);
+            List<ROI> rois = lungs.extractRois(segmented);
 
             // Set ROI fields
             for (ROI roi : rois) {
