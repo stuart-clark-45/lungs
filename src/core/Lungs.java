@@ -220,13 +220,26 @@ public class Lungs {
    * @return a grey-scale {@link Mat} for the given slice.
    */
   public static Mat getSliceMat(CTSlice slice) {
-    try {
-      DICOM dicom = new DICOM();
-      dicom.open(slice.getFilePath());
-      return MatUtils.fromDICOM(dicom);
-    } catch (Exception e) {
-      LOGGER.error("failed to get slice with id " + slice.getId(), e);
-      throw e;
+    // TODO remove all this hacky code when problem fully realaised
+    int counter = 0;
+    while (true) {
+      try {
+        DICOM dicom = new DICOM();
+        dicom.open(slice.getFilePath());
+        return MatUtils.fromDICOM(dicom);
+      } catch (Exception e) {
+        LOGGER.error("Trying again in one second wtih slice: " + slice.getId(), e);
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e1) {
+          throw new IllegalStateException(e1);
+        }
+        if (++counter > 3)
+          throw e;
+      }
+    }
+  }
+
     }
   }
 
