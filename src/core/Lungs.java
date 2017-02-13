@@ -77,6 +77,11 @@ public class Lungs {
   public static final int FOREGROUND = 255;
 
   private Datastore ds;
+  private final ROIExtractor extractor;
+
+  /*
+   * Parameters used during segmentation
+   */
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
@@ -100,6 +105,7 @@ public class Lungs {
     this.openingWidth = openingWidth;
     this.openingHeight = openingHeight;
     this.openingKernel = openingKernel;
+    this.extractor = new ROIExtractor(FOREGROUND);
   }
 
   /**
@@ -246,6 +252,19 @@ public class Lungs {
   }
 
   /**
+   * @param segmented a binary segmented {@link Mat} where the foreground has intensity values of
+   *        {@link Lungs#FOREGROUND}.
+   * @return A list of all the the {@link ROI}s that should be processed further by the system.
+   * @throws LungsException
+   */
+  public List<ROI> extractRois(Mat segmented) throws LungsException {
+    List<ROI> rois = extractor.extract(segmented);
+    // Remove the largest
+    rois.remove(largest(rois));
+    return rois;
+  }
+
+  /**
    * Should be run with the following VM args
    * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
    *
@@ -279,7 +298,6 @@ public class Lungs {
 
     // Create nodule predictions
     LOGGER.info("Creating nodule predictions for stack");
-    ROIExtractor extractor = new ROIExtractor(FOREGROUND);
     FeatureEngine fEngine = new FeatureEngine();
     InstancesBuilder iBuilder = new InstancesBuilder(false);
     List<Mat> predictions =
@@ -291,7 +309,7 @@ public class Lungs {
       Mat predict = predictions.get(i);
 
       // Create Instances
-      List<ROI> rois = extractor.extract(seg);
+      List<ROI> rois = lungs.extractRois(seg);
       rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
       Instances instances = iBuilder.instances("Slice Instances", rois);
       Attribute classAttribute = instances.classAttribute();
