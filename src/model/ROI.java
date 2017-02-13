@@ -33,6 +33,8 @@ public class ROI {
 
   private Double meanIntensity;
 
+  private double[] intensityHistogram;
+
   @Indexed
   private Class classification;
 
@@ -102,4 +104,12 @@ public class ROI {
     this.seriesInstanceUID = seriesInstanceUID;
   }
 
+  public double[] getIntensityHistogram() {
+    return intensityHistogram;
+  }
+
+  public void setIntensityHistogram(double[] intensityHistogram) {
+    this.intensityHistogram = intensityHistogram;
+  }
+  
 }
