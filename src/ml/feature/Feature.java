@@ -3,6 +3,7 @@ package ml.feature;
 import org.opencv.core.Mat;
 
 import model.ROI;
+import util.LungsException;
 
 /**
  * Should be implemented by all features.
@@ -16,6 +17,6 @@ public interface Feature {
    * 
    * @param roi
    */
-  void compute(ROI roi, Mat mat);
+  void compute(ROI roi, Mat mat) throws LungsException;
 
 }
