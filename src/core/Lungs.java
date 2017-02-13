@@ -126,13 +126,15 @@ public class Lungs {
     return annotated;
   }
 
-  public ROI largest(List<ROI> rois) throws LungsException {
-    Optional<ROI> max = rois.stream().max(Comparator.comparingInt(roi -> roi.getPoints().size()));
-    if (max.isPresent()) {
-      return max.get();
-    } else {
-      throw new LungsException("rois must not be an empty list");
-    }
+  /**
+   * @param rois the list of {@link ROI}s for which you would like to find the one with the largest
+   *        area (in pixels).
+   * @return an {@link Optional#of(Object)} the largest {@link ROI} or an {@link Optional#empty()}
+   *         if {@code rois} is an empty list.
+   * @throws LungsException
+   */
+  public Optional<ROI> largest(List<ROI> rois) throws LungsException {
+    return rois.stream().max(Comparator.comparingInt(roi -> roi.getPoints().size()));
   }
 
   /**
