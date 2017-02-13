@@ -2,6 +2,8 @@ package util;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -50,6 +52,14 @@ public class MatUtils {
     byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
     mat.put(0, 0, data);
     return mat;
+  }
+
+  /**
+   * @param mats single channel {@link Mat}s.
+   * @return {@code mats} converted to an BGR {@link Mat}s.
+   */
+  public static List<Mat> grey2BGR(List<Mat> mats) {
+    return mats.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
   }
 
   /**
