@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import ml.ArffGenerator;
-import ml.InstancesBuilder;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -36,8 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
-import ml.FeatureEngine;
 import ij.plugin.DICOM;
+import ml.ArffGenerator;
+import ml.FeatureEngine;
+import ml.InstancesBuilder;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
@@ -49,7 +49,6 @@ import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
-import util.PointUtils;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -240,6 +239,9 @@ public class Lungs {
     }
   }
 
+  public void paintROI(Mat bgr, ROI roi, double[] colour) {
+    for (Point point : roi.getPoints()) {
+      bgr.put((int) point.y, (int) point.x, colour);
     }
   }
 
