@@ -334,10 +334,11 @@ public class Lungs {
       LOGGER.info((i + 1) + "/" + segmented.size() + " slices processed");
     }
 
-    // Create ground truth
-    List<Mat> groundTruth = lungs.groundTruth(stack.getSlices(), original);
+    // Add ground truth
+    List<Mat> annotated = lungs.groundTruth(stack.getSlices(), predictions);
 
     // Display Mats
-    new MatViewer(groundTruth, predictions).display();
+    new MatViewer(original, annotated).display();
   }
+
 }
