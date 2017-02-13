@@ -323,12 +323,10 @@ public class Lungs {
         ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
 
         // If nodule then annotate
-        // TODO class labels apear to be backwards no idea why
+        // TODO class labels appear to be backwards no idea why
         if (!classification.equals(ROI.Class.NODULE)) {
           LOGGER.info("Nodule Found!");
-          for (Point point : PointUtils.region2perim(rois.get(j).getPoints())) {
-            predict.put((int) point.y, (int) point.x, ColourBGR.GREEN);
-          }
+          lungs.paintROI(predict, rois.get(j), ColourBGR.GREEN);
         }
 
       }
