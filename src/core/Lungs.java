@@ -18,7 +18,9 @@ import static util.DataFilter.filter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import ml.ArffGenerator;
@@ -118,6 +120,15 @@ public class Lungs {
     }
 
     return annotated;
+  }
+
+  public ROI largest(List<ROI> rois) throws LungsException {
+    Optional<ROI> max = rois.stream().max(Comparator.comparingInt(roi -> roi.getPoints().size()));
+    if (max.isPresent()) {
+      return max.get();
+    } else {
+      throw new LungsException("rois must not be an empty list");
+    }
   }
 
   /**
