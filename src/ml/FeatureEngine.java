@@ -6,8 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import ml.feature.Feature;
-import ml.feature.MeanIntensity;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
@@ -16,9 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.Lungs;
+import ml.feature.Feature;
+import ml.feature.MeanIntensity;
 import model.CTSlice;
 import model.ROI;
 import util.FutureMonitor;
+import util.LungsException;
 import util.MongoHelper;
 
 /**
@@ -103,7 +104,11 @@ public class FeatureEngine {
    */
   public void computeFeatures(ROI roi, Mat mat) {
     for (Feature feature : features) {
-      feature.compute(roi, mat);
+      try {
+        feature.compute(roi, mat);
+      } catch (LungsException e) {
+        LOGGER.error("Failed to compute feature for mat with id: " + roi.getId(), e);
+      }
     }
   }
 
