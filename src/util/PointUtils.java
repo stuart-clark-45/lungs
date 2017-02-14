@@ -74,10 +74,11 @@ public class PointUtils {
     MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
     Mat region = points2MinMat(regionPoints, mmXY);
     List<MatOfPoint> contours = new ArrayList<>();
-    Imgproc.findContours(region, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
-    if(contours.size() != 1) {
-      throw new LungsException("More than one contour has been found");
-    }
+
+    // Find external contour
+    Imgproc.findContours(region, contours, new Mat(), Imgproc.RETR_EXTERNAL,
+        Imgproc.CHAIN_APPROX_NONE);
+
     // There should only every be one contour
     List<Point> perimeter = contours.get(0).toList();
     // add the min vals back to each x and y
