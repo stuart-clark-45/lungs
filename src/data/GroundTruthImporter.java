@@ -24,7 +24,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import model.lidc.ResponseHeader;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
@@ -35,14 +34,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import config.Misc;
 import model.GroundTruth;
 import model.lidc.EdgeMap;
 import model.lidc.LidcReadMessage;
 import model.lidc.Locus;
 import model.lidc.NonNodule;
 import model.lidc.ReadingSession;
+import model.lidc.ResponseHeader;
 import model.lidc.Roi;
 import model.lidc.UnblindedReadNodule;
+import util.ConfigHelper;
 import util.LungsException;
 import util.PointUtils;
 
@@ -87,7 +89,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
 
   @Override
   protected String prodPath() {
-    return "./resource/LIDC-XML-only";
+    return ConfigHelper.getString(Misc.LIDC) + "/LIDC-XML-only";
   }
 
   @Override
@@ -161,7 +163,8 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
 
       if (child.getNodeName().equals("ResponseHeader")) {
         String nodeAsString = nodeToString(child);
-        readMessage.setResponseHeader((ResponseHeader) headerParser.unmarshal(new StringReader(nodeAsString)));
+        readMessage.setResponseHeader((ResponseHeader) headerParser.unmarshal(new StringReader(
+            nodeAsString)));
       }
 
     }

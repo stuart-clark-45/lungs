@@ -13,8 +13,10 @@ import org.mongodb.morphia.Datastore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Misc;
 import ij.plugin.DICOM;
 import model.CTSlice;
+import util.ConfigHelper;
 import util.LungsException;
 
 /**
@@ -38,7 +40,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
 
   @Override
   protected String prodPath() {
-    return "./resource/DOI";
+    return ConfigHelper.getString(Misc.LIDC) + "/DOI";
   }
 
   @Override
