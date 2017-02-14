@@ -26,6 +26,8 @@ public class ROI {
 
   private List<Point> points;
 
+  private List<Point> perimeter;
+
   @Indexed
   private String imageSopUID;
 
@@ -131,4 +133,12 @@ public class ROI {
     }
   }
 
+  public List<Point> getPerimeter() {
+    return perimeter;
+  }
+
+  public void setPerimeter(List<Point> perimeter) {
+    this.perimeter = perimeter;
+  }
+  
 }
