@@ -15,9 +15,9 @@
         <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
         <dependency org="io.jenetics" name="jenetics" rev="3.7.0" />
         <dependency org="nz.ac.waikato.cms.weka" name="weka-stable" rev="3.8.0"/>
+        <dependency org="org.slf4j" name="slf4j-simple" rev="1.6.4"/>
 
         <!-- runtime dependencies -->
-        <dependency org="org.slf4j" name="slf4j-simple" rev="1.6.4" conf="runtime->default"/>
 
         <!-- test dependencies -->
         <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
