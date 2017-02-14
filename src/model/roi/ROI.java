@@ -69,10 +69,7 @@ public class ROI {
    */
   private int area;
 
-  /**
-   * The radius of the minimum fitting circle calculated using {@link ml.feature.Radius}.
-   */
-  private float radius;
+  private Circle minCircle;
 
   public ROI() {
     region = new ArrayList<>();
@@ -178,12 +175,12 @@ public class ROI {
     this.area = area;
   }
 
-  public float getRadius() {
-    return radius;
+  public Circle getMinCircle() {
+    return minCircle;
   }
 
-  public void setRadius(float radius) {
-    this.radius = radius;
+  public void setMinCircle(Circle minCircle) {
+    this.minCircle = minCircle;
   }
 
 }
