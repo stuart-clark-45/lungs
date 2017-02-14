@@ -3,7 +3,9 @@ package model.roi;
 import org.opencv.core.Point;
 
 /**
- * @author Stuart Clark used to hold enough information to draw a circle.
+ * Used to hold enough information to draw a circle.
+ *
+ * @author Stuart Clark
  */
 public class Circle {
 
