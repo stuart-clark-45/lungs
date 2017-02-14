@@ -35,7 +35,7 @@ public class Matcher {
    * @return a value between 0 and 1 inclusive. 1 is a perfect match, 0 is no match at all.
    */
   public static double match(ROI roi, GroundTruth gt) {
-    return match(roi.getPoints(), gt.getRegion());
+    return match(roi.getRegion(), gt.getRegion());
   }
 
   /**

@@ -24,7 +24,7 @@ public class ROI {
   @Id
   private ObjectId id;
 
-  private List<Point> points;
+  private List<Point> region;
 
   private List<Point> perimeter;
 
@@ -54,23 +54,23 @@ public class ROI {
   private Double matchThreshold;
 
   public ROI() {
-    points = new ArrayList<>();
+    region = new ArrayList<>();
   }
 
   public ObjectId getId() {
     return id;
   }
 
-  public List<Point> getPoints() {
-    return points;
+  public List<Point> getRegion() {
+    return region;
   }
 
-  public void setPoints(List<Point> points) {
-    this.points = points;
+  public void setRegion(List<Point> region) {
+    this.region = region;
   }
 
   public void addPoint(Point point) {
-    points.add(point);
+    region.add(point);
   }
 
   public String getImageSopUID() {
@@ -140,5 +140,5 @@ public class ROI {
   public void setPerimeter(List<Point> perimeter) {
     this.perimeter = perimeter;
   }
-  
+
 }

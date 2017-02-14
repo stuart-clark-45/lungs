@@ -134,7 +134,7 @@ public class Lungs {
    * @throws LungsException
    */
   public Optional<ROI> largest(List<ROI> rois) throws LungsException {
-    return rois.stream().max(Comparator.comparingInt(roi -> roi.getPoints().size()));
+    return rois.stream().max(Comparator.comparingInt(roi -> roi.getRegion().size()));
   }
 
   /**
@@ -248,7 +248,7 @@ public class Lungs {
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
-    for (Point point : roi.getPoints()) {
+    for (Point point : roi.getRegion()) {
       bgr.put((int) point.y, (int) point.x, colour);
     }
   }

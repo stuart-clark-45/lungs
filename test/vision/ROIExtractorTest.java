@@ -35,7 +35,7 @@ public class ROIExtractorTest {
     // Reconstruct the segmented mat using the RIOs
     Mat rebuilt = MatUtils.similarMat(segmented);
     for (ROI roi : rois) {
-      for (Point point : roi.getPoints()) {
+      for (Point point : roi.getRegion()) {
         rebuilt.put((int) point.y, (int) point.x, (double) FOREGROUND);
       }
     }

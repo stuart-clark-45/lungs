@@ -25,7 +25,7 @@ public class MatcherTest {
     points1.add(new Point(2, 2));
 
     ROI roi = new ROI();
-    roi.setPoints(points1);
+    roi.setRegion(points1);
     GroundTruth gt1 = new GroundTruth();
     gt1.setRegion(points1);
     assertEquals(Double.valueOf(1), Double.valueOf(Matcher.match(roi, gt1)));

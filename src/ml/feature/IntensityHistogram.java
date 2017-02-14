@@ -22,10 +22,10 @@ public class IntensityHistogram implements Feature {
     }
 
     double[] hist = new double[mat.depth() + 1];
-    List<Point> points = roi.getPoints();
+    List<Point> points = roi.getRegion();
 
     // Count up the number of occurrences for each value
-    for (Point point : roi.getPoints()) {
+    for (Point point : roi.getRegion()) {
       int val = (int) mat.get((int) point.y, (int) point.x)[0];
       hist[val]++;
     }
