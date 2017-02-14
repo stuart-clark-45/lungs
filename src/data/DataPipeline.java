@@ -1,17 +1,17 @@
 package data;
 
+import static util.TimeUtils.milliToString;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
+import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static util.TimeUtils.milliToString;
 
 /**
  * Used to import and aggregate all of the data and perform any pre-computation required for the
@@ -29,6 +29,7 @@ public class DataPipeline {
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     LOGGER.info("Running DataPipeLine");
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     long start = System.currentTimeMillis();
 
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
