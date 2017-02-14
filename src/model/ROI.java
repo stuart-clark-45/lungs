@@ -28,6 +28,12 @@ public class ROI {
 
   private List<Point> perimeter;
 
+  /**
+   * The length of the perimeter calculated using {@link ml.feature.Perimeter}. This value may not
+   * be the same as {@code perimeter.size()}.
+   */
+  private int perimLength;
+
   @Indexed
   private String imageSopUID;
 
@@ -139,6 +145,14 @@ public class ROI {
 
   public void setPerimeter(List<Point> perimeter) {
     this.perimeter = perimeter;
+  }
+
+  public int getPerimLength() {
+    return perimLength;
+  }
+
+  public void setPerimLength(int perimLength) {
+    this.perimLength = perimLength;
   }
 
 }
