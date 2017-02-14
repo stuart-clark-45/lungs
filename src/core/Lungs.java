@@ -265,7 +265,7 @@ public class Lungs {
     // Remove the largest
     Optional<ROI> largest = largest(rois);
     largest.ifPresent(rois::remove);
-    rois.parallelStream().forEach(roi -> roi.setPerimeter(PointUtils.region2perim(roi.getRegion())));
+    rois.parallelStream().forEach(roi -> roi.setContour(PointUtils.region2perim(roi.getRegion())));
     return rois;
   }
 

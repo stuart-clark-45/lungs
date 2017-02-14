@@ -15,7 +15,7 @@ public class Perimeter implements Feature {
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
     // TODO need to measure using info from meta data not just count number of pixels
-    roi.setPerimLength(roi.getPerimeter().size());
+    roi.setPerimLength(roi.getContour().size());
   }
 
 }

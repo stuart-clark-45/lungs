@@ -26,7 +26,7 @@ public class ROI {
 
   private List<Point> region;
 
-  private List<Point> perimeter;
+  private List<Point> contour;
 
   @Indexed
   private String imageSopUID;
@@ -58,8 +58,8 @@ public class ROI {
   private int ihIndex;
 
   /**
-   * The length of the perimeter calculated using {@link ml.feature.Perimeter}. This value may not
-   * be the same as {@code perimeter.size()}.
+   * The length of the contour calculated using {@link ml.feature.Perimeter}. This value may not
+   * be the same as {@code contour.size()}.
    */
   private int perimLength;
 
@@ -149,12 +149,12 @@ public class ROI {
     }
   }
 
-  public List<Point> getPerimeter() {
-    return perimeter;
+  public List<Point> getContour() {
+    return contour;
   }
 
-  public void setPerimeter(List<Point> perimeter) {
-    this.perimeter = perimeter;
+  public void setContour(List<Point> contour) {
+    this.contour = contour;
   }
 
   public int getPerimLength() {
