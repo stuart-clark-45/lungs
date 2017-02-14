@@ -28,17 +28,24 @@ public class ROI {
 
   private List<Point> perimeter;
 
-  /**
-   * The length of the perimeter calculated using {@link ml.feature.Perimeter}. This value may not
-   * be the same as {@code perimeter.size()}.
-   */
-  private int perimLength;
-
   @Indexed
   private String imageSopUID;
 
   @Indexed
   private String seriesInstanceUID;
+
+  @Indexed
+  private Class classification;
+
+  /**
+   * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
+   * {@link ROIGenerator}.
+   */
+  private Double matchThreshold;
+
+  /*
+   * The follow fields are used as features for the classifier
+   */
 
   private Double meanIntensity;
 
@@ -50,14 +57,17 @@ public class ROI {
    */
   private int ihIndex;
 
-  @Indexed
-  private Class classification;
+  /**
+   * The length of the perimeter calculated using {@link ml.feature.Perimeter}. This value may not
+   * be the same as {@code perimeter.size()}.
+   */
+  private int perimLength;
 
   /**
-   * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
-   * {@link ROIGenerator}.
+   * The area of the region calculated using {@link ml.feature.Area}. This value may not be the same
+   * as {@code region.size()}.
    */
-  private Double matchThreshold;
+  private int area;
 
   public ROI() {
     region = new ArrayList<>();
@@ -153,6 +163,14 @@ public class ROI {
 
   public void setPerimLength(int perimLength) {
     this.perimLength = perimLength;
+  }
+
+  public int getArea() {
+    return area;
+  }
+
+  public void setArea(int area) {
+    this.area = area;
   }
 
 }
