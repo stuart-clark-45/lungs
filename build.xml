@@ -1,4 +1,4 @@
-<project name="lings" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant"
+<project name="lungs" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:jacoco="antlib:org.jacoco.ant">
   <description>
     Travel.co.uk server application
@@ -35,6 +35,7 @@
            encoding="UTF-8">
       <classpath>
         <fileset dir="${dir.lib}/compile" includes="**/*.jar"/>
+        <fileset dir="/usr/local/Cellar/opencv3/3.2.0/share/OpenCV/java" includes="opencv-320.jar"/>
       </classpath>
       <compilerarg line="-XDignore.symbol.file" />
     </javac>
@@ -102,7 +103,7 @@
 
 
     <!-- Build up a classpath for the jar -->
-    <manifestclasspath property="dist.jar.classpath" jarfile="${dir.dist}/travel.jar">
+    <manifestclasspath property="dist.jar.classpath" jarfile="${dir.dist}/lungs.jar">
       <classpath>
         <fileset dir="${dir.dist}/lib" includes="**/*.jar"/>
 	<fileset dir="${dir.dist}/resource" includes="**/*"/>
@@ -116,7 +117,7 @@
       <arg value="--dirty=-impure"/>
     </exec>
 
-    <jar destfile="${dir.dist}/travel.jar">
+    <jar destfile="${dir.dist}/lungs.jar">
       <manifest>
         <attribute name="Class-Path" value="${dist.jar.classpath}"/>
         <section name="Build">
