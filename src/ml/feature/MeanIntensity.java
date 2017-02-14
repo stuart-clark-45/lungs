@@ -2,7 +2,6 @@ package ml.feature;
 
 import java.util.List;
 
-import ml.feature.Feature;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
