@@ -1,11 +1,11 @@
 package ml.feature;
 
-import model.roi.Circle;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
+import model.roi.Circle;
 import model.roi.ROI;
 import util.LungsException;
 
@@ -25,11 +25,8 @@ public class MinCircle implements Feature {
     float[] radius = new float[1];
     Imgproc.minEnclosingCircle(matOfPoints, center, radius);
 
-    // Store the result in the roi
-    Circle minCircle = new Circle();
-    minCircle.setCenter(center);
-    minCircle.setRadius(radius[0]);
-    roi.setMinCircle(minCircle);
+    // Store the result in the ROI
+    roi.setMinCircle(new Circle(center, radius[0]));
   }
 
 }
