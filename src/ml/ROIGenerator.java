@@ -19,11 +19,10 @@ import org.slf4j.LoggerFactory;
 import core.Lungs;
 import model.CTSlice;
 import model.GroundTruth;
-import model.ROI;
+import model.roi.ROI;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;
-import vision.ROIExtractor;
 
 /**
  * Used to import {@link ROI}s detected

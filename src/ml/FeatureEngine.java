@@ -17,7 +17,7 @@ import core.Lungs;
 import ml.feature.Feature;
 import ml.feature.MeanIntensity;
 import model.CTSlice;
-import model.ROI;
+import model.roi.ROI;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;

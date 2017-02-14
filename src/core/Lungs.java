@@ -41,7 +41,7 @@ import ml.InstancesBuilder;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
-import model.ROI;
+import model.roi.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.DataFilter;

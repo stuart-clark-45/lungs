@@ -11,7 +11,7 @@ import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import model.ROI;
+import model.roi.ROI;
 import util.MongoHelper;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;

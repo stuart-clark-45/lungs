@@ -9,7 +9,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 
-import model.ROI;
+import model.roi.ROI;
 import util.Testing;
 
 /**

@@ -5,7 +5,7 @@ import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
-import model.ROI;
+import model.roi.ROI;
 import util.MatUtils;
 
 /**

@@ -23,7 +23,7 @@ import core.Lungs;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
-import model.ROI;
+import model.roi.ROI;
 import util.LungsException;
 import util.MongoHelper;
 import vision.Matcher;

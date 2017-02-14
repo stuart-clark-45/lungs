@@ -1,7 +1,7 @@
 package ml;
 
-import static model.ROI.Class.NODULE;
-import static model.ROI.Class.NON_NODULE;
+import static model.roi.ROI.Class.NODULE;
+import static model.roi.ROI.Class.NON_NODULE;
 import static org.mongodb.morphia.aggregation.Accumulator.accumulator;
 import static org.mongodb.morphia.aggregation.Group.grouping;
 
@@ -17,7 +17,7 @@ import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import model.ROI;
+import model.roi.ROI;
 import util.MongoHelper;
 import weka.core.Attribute;
 import weka.core.DenseInstance;

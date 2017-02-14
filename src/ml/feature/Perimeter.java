@@ -2,7 +2,7 @@ package ml.feature;
 
 import org.opencv.core.Mat;
 
-import model.ROI;
+import model.roi.ROI;
 import util.LungsException;
 
 /**

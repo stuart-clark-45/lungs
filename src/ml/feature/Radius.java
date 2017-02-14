@@ -5,7 +5,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-import model.ROI;
+import model.roi.ROI;
 import util.LungsException;
 
 /**

@@ -14,7 +14,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import core.Lungs;
-import model.ROI;
+import model.roi.ROI;
 import util.ColourBGR;
 import util.Testing;
 

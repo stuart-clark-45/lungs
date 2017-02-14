@@ -16,7 +16,7 @@ import org.mongodb.morphia.Datastore;
 import org.opencv.core.Point;
 
 import model.CTSlice;
-import model.ROI;
+import model.roi.ROI;
 import util.MongoHelper;
 import util.Testing;
 

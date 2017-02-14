@@ -1,8 +1,8 @@
 package ml;
 
 import static model.GroundTruth.Type.BIG_NODULE;
-import static model.ROI.Class.NODULE;
-import static model.ROI.Class.NON_NODULE;
+import static model.roi.ROI.Class.NODULE;
+import static model.roi.ROI.Class.NON_NODULE;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import config.Misc;
 import model.GroundTruth;
-import model.ROI;
+import model.roi.ROI;
 import util.ConfigHelper;
 import util.MongoHelper;
 import vision.Matcher;
