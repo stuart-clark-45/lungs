@@ -7,8 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import core.Lungs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 /**
@@ -46,6 +49,7 @@ public class PointUtilsTest {
 
   @Test
   public void testRegion2Perim() throws Exception {
+    // A shape with two contours
     List<Point> region = new ArrayList<>();
     region.add(new Point(4, 4));
     region.add(new Point(3, 5));
@@ -56,20 +60,36 @@ public class PointUtilsTest {
     region.add(new Point(4, 6));
     region.add(new Point(5, 6));
     region.add(new Point(6, 6));
+    region.add(new Point(1, 7));
+    region.add(new Point(2, 7));
     region.add(new Point(3, 7));
-    region.add(new Point(4, 7));
     region.add(new Point(5, 7));
+    region.add(new Point(6, 7));
+    region.add(new Point(7, 7));
+    region.add(new Point(2, 8));
+    region.add(new Point(3, 8));
     region.add(new Point(4, 8));
+    region.add(new Point(5, 8));
+    region.add(new Point(6, 8));
+    region.add(new Point(3, 9));
+    region.add(new Point(4, 9));
+    region.add(new Point(5, 9));
+    region.add(new Point(4, 10));
 
+    // Expect only the outer most contour
     List<Point> expected = new ArrayList<>();
     expected.add(new Point(4, 4));
     expected.add(new Point(3, 5));
     expected.add(new Point(5, 5));
     expected.add(new Point(2, 6));
     expected.add(new Point(6, 6));
-    expected.add(new Point(3, 7));
-    expected.add(new Point(5, 7));
-    expected.add(new Point(4, 8));
+    expected.add(new Point(1, 7));
+    expected.add(new Point(7, 7));
+    expected.add(new Point(2, 8));
+    expected.add(new Point(6, 8));
+    expected.add(new Point(3, 9));
+    expected.add(new Point(5, 9));
+    expected.add(new Point(4, 10));
 
     HashSet<Point> actual = new HashSet<>(PointUtils.region2perim(region));
 
