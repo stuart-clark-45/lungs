@@ -49,6 +49,7 @@ import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
+import util.PointUtils;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -264,6 +265,7 @@ public class Lungs {
     // Remove the largest
     Optional<ROI> largest = largest(rois);
     largest.ifPresent(rois::remove);
+    rois.parallelStream().forEach(roi -> roi.setPerimeter(PointUtils.region2perim(roi.getRegion())));
     return rois;
   }
 
