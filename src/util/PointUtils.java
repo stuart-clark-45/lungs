@@ -70,7 +70,7 @@ public class PointUtils {
    * @return a list of all the points that form the inclusive parameter of the region. i.e. the
    *         points are also part of the area. List is not guaranteed to be in raster order.
    */
-  public static List<Point> region2perim(List<Point> regionPoints) throws LungsException {
+  public static List<Point> region2perim(List<Point> regionPoints) {
     MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
     Mat region = points2MinMat(regionPoints, mmXY);
     List<MatOfPoint> contours = new ArrayList<>();
