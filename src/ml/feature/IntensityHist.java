@@ -23,8 +23,15 @@ public abstract class IntensityHist implements Feature {
    */
   private int numBins;
 
+  /**
+   * @param numBins should be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   */
   public IntensityHist(int numBins) {
-    this.numBins = numBins;
+    if ((numBins & -numBins) == numBins) {
+      this.numBins = numBins;
+    } else {
+      throw new IllegalArgumentException("numBins must be a power of two but is " + numBins);
+    }
   }
 
   protected Histogram createHist(ROI roi, Mat mat) throws LungsException {
