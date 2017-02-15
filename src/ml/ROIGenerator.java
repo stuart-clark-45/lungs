@@ -1,7 +1,5 @@
 package ml;
 
-import static util.DataFilter.filter;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import data.Importer;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -17,9 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.Lungs;
+import data.Importer;
 import model.CTSlice;
 import model.GroundTruth;
 import model.roi.ROI;
+import util.DataFilter;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MongoHelper;
@@ -58,7 +57,7 @@ public class ROIGenerator extends Importer<ROI> {
 
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
-    for (CTSlice slice : filter(MongoHelper.getDataStore().createQuery(CTSlice.class))) {
+    for (CTSlice slice : DataFilter.get().all(MongoHelper.getDataStore().createQuery(CTSlice.class))) {
       futures.add(es.submit(() -> {
 
         // Load slice mat

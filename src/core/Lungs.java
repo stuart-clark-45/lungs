@@ -14,7 +14,6 @@ import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
-import static util.DataFilter.filter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -373,9 +372,7 @@ public class Lungs {
     // Load the images
     LOGGER.info("Loading images");
     Datastore ds = MongoHelper.getDataStore();
-    CTStack stack =
-        filter(ds.createQuery(CTStack.class)).field("seriesInstanceUID")
-            .equal(DataFilter.TEST_INSTANCE).get();
+    CTStack stack = DataFilter.get().test(ds.createQuery(CTStack.class)).get();
 
     Lungs lungs = new Lungs();
     lungs.gtVsNoduleRoi(stack);
