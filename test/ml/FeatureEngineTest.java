@@ -1,12 +1,12 @@
 package ml;
 
-import static junit.framework.TestCase.assertNotNull;
+
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import ml.feature.MeanIntensity;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Point;
 
+import ml.feature.MeanIntensity;
 import model.CTSlice;
 import model.roi.ROI;
 import util.MongoHelper;
