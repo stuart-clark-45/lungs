@@ -50,13 +50,20 @@ public class ROI {
 
   private Double meanIntensity;
 
-  private double[] intensityHistogram;
+  /**
+   * A intensity histogram with few bins. Computed using {@link ml.feature.CoarseHist}.
+   */
+  private Histogram coarseHist;
 
   /**
-   * Used to store the index of the next value that should be returned from
-   * {@link ROI#intensityHistogram} when {@link ROI#nextIhValue} is called.
+   * A intensity histogram with a medium amount of bins. Computed using {@link ml.feature.MedHist}.
    */
-  private int ihIndex;
+  private Histogram medHist;
+
+  /**
+   * A intensity histogram with lots of bins. Computed using {@link ml.feature.FineHist}.
+   */
+  private Histogram fineHist;
 
   /**
    * The length of the contour calculated using {@link ml.feature.Perimeter}. This value may not be
@@ -141,26 +148,6 @@ public class ROI {
     this.seriesInstanceUID = seriesInstanceUID;
   }
 
-  public double[] getIntensityHistogram() {
-    return intensityHistogram;
-  }
-
-  public void setIntensityHistogram(double[] intensityHistogram) {
-    this.intensityHistogram = intensityHistogram;
-  }
-
-  /**
-   * @return returns the next value in the {@link ROI#intensityHistogram} if there is one else
-   *         returns 0.0.
-   */
-  public double nextIhValue() {
-    if (ihIndex < intensityHistogram.length) {
-      return intensityHistogram[ihIndex++];
-    } else {
-      return 0.0;
-    }
-  }
-
   public List<Point> getContour() {
     return contour;
   }
@@ -199,6 +186,30 @@ public class ROI {
 
   public void setFitEllipse(RotatedRect fitEllipse) {
     this.fitEllipse = fitEllipse;
+  }
+
+  public Histogram getCoarseHist() {
+    return coarseHist;
+  }
+
+  public void setCoarseHist(Histogram coarseHist) {
+    this.coarseHist = coarseHist;
+  }
+
+  public Histogram getMedHist() {
+    return medHist;
+  }
+
+  public void setMedHist(Histogram medHist) {
+    this.medHist = medHist;
+  }
+
+  public Histogram getFineHist() {
+    return fineHist;
+  }
+
+  public void setFineHist(Histogram fineHist) {
+    this.fineHist = fineHist;
   }
 
 }
