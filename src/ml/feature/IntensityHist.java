@@ -21,7 +21,7 @@ public class IntensityHistogram implements Feature {
       throw new LungsException("mat must have 1 channel");
     }
 
-    double[] hist = new double[mat.depth() + 1];
+    double[] hist = new double[256];
     List<Point> points = roi.getRegion();
 
     // Count up the number of occurrences for each value
