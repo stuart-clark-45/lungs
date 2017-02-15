@@ -40,51 +40,7 @@
       <compilerarg line="-XDignore.symbol.file" />
     </javac>
   </target>
-
-  <target name="compile-tests" depends="compile" description="build the test suite">
-    <javac srcdir="${dir.test}" destdir="${dir.build}" target="1.8" source="1.8" includeantruntime="false"
-           debug="on" encoding="UTF-8">
-      <classpath>
-        <fileset dir="${dir.lib}" includes="**/*.jar"/>
-      </classpath>
-      <compilerarg line="-XDignore.symbol.file" />
-    </javac>
-  </target>
-
-  <target name="test" depends="compile-tests" description="run test suite and report on code coverage">
-    <mkdir dir="${dir.report}"/>
-    <jacoco:coverage destfile="${dir.report}/jacoco.exec">
-      <junit printsummary="yes" haltonfailure="yes" fork="true" forkmode="once" timeout="180000"
-             showoutput="false">
-        <classpath>
-          <pathelement location="${dir.build}"/>
-          <pathelement location="${dir.conf}"/>
-          <pathelement location="${dir.rsrc}"/>
-          <pathelement location="${dir.test}"/>
-          <fileset dir="${dir.lib}" includes="**/*.jar"/>
-        </classpath>
-        <formatter type="plain"/>
-        <batchtest fork="yes" todir="${dir.report}">
-          <fileset dir="${dir.test}" includes="**/*Test*.java" excludes="**/*Jet2*.java"/>
-        </batchtest>
-      </junit>
-    </jacoco:coverage>
-    <jacoco:report>
-      <executiondata>
-        <file file="${dir.report}/jacoco.exec"/>
-      </executiondata>
-      <structure name="Travel.co.uk">
-        <classfiles>
-          <fileset dir="${dir.build}" includes="**/*.class"/>
-        </classfiles>
-        <sourcefiles encoding="UTF-8">
-          <fileset dir="${dir.src}" includes="**/*.java"/>
-        </sourcefiles>
-      </structure>
-      <html destdir="${dir.report}/jacoco"/>
-    </jacoco:report>
-  </target>
-
+  
   <target name="dist" depends="compile" description="build a distribution-ready package">
     <mkdir dir="${dir.dist}/lib"/>
     <copy todir="${dir.dist}/lib">
