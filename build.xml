@@ -1,8 +1,5 @@
 <project name="lungs" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:jacoco="antlib:org.jacoco.ant">
-  <description>
-    Travel.co.uk server application
-  </description>
 
   <property name="dir.build" value="bin"/>
   <property name="dir.lib" value="lib"/>
@@ -20,7 +17,7 @@
     <delete dir="${dir.report}"/>
   </target>
 
-  <target name="resolve" description="resolve module dependencies">
+  <target name="resolve" description="resolve dependencies">
     <ivy:retrieve pattern="${dir.lib}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true"
                   type="jar,bundle" log="quiet"/>
   </target>
@@ -40,7 +37,7 @@
       <compilerarg line="-XDignore.symbol.file" />
     </javac>
   </target>
-  
+
   <target name="dist" depends="compile" description="build a distribution-ready package">
     <mkdir dir="${dir.dist}/lib"/>
     <copy todir="${dir.dist}/lib">
