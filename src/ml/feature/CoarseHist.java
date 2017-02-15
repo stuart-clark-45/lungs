@@ -6,7 +6,7 @@ import model.roi.ROI;
 import util.LungsException;
 
 /**
- * Creates a histogram with few bins for the {@link ROI} and updates {@link ROI#coarseHist}.
+ * Creates a histogram for the {@link ROI} with few bins and updates {@link ROI#coarseHist}.
  *
  * @author Stuart Clark
  */
