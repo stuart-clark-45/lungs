@@ -12,8 +12,10 @@ import util.LungsException;
  */
 public class CoarseHist extends IntensityHist {
 
+  public static final int BINS = 16;
+
   public CoarseHist() {
-    super(20);
+    super(BINS);
   }
 
   @Override

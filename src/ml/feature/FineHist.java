@@ -12,8 +12,10 @@ import util.LungsException;
  */
 public class FineHist extends IntensityHist {
 
+  public static final int BINS = 256;
+
   public FineHist() {
-    super(250);
+    super(BINS);
   }
 
   @Override
