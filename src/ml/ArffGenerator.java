@@ -1,8 +1,5 @@
 package ml;
 
-import static util.DataFilter.TEST_INSTANCE;
-import static util.DataFilter.TRAIN_INSTANCE;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -12,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import model.roi.ROI;
+import util.DataFilter;
 import util.MongoHelper;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
@@ -39,14 +37,14 @@ public class ArffGenerator {
   public void run() throws IOException {
     LOGGER.info("Running ArffGenerator...");
 
+    DataFilter filter = DataFilter.get();
+
     // Create training set
-    Query<ROI> trainQuery =
-        ds.createQuery(ROI.class).field("seriesInstanceUID").equal(TRAIN_INSTANCE);
+    Query<ROI> trainQuery = filter.train(ds.createQuery(ROI.class));
     Instances trainingSet = builder.instances("Training Set", trainQuery);
 
     // Create testing set
-    Query<ROI> testQuery =
-        ds.createQuery(ROI.class).field("seriesInstanceUID").equal(TEST_INSTANCE);
+    Query<ROI> testQuery = filter.test(ds.createQuery(ROI.class));
     Instances testingSet = builder.instances("Testing Set", testQuery);
 
     // Combine testing and training sets
