@@ -1,9 +1,11 @@
 package util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.annotations.Id;
@@ -59,16 +61,19 @@ public class DataFilter {
   private static DataFilter DATA_FILTER = null;
 
   /**
-   * All the seriesInstanceUIDs of the instanced used for training while in {@link Mode.Value#PROD}
-   * mode.
+   * All the seriesInstanceUIDs of the instanced used for training by the system.
    */
-  List<String> prodTrainInstances;
+  List<String> trainInstances;
 
   /**
-   * All the seriesInstanceUIDs of the instanced used for testing while in {@link Mode.Value#PROD}
-   * mode.
+   * All the seriesInstanceUIDs of the instanced used by the system.
    */
-  List<String> prodTestInstances;
+  List<String> testInstances;
+
+  /**
+   * All the seriesInstanceUIDs of the instanced used by the system.
+   */
+  List<String> allInstances;
 
   private Mode.Value mode;
 
@@ -79,6 +84,10 @@ public class DataFilter {
     mode = ConfigHelper.getMode();
     if (mode == Mode.Value.PROD) {
       initProd();
+    } else {
+      trainInstances = Collections.singletonList(TRAIN_INSTANCE);
+      testInstances = Collections.singletonList(TEST_INSTANCE);
+      allInstances = Stream.of(TRAIN_INSTANCE, TEST_INSTANCE).collect(Collectors.toList());
     }
   }
 
@@ -86,27 +95,27 @@ public class DataFilter {
     LOGGER.info("Separating test and training instances for production...");
 
     // Create a list of all the distinct seriesInstanceUID that will be used in prod mode
-    List<String> uids = new LinkedList<>();
+    allInstances = new ArrayList<>();
     Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> match = all(ds.createQuery(CTStack.class));
+    Query<CTStack> match = ds.createQuery(CTStack.class).field("model").equal(MODEL);
     ds.createAggregation(CTStack.class).match(match).group(UID).aggregate(Result.class)
-        .forEachRemaining(result -> uids.add(result.seriesInstanceUID));
+        .forEachRemaining(result -> allInstances.add(result.seriesInstanceUID));
 
     // Calculate the number that should be in the test and training sets
-    int total = uids.size();
+    int total = allInstances.size();
     int numTrain = Double.valueOf(total * TRAIN_WEIGHT).intValue();
     int numTest = total - numTrain;
 
     // Create list of training instances
-    prodTrainInstances = new ArrayList<>(numTrain);
+    trainInstances = new ArrayList<>(numTrain);
     for (int i = 0; i < numTrain; i++) {
-      prodTrainInstances.add(uids.get(i));
+      trainInstances.add(allInstances.get(i));
     }
 
     // Create list of testing instances
-    prodTestInstances = new ArrayList<>(numTest);
+    testInstances = new ArrayList<>(numTest);
     for (int i = numTrain; i < total; i++) {
-      prodTestInstances.add(uids.get(i));
+      testInstances.add(allInstances.get(i));
     }
 
     LOGGER.info("Finished separating instances");
@@ -118,11 +127,7 @@ public class DataFilter {
    * @return a query that returns both the test and training set instances.
    */
   public <T> Query<T> all(Query<T> query) {
-    if (mode == Mode.Value.PROD) {
-      return query.field("model").equal(MODEL);
-    } else {
-      return query.field(UID).in(Arrays.asList(TRAIN_INSTANCE, TEST_INSTANCE));
-    }
+    return query.field(UID).in(allInstances);
   }
 
   /**
@@ -131,11 +136,7 @@ public class DataFilter {
    * @return a query that returns training set instances only.
    */
   public <T> Query<T> train(Query<T> query) {
-    if (mode == Mode.Value.PROD) {
-      return all(query).field(UID).in(prodTrainInstances);
-    } else {
-      return query.field(UID).equal(TRAIN_INSTANCE);
-    }
+    return all(query).field(UID).in(trainInstances);
   }
 
   /**
@@ -144,11 +145,7 @@ public class DataFilter {
    * @return a query that returns testing set instances only.
    */
   public <T> Query<T> test(Query<T> query) {
-    if (mode == Mode.Value.PROD) {
-      return all(query).field(UID).in(prodTestInstances);
-    } else {
-      return query.field(UID).equal(TEST_INSTANCE);
-    }
+    return all(query).field(UID).in(testInstances);
   }
 
   /**

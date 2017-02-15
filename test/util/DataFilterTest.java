@@ -68,8 +68,9 @@ public class DataFilterTest {
     DataFilter filter = new DataFilter();
 
     // Check the aggregation correctly split the instances
-    assertEquals(trainSize, filter.prodTrainInstances.size());
-    assertEquals(testSize, filter.prodTestInstances.size());
+    assertEquals(trainSize, filter.trainInstances.size());
+    assertEquals(testSize, filter.testInstances.size());
+    assertEquals(total, filter.allInstances.size());
 
     // Test all(..)
     Set<String> expectedAll = new HashSet<>(uids);
@@ -77,12 +78,12 @@ public class DataFilterTest {
     assertEquals(expectedAll, all);
 
     // Test train(..)
-    Set<String> expectedTrain = new HashSet<>(filter.prodTrainInstances);
+    Set<String> expectedTrain = new HashSet<>(filter.trainInstances);
     Set<String> train = getUIDs(filter.train(ds.createQuery(CTStack.class)));
     assertEquals(expectedTrain, train);
 
     // Test test(..)
-    Set<String> expectedTest = new HashSet<>(filter.prodTestInstances);
+    Set<String> expectedTest = new HashSet<>(filter.testInstances);
     Set<String> test = getUIDs(filter.test(ds.createQuery(CTStack.class)));
     assertEquals(expectedTest, test);
 
