@@ -14,8 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.Lungs;
+import ml.feature.Area;
+import ml.feature.CoarseHist;
 import ml.feature.Feature;
+import ml.feature.FineHist;
+import ml.feature.FitEllipse;
 import ml.feature.MeanIntensity;
+import ml.feature.MedHist;
+import ml.feature.MinCircle;
+import ml.feature.Perimeter;
 import model.CTSlice;
 import model.roi.ROI;
 import util.FutureMonitor;
@@ -118,6 +125,13 @@ public class FeatureEngine {
   private static List<Feature> defaultFeatures() {
     List<Feature> features = new ArrayList<>();
     features.add(new MeanIntensity());
+    features.add(new Area());
+    features.add(new Perimeter());
+    features.add(new MinCircle());
+    features.add(new FitEllipse());
+    features.add(new CoarseHist());
+    features.add(new MedHist());
+    features.add(new FineHist());
     return features;
   }
 
