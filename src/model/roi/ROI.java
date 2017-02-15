@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
 
 import ml.ROIGenerator;
 
@@ -58,8 +59,8 @@ public class ROI {
   private int ihIndex;
 
   /**
-   * The length of the contour calculated using {@link ml.feature.Perimeter}. This value may not
-   * be the same as {@code contour.size()}.
+   * The length of the contour calculated using {@link ml.feature.Perimeter}. This value may not be
+   * the same as {@code contour.size()}.
    */
   private int perimLength;
 
@@ -69,7 +70,16 @@ public class ROI {
    */
   private int area;
 
+  /**
+   * The minimum bounding circle computed using {@link ml.feature.MinCircle}.
+   */
   private Circle minCircle;
+
+  /**
+   * The rotated rect that contains the a fitted ellipse computed using
+   * {@link ml.feature.FitEllipse}.
+   */
+  private RotatedRect fitEllipse;
 
   public ROI() {
     region = new ArrayList<>();
@@ -181,6 +191,14 @@ public class ROI {
 
   public void setMinCircle(Circle minCircle) {
     this.minCircle = minCircle;
+  }
+
+  public RotatedRect getFitEllipse() {
+    return fitEllipse;
+  }
+
+  public void setFitEllipse(RotatedRect fitEllipse) {
+    this.fitEllipse = fitEllipse;
   }
 
 }
