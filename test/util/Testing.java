@@ -30,7 +30,7 @@ public class Testing extends BlockJUnit4ClassRunner {
     drop();
 
     // Set application mode
-    ConfigHelper.getProps().put(Mode.KEY, Mode.VALUE.TEST.name());
+    ConfigHelper.getProps().put(Mode.KEY, Mode.Value.TEST.name());
     LOGGER.info("Config set up");
   }
 

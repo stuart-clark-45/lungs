@@ -96,9 +96,9 @@ public class ConfigHelper {
   /**
    * @return the current system mode.
    */
-  public static Mode.VALUE getMode() {
+  public static Mode.Value getMode() {
     String s = (String) getProps().get(Mode.KEY);
-    return Mode.VALUE.valueOf(s);
+    return Mode.Value.valueOf(s);
   }
 
   /**

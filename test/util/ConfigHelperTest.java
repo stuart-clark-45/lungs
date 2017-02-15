@@ -72,7 +72,7 @@ public class ConfigHelperTest {
 
   @Test
   public void testGetMode() throws Exception {
-    assertEquals(Mode.VALUE.TEST, ConfigHelper.getMode());
+    assertEquals(Mode.Value.TEST, ConfigHelper.getMode());
   }
 
   @Test(expected = IllegalStateException.class)
