@@ -1,6 +1,5 @@
 package optimise;
 
-import static util.DataFilter.filter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +23,7 @@ import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.roi.ROI;
+import util.DataFilter;
 import util.LungsException;
 import util.MongoHelper;
 import vision.Matcher;
@@ -76,7 +76,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
 
     // Load some stacks
     Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> query = filter(ds.createQuery(CTStack.class));
+    Query<CTStack> query = DataFilter.get().all(ds.createQuery(CTStack.class));
     List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
