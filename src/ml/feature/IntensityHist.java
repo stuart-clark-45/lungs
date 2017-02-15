@@ -2,21 +2,21 @@ package ml.feature;
 
 import java.util.List;
 
-import model.roi.Histogram;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
+import model.roi.Histogram;
 import model.roi.ROI;
 import util.LungsException;
 
 /**
- * Computes the intensity histogram for {@link ROI} and updates {@link ROI#intensityHistogram}.
+ * Abstract class used to create histograms features.
  *
  * @author Stuart Clark
  */
 public abstract class IntensityHist implements Feature {
 
-  private static final int HIST_SIZE = 256;
+  private static final int NUM_POSSIBLE_VALS = 256;
 
   /**
    * The number of numBins that should be used for the histogram.
@@ -35,7 +35,7 @@ public abstract class IntensityHist implements Feature {
     List<Point> points = roi.getRegion();
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[HIST_SIZE];
+    double[] valCount = new double[NUM_POSSIBLE_VALS];
     for (Point point : roi.getRegion()) {
       int val = (int) mat.get((int) point.y, (int) point.x)[0];
       valCount[val]++;
@@ -44,7 +44,7 @@ public abstract class IntensityHist implements Feature {
     // Create a histogram with the correct number of bins
     double[] hist = new double[numBins];
     int binIndex = 0;
-    int valPerBin = (int) Math.ceil(HIST_SIZE / numBins);
+    int valPerBin = (int) Math.ceil(NUM_POSSIBLE_VALS / numBins);
     int counter = 0;
     for (double val : valCount) {
       // Add val to the current value in the bin
