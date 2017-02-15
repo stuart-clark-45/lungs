@@ -88,7 +88,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
   }
 
   @Override
-  protected String prodPath() {
+  protected String normalPath() {
     return ConfigHelper.getString(Misc.LIDC) + "/LIDC-XML-only";
   }
 

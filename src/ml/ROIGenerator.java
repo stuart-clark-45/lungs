@@ -48,7 +48,7 @@ public class ROIGenerator extends Importer<ROI> {
   }
 
   @Override
-  protected String prodPath() {
+  protected String normalPath() {
     return null;
   }
 

@@ -10,7 +10,7 @@ public class Mode {
   public static final String KEY = "mode";
 
   public enum VALUE {
-    PROD, TEST
+    PROD, DEV, TEST
   }
 
 }

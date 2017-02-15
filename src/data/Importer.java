@@ -32,10 +32,10 @@ public abstract class Importer<T> implements Runnable {
   public Importer(Class<T> clazz) {
     this.clazz = clazz;
     Mode.VALUE mode = ConfigHelper.getMode();
-    if (mode == Mode.VALUE.PROD) {
-      path = prodPath();
-    } else {
+    if (mode == Mode.VALUE.TEST) {
       path = testPath();
+    } else {
+      path = normalPath();
     }
 
   }
@@ -67,10 +67,10 @@ public abstract class Importer<T> implements Runnable {
   protected abstract String testPath();
 
   /**
-   * @return the path that should be used mode is set to {@link config.Mode.VALUE#PROD}. Simply
+   * @return the path that should be used mode is not set to {@link config.Mode.VALUE#TEST}. Simply
    *         return {@code null} file is not used to import models.
    */
-  protected abstract String prodPath();
+  protected abstract String normalPath();
 
   protected abstract void importModels(Datastore ds) throws LungsException;
 

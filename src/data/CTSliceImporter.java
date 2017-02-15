@@ -39,7 +39,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
   }
 
   @Override
-  protected String prodPath() {
+  protected String normalPath() {
     return ConfigHelper.getString(Misc.LIDC) + "/DOI";
   }
 
