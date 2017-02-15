@@ -14,16 +14,20 @@ public class Histogram implements Iterator<Double> {
   /**
    * The values in each of the histogram bins. Could be frequencies or summations.
    */
-  private double[] vals;
+  private double[] bins;
   @Transient
   private int index;
 
-  public Histogram(double[] vals) {
-    this.vals = vals;
+  public Histogram(double[] bins) {
+    this.bins = bins;
   }
 
-  public double[] getVals() {
-    return vals;
+  public double[] getBins() {
+    return bins;
+  }
+
+  public int numBins() {
+    return bins.length;
   }
 
   /**
@@ -36,12 +40,12 @@ public class Histogram implements Iterator<Double> {
 
   @Override
   public boolean hasNext() {
-    return index < vals.length;
+    return index < bins.length;
   }
 
   @Override
   public Double next() {
-    return vals[index++];
+    return bins[index++];
   }
 
 }
