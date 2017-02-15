@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -269,28 +270,12 @@ public class Lungs {
     return rois;
   }
 
-  /**
-   * Should be run with the following VM args
-   * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
-   *
-   * @param args
-   * @throws LungsException
-   */
-  public static void main(String[] args) throws Exception {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    Lungs lungs = new Lungs();
-
-    // Load the images
-    LOGGER.info("Loading images");
-    Datastore ds = MongoHelper.getDataStore();
-    CTStack stack =
-        filter(ds.createQuery(CTStack.class)).field("seriesInstanceUID")
-            .equal(DataFilter.TEST_INSTANCE).get();
+  public void assistance(CTStack stack) throws Exception {
     List<Mat> original = getStackMats(stack);
 
     // Segment the images
     LOGGER.info("Segmenting images");
-    List<Mat> segmented = lungs.segment(original);
+    List<Mat> segmented = segment(original);
 
     // Train classifier
     LOGGER.info("Training classifier");
@@ -314,7 +299,7 @@ public class Lungs {
       Mat predict = predictions.get(i);
 
       // Create Instances
-      List<ROI> rois = lungs.extractRois(seg);
+      List<ROI> rois = extractRois(seg);
       rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
       Instances instances = iBuilder.instances("Slice Instances", rois);
       Attribute classAttribute = instances.classAttribute();
@@ -331,7 +316,7 @@ public class Lungs {
         // TODO class labels appear to be backwards no idea why
         if (!classification.equals(ROI.Class.NODULE)) {
           LOGGER.info("Nodule Found!");
-          lungs.paintROI(predict, rois.get(j), ColourBGR.GREEN);
+          paintROI(predict, rois.get(j), ColourBGR.GREEN);
         }
 
       }
@@ -340,10 +325,61 @@ public class Lungs {
     }
 
     // Add ground truth
-    List<Mat> annotated = lungs.groundTruth(stack.getSlices(), predictions);
+    List<Mat> annotated = groundTruth(stack.getSlices(), predictions);
 
     // Display Mats
     new MatViewer(original, annotated).display();
+  }
+
+  public void gtVsNoduleRoi(CTStack stack) {
+    LOGGER.info("Loading Mats...");
+    List<Mat> original = getStackMats(stack);
+    List<Mat> bgr = MatUtils.grey2BGR(original);
+
+    List<CTSlice> slices = stack.getSlices();
+
+    LOGGER.info("Drawing detected nodules ...");
+    int numSlice = slices.size();
+    for (int i = 0; i < numSlice; i++) {
+      CTSlice slice = slices.get(i);
+
+      Query<ROI> rois =
+          ds.createQuery(ROI.class).field("imageSopUID").equal(slice.getImageSopUID())
+              .field("classification").equal(ROI.Class.NODULE);
+      for (ROI roi : rois) {
+        paintROI(bgr.get(i), roi, ColourBGR.GREEN);
+      }
+
+      LOGGER.info(i + 1 + "/" + numSlice + " processed");
+    }
+
+    LOGGER.info("Annotating ground truth");
+    List<Mat> annotated = groundTruth(slices, bgr);
+
+    LOGGER.info("Preparing to display Mats...");
+    new MatViewer(original, annotated).display();
+  }
+
+  /**
+   * Should be run with the following VM args
+   * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
+   *
+   * @param args
+   * @throws LungsException
+   */
+  public static void main(String[] args) throws Exception {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+    // Load the images
+    LOGGER.info("Loading images");
+    Datastore ds = MongoHelper.getDataStore();
+    CTStack stack =
+        filter(ds.createQuery(CTStack.class)).field("seriesInstanceUID")
+            .equal(DataFilter.TEST_INSTANCE).get();
+
+    Lungs lungs = new Lungs();
+    lungs.gtVsNoduleRoi(stack);
+    // lungs.assistance(stack);
   }
 
 }
