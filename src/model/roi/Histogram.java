@@ -18,6 +18,10 @@ public class Histogram implements Iterator<Double> {
   @Transient
   private int index;
 
+  private Histogram() {
+    // For morphia
+  }
+
   public Histogram(double[] bins) {
     this.bins = bins;
   }
