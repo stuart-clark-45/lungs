@@ -4,6 +4,7 @@ import static model.roi.ROI.Class.NODULE;
 import static model.roi.ROI.Class.NON_NODULE;
 import static org.mongodb.morphia.aggregation.Accumulator.accumulator;
 import static org.mongodb.morphia.aggregation.Group.grouping;
+import static weka.core.Utils.missingValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,9 @@ import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ml.feature.CoarseHist;
+import ml.feature.FineHist;
+import ml.feature.MedHist;
 import model.roi.ROI;
 import util.MongoHelper;
 import weka.core.Attribute;
@@ -49,9 +53,57 @@ public class InstancesBuilder {
     // Create list if attributes and methods to access them
     this.attributes = new ArrayList<>();
     this.functions = new ArrayList<>();
+
     // Add mean intensity
     this.attributes.add(new Attribute("Mean Intensity"));
     this.functions.add(ROI::getMeanIntensity);
+
+    // Add area
+    this.attributes.add(new Attribute("Area"));
+    this.functions.add(ROI::getArea);
+
+    // Add Perimeter
+    this.attributes.add(new Attribute("Perimeter"));
+    this.functions.add(ROI::getPerimLength);
+
+    // Add Min Circle
+    this.attributes.add(new Attribute("Min Circle Radius"));
+    this.functions.add(roi -> roi.getMinCircle().getRadius());
+
+    // Add Fitted Ellipse (Avoiding NPEs will ternary expression)
+    this.attributes.add(new Attribute("Fitted Ellipse Angle"));
+    this.functions.add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().angle
+        : missingValue());
+    this.attributes.add(new Attribute("Fitted Ellipse Area"));
+    this.functions.add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().boundingRect()
+        .area() : missingValue());
+    this.attributes.add(new Attribute("Fitted Ellipse Width"));
+    this.functions
+        .add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().boundingRect().width
+            : missingValue());
+    this.attributes.add(new Attribute("Fitted Ellipse Height"));
+    this.functions
+        .add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().boundingRect().height
+            : missingValue());
+
+    // Add Coarse Histogram
+    for (int i = 0; i < CoarseHist.BINS; i++) {
+      this.attributes.add(new Attribute("Coarse Hist " + i));
+      this.functions.add(roi -> roi.getCoarseHist().next());
+    }
+
+    // Add Medium Histogram
+    for (int i = 0; i < MedHist.BINS; i++) {
+      this.attributes.add(new Attribute("Medium Hist " + i));
+      this.functions.add(roi -> roi.getMedHist().next());
+    }
+
+    // Add Fine Histogram
+    for (int i = 0; i < FineHist.BINS; i++) {
+      this.attributes.add(new Attribute("Fine Hist " + i));
+      this.functions.add(roi -> roi.getFineHist().next());
+    }
+
     // Add class
     this.attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
     this.functions.add(ROI::getClassification);
@@ -104,7 +156,7 @@ public class InstancesBuilder {
     int counter = 0;
     while (rois.hasNext()) {
       ROI roi = rois.next();
-      
+
       // Add to the instances
       Instance instance = new DenseInstance(numAttributes);
       // Don't try to set class if setClass if false
@@ -134,8 +186,8 @@ public class InstancesBuilder {
     if (value == null) {
       throw new IllegalStateException("Value for " + attribute.name()
           + " is null you may need to run the FeatureEngine again");
-    } else if (value instanceof Double) {
-      instance.setValue(attribute, (Double) value);
+    } else if (value instanceof Number) {
+      instance.setValue(attribute, ((Number) value).doubleValue());
     } else if (value instanceof ROI.Class) {
       instance.setValue(attribute, ((ROI.Class) value).name());
     } else {
