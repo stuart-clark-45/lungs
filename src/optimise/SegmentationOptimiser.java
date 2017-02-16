@@ -261,7 +261,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     int popSize = 50;
     int generations = 20000;
     int numStacks = 10;
-    int readingNumber = 0;
+    int readingNumber = args.length == 1 ? Integer.parseInt(args[0]) : 0;
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(popSize, generations, numStacks, readingNumber);
 
