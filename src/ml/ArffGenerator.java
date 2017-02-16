@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import model.roi.ROI;
 import util.DataFilter;
 import util.MongoHelper;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.trees.J48;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 
@@ -34,7 +37,7 @@ public class ArffGenerator {
     builder = new InstancesBuilder(true);
   }
 
-  public void run() throws IOException {
+  public void run() throws Exception {
     LOGGER.info("Running ArffGenerator...");
 
     DataFilter filter = DataFilter.get();
@@ -59,6 +62,16 @@ public class ArffGenerator {
     save(testingSet, TEST_FILE);
     save(all, ALL_FILE);
 
+    LOGGER.info("Testing the classifier...");
+    // Build classifier
+    Classifier cls = new J48();
+    cls.buildClassifier(trainingSet);
+    // Evaluate classifier and print some statistics
+    Evaluation eval = new Evaluation(trainingSet);
+    eval.evaluateModel(cls, testingSet);
+    LOGGER.info(eval.toSummaryString("\nResults\n======\n", false));
+    LOGGER.info(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n"));
+    LOGGER.info(eval.toMatrixString("\n=== Confusion Matrix ===\n"));
     LOGGER.info("ArffGenerator finished running");
   }
 
@@ -80,7 +93,7 @@ public class ArffGenerator {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     new ArffGenerator().run();
   }
 

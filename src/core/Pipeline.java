@@ -1,8 +1,5 @@
 package core;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import data.DataPipeline;
 import ml.MLPipeline;
 
@@ -13,8 +10,7 @@ import ml.MLPipeline;
  */
 public class Pipeline {
 
-  public static void main(String[] args) throws ExecutionException, InterruptedException,
-      IOException {
+  public static void main(String[] args) throws Exception {
 
     // Run the pipelines
     DataPipeline.main(new String[0]);

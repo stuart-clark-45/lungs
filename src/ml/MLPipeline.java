@@ -2,7 +2,6 @@ package ml;
 
 import static util.TimeUtils.milliToString;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,7 +23,7 @@ public class MLPipeline {
     // Hide the constructor
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     LOGGER.info("Running MLPipeLine");
