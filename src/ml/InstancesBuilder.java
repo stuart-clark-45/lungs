@@ -2,8 +2,6 @@ package ml;
 
 import static model.roi.ROI.Class.NODULE;
 import static model.roi.ROI.Class.NON_NODULE;
-import static org.mongodb.morphia.aggregation.Accumulator.accumulator;
-import static org.mongodb.morphia.aggregation.Group.grouping;
 import static weka.core.Utils.missingValue;
 
 import java.util.ArrayList;
@@ -13,7 +11,6 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,44 +111,32 @@ public class InstancesBuilder {
   }
 
   /**
-   * @param name the name to give the {@link Instances}.
+   * @param set the set {@link Instances} to add {@link Instance}s to.
    * @param rois the list of {@link ROI}s to use.
    * @return {@link Instances} for the given {@link ROI}s
    */
-  public Instances instances(String name, List<ROI> rois) {
-    return instances(name, rois.iterator(), rois.size());
+  public void addInstances(Instances set, List<ROI> rois) {
+    addInstances(set, rois.iterator(), rois.size());
   }
 
   /**
-   * @param name the name to give the {@link Instances}.
+   * @param set the set {@link Instances} to add {@link Instance}s to.
    * @param query the query to use to get the {@link ROI}s
    * @return {@link Instances} for the given {@link ROI}s
    */
-  public Instances instances(String name, Query<ROI> query) {
-    LOGGER.info("Creating Instances for " + name + "...");
-    Instances instances = instances(name, query.iterator(), (int) query.count());
-
-    // Log the number of each class in the instances
-    LOGGER.info(name + " created with the following number of instances");
-    Iterator<Result> results =
-        ds.createAggregation(ROI.class).match(query)
-            .group("classification", grouping("count", accumulator("$sum", 1)))
-            .aggregate(Result.class);
-    results.forEachRemaining(r -> LOGGER.info(r.toString()));
-
-    return instances;
+  public void addInstances(Instances set, Query<ROI> query) {
+    addInstances(set, query.iterator(), (int) query.count());
   }
 
   /**
-   * @param name the name to give the {@link Instances}.
+   * @param set the set {@link Instances} to add {@link Instance}s to.
    * @param rois iterator for the {@link ROI}s.
    * @return {@link Instances} for the given {@link ROI}s
    */
-  private Instances instances(String name, Iterator<ROI> rois, int numROI) {
-    // Create instances
-    Instances instances = new Instances(name, attributes, numROI);
-    instances.setClassIndex(numAttributes - 1);
+  private void addInstances(Instances set, Iterator<ROI> rois, int numROI) {
+    String name = set.relationName();
 
+    LOGGER.info("Adding instances to " + name + "...");
     // Iterate over rois
     int counter = 0;
     while (rois.hasNext()) {
@@ -164,14 +149,18 @@ public class InstancesBuilder {
       for (int i = 0; i < end; i++) {
         setValue(instance, attributes.get(i), functions.get(i).apply(roi));
       }
-      instances.add(instance);
+      set.add(instance);
 
       // Logging
       if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numROI + " " + name + " instances created");
+        LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
       }
     }
+  }
 
+  public Instances createSet(String name, int size) {
+    Instances instances = new Instances(name, attributes, size);
+    instances.setClassIndex(numAttributes - 1);
     return instances;
   }
 
@@ -194,44 +183,6 @@ public class InstancesBuilder {
       throw new IllegalStateException(value.getClass()
           + " not yet supported by Trainer please add it");
     }
-  }
-
-  public ArrayList<Attribute> getAttributes() {
-    return attributes;
-  }
-
-  /**
-   * Used to obtain the results of an aggregation counting the occurrences of different classes of
-   * ROIs.
-   */
-  private static class Result {
-
-    @Id
-    private String id;
-
-    private int count;
-
-    public String getId() {
-      return id;
-    }
-
-    public void setId(String id) {
-      this.id = id;
-    }
-
-    public int getCount() {
-      return count;
-    }
-
-    public void setCount(int count) {
-      this.count = count;
-    }
-
-    @Override
-    public String toString() {
-      return id + ": " + count;
-    }
-
   }
 
 }
