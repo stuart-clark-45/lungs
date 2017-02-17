@@ -300,7 +300,8 @@ public class Lungs {
       // Create Instances
       List<ROI> rois = extractRois(seg);
       rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
-      Instances instances = iBuilder.instances("Slice Instances", rois);
+      Instances instances = iBuilder.createSet("Slice Instances", rois.size());
+      iBuilder.addInstances(instances, rois);
       Attribute classAttribute = instances.classAttribute();
 
       // Create predictions
