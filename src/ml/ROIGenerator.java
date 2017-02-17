@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import core.Lungs;
 import data.Importer;
 import model.CTSlice;
+import model.CTStack;
 import model.GroundTruth;
 import model.roi.ROI;
 import util.DataFilter;
@@ -57,38 +58,51 @@ public class ROIGenerator extends Importer<ROI> {
 
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
-    for (CTSlice slice : DataFilter.get().all(MongoHelper.getDataStore().createQuery(CTSlice.class))) {
-      futures.add(es.submit(() -> {
+    for (CTStack stack : DataFilter.get()
+        .all(MongoHelper.getDataStore().createQuery(CTStack.class))) {
 
-        // Load slice mat
-          Mat mat = Lungs.getSliceMat(slice);
+      // Determine the set that the stack belongs too
+      ROI.Set set;
+      if (DataFilter.get().getTrainInstances().contains(stack.getSeriesInstanceUID())) {
+        set = ROI.Set.TRAIN;
+      } else {
+        set = ROI.Set.TEST;
+      }
 
-          // Segment slice (will only ever be one returned)
-          Mat segmented = lungs.segment(Collections.singletonList(mat)).get(0);
+      for (CTSlice slice : stack.getSlices()) {
+        futures.add(es.submit(() -> {
 
-          // Get ground truths for slice
-          List<GroundTruth> groundTruths =
-              ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                  .field("imageSopUID").equal(slice.getImageSopUID()).asList();
+          // Load slice mat
+            Mat mat = Lungs.getSliceMat(slice);
 
-          // Create ROIs and save them
-          try {
-            List<ROI> rois = lungs.extractRois(segmented);
+            // Segment slice (will only ever be one returned)
+            Mat segmented = lungs.segment(Collections.singletonList(mat)).get(0);
 
-            // Set ROI fields
-            for (ROI roi : rois) {
-              roi.setImageSopUID(slice.getImageSopUID());
-              roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
-              ROIClassifier.setClass(roi, groundTruths);
+            // Get ground truths for slice
+            List<GroundTruth> groundTruths =
+                ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
+                    .field("imageSopUID").equal(slice.getImageSopUID()).asList();
+
+            // Create ROIs and save them
+            try {
+              List<ROI> rois = lungs.extractRois(segmented);
+
+              // Set ROI fields
+              for (ROI roi : rois) {
+                roi.setImageSopUID(slice.getImageSopUID());
+                roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
+                roi.setSet(set);
+                ROIClassifier.setClass(roi, groundTruths);
+              }
+
+              // Save rois
+              ds.save(rois);
+            } catch (LungsException e) {
+              LOGGER.error(
+                  "Failed to extract ROI for slice with SOP UID: " + slice.getImageSopUID(), e);
             }
-
-            // Save rois
-            ds.save(rois);
-          } catch (LungsException e) {
-            LOGGER.error("Failed to extract ROI for slice with SOP UID: " + slice.getImageSopUID(),
-                e);
-          }
-        }));
+          }));
+      }
     }
 
     // Monitor the progress of the Futures
