@@ -2,7 +2,9 @@ package util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,17 +64,17 @@ public class DataFilter {
   /**
    * All the seriesInstanceUIDs of the instanced used for training by the system.
    */
-  List<String> trainInstances;
+  Set<String> trainInstances;
 
   /**
    * All the seriesInstanceUIDs of the instanced used by the system.
    */
-  List<String> testInstances;
+  Set<String> testInstances;
 
   /**
    * All the seriesInstanceUIDs of the instanced used by the system.
    */
-  List<String> allInstances;
+  Set<String> allInstances;
 
   private Mode.Value mode;
 
@@ -81,12 +83,15 @@ public class DataFilter {
    */
   DataFilter() {
     mode = ConfigHelper.getMode();
+    trainInstances = new HashSet<>();
+    testInstances = new HashSet<>();
+    allInstances = new HashSet<>();
     if (mode == Mode.Value.PROD) {
       initProd();
     } else {
-      trainInstances = Collections.singletonList(TRAIN_INSTANCE);
-      testInstances = Collections.singletonList(TEST_INSTANCE);
-      allInstances = Stream.of(TRAIN_INSTANCE, TEST_INSTANCE).collect(Collectors.toList());
+      trainInstances = Collections.singleton(TRAIN_INSTANCE);
+      testInstances = Collections.singleton(TEST_INSTANCE);
+      allInstances = Stream.of(TRAIN_INSTANCE, TEST_INSTANCE).collect(Collectors.toSet());
     }
   }
 
@@ -94,28 +99,29 @@ public class DataFilter {
     LOGGER.info("Separating test and training instances for production...");
 
     // Create a list of all the distinct seriesInstanceUID that will be used in prod mode
-    allInstances = new ArrayList<>();
+    List<String> all= new ArrayList<>();
     Datastore ds = MongoHelper.getDataStore();
     Query<CTStack> match = ds.createQuery(CTStack.class).field("model").equal(MODEL);
     ds.createAggregation(CTStack.class).match(match).group(UID).aggregate(Result.class)
-        .forEachRemaining(result -> allInstances.add(result.seriesInstanceUID));
+        .forEachRemaining(result -> all.add(result.seriesInstanceUID));
 
     // Calculate the number that should be in the test and training sets
-    int total = allInstances.size();
+    int total = all.size();
     int numTrain = Double.valueOf(total * TRAIN_WEIGHT).intValue();
-    int numTest = total - numTrain;
 
-    // Create list of training instances
-    trainInstances = new ArrayList<>(numTrain);
+    // Create the set of training instances
     for (int i = 0; i < numTrain; i++) {
-      trainInstances.add(allInstances.get(i));
+      trainInstances.add(all.get(i));
     }
 
-    // Create list of testing instances
-    testInstances = new ArrayList<>(numTest);
+    // Create set of testing instances
     for (int i = numTrain; i < total; i++) {
-      testInstances.add(allInstances.get(i));
+      testInstances.add(all.get(i));
     }
+
+    // Create the set of all instances
+    allInstances.addAll(testInstances);
+    allInstances.addAll(trainInstances);
 
     LOGGER.info("Finished separating instances");
   }

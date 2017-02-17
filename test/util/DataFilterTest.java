@@ -78,14 +78,12 @@ public class DataFilterTest {
     assertEquals(expectedAll, all);
 
     // Test train(..)
-    Set<String> expectedTrain = new HashSet<>(filter.trainInstances);
     Set<String> train = getUIDs(filter.train(ds.createQuery(CTStack.class)));
-    assertEquals(expectedTrain, train);
+    assertEquals(filter.trainInstances, train);
 
     // Test test(..)
-    Set<String> expectedTest = new HashSet<>(filter.testInstances);
     Set<String> test = getUIDs(filter.test(ds.createQuery(CTStack.class)));
-    assertEquals(expectedTest, test);
+    assertEquals(filter.testInstances, test);
 
     // Go back to test mode
     ConfigHelper.getProps().put(Mode.KEY, Mode.Value.TEST.name());
