@@ -22,6 +22,10 @@ public class ROI {
     NODULE, NON_NODULE
   }
 
+  public enum Set {
+    TRAIN, TEST
+  }
+
   @Id
   private ObjectId id;
 
@@ -37,6 +41,12 @@ public class ROI {
 
   @Indexed
   private Class classification;
+
+  /**
+   * The set that the ROI belongs too i.e TRAIN or TEST
+   */
+  @Indexed
+  private Set set;
 
   /**
    * The value for {@link config.Misc#MATCH_THRESHOLD} used when classifying the ROI see
@@ -210,6 +220,14 @@ public class ROI {
 
   public void setFineHist(Histogram fineHist) {
     this.fineHist = fineHist;
+  }
+
+  public Set getSet() {
+    return set;
+  }
+
+  public void setSet(Set set) {
+    this.set = set;
   }
 
 }
