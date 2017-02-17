@@ -5,6 +5,8 @@ import org.mongodb.morphia.Datastore;
 import com.mongodb.DBCollection;
 
 import config.Mode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import util.ConfigHelper;
 import util.LungsException;
 import util.MongoHelper;
@@ -15,6 +17,8 @@ import util.MongoHelper;
  * @author Stuart Clark
  */
 public abstract class Importer<T> implements Runnable {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Importer.class);
 
   /**
    * The path to use when importing files
@@ -54,6 +58,7 @@ public abstract class Importer<T> implements Runnable {
       collection.dropIndexes();
       importModels(ds);
 
+      LOGGER.info("Ensuring indexes for " + clazz.getName() + "...");
       ds.ensureIndexes(clazz);
     } catch (LungsException e) {
       throw new IllegalStateException("Failed to import models", e);
