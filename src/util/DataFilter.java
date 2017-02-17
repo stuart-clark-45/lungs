@@ -64,17 +64,17 @@ public class DataFilter {
   /**
    * All the seriesInstanceUIDs of the instanced used for training by the system.
    */
-  Set<String> trainInstances;
+  private Set<String> trainInstances;
 
   /**
    * All the seriesInstanceUIDs of the instanced used by the system.
    */
-  Set<String> testInstances;
+  private Set<String> testInstances;
 
   /**
    * All the seriesInstanceUIDs of the instanced used by the system.
    */
-  Set<String> allInstances;
+  private Set<String> allInstances;
 
   private Mode.Value mode;
 
@@ -99,7 +99,7 @@ public class DataFilter {
     LOGGER.info("Separating test and training instances for production...");
 
     // Create a list of all the distinct seriesInstanceUID that will be used in prod mode
-    List<String> all= new ArrayList<>();
+    List<String> all = new ArrayList<>();
     Datastore ds = MongoHelper.getDataStore();
     Query<CTStack> match = ds.createQuery(CTStack.class).field("model").equal(MODEL);
     ds.createAggregation(CTStack.class).match(match).group(UID).aggregate(Result.class)
@@ -151,6 +151,18 @@ public class DataFilter {
    */
   public <T> Query<T> test(Query<T> query) {
     return all(query).field(UID).in(testInstances);
+  }
+
+  public Set<String> getTrainInstances() {
+    return trainInstances;
+  }
+
+  public Set<String> getTestInstances() {
+    return testInstances;
+  }
+
+  public Set<String> getAllInstances() {
+    return allInstances;
   }
 
   /**

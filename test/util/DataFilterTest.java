@@ -68,9 +68,9 @@ public class DataFilterTest {
     DataFilter filter = new DataFilter();
 
     // Check the aggregation correctly split the instances
-    assertEquals(trainSize, filter.trainInstances.size());
-    assertEquals(testSize, filter.testInstances.size());
-    assertEquals(total, filter.allInstances.size());
+    assertEquals(trainSize, filter.getTrainInstances().size());
+    assertEquals(testSize, filter.getTestInstances().size());
+    assertEquals(total, filter.getAllInstances().size());
 
     // Test all(..)
     Set<String> expectedAll = new HashSet<>(uids);
@@ -79,11 +79,11 @@ public class DataFilterTest {
 
     // Test train(..)
     Set<String> train = getUIDs(filter.train(ds.createQuery(CTStack.class)));
-    assertEquals(filter.trainInstances, train);
+    assertEquals(filter.getTrainInstances(), train);
 
     // Test test(..)
     Set<String> test = getUIDs(filter.test(ds.createQuery(CTStack.class)));
-    assertEquals(filter.testInstances, test);
+    assertEquals(filter.getTestInstances(), test);
 
     // Go back to test mode
     ConfigHelper.getProps().put(Mode.KEY, Mode.Value.TEST.name());
