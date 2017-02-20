@@ -21,8 +21,7 @@ public class MedHist extends IntensityHist {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    createHist(roi, mat);
-    roi.setMedHist(getHistogram());
+    roi.setMedHist(createHist(roi, mat));
   }
 
 }

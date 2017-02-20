@@ -118,10 +118,12 @@ public class IntensityHistTest {
     testHist.compute(roi, mat);
 
     double[] expected = {0.25, 0.375, 0.125, 0.25};
-    assertArrayEquals(toObject(expected), toObject(testHist.getHistogram().getBins()));
+    assertArrayEquals(toObject(expected), toObject(testHist.histogram.getBins()));
   }
 
   private static class TestHist extends IntensityHist {
+
+    private Histogram histogram;
 
     public TestHist() {
       super(4);
@@ -129,7 +131,7 @@ public class IntensityHistTest {
 
     @Override
     public void compute(ROI roi, Mat mat) throws LungsException {
-      createHist(roi, mat);
+      histogram = createHist(roi, mat);
     }
 
   }
