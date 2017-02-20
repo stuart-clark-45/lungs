@@ -133,7 +133,7 @@ public class InstancesBuilder {
    * @param rois iterator for the {@link ROI}s.
    * @return {@link Instances} for the given {@link ROI}s
    */
-  private void addInstances(Instances set, Iterator<ROI> rois, int numROI) {
+  public void addInstances(Instances set, Iterator<ROI> rois, int numROI) {
     String name = set.relationName();
 
     LOGGER.info("Adding instances to " + name + "...");
