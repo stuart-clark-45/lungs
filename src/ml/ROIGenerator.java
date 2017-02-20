@@ -22,6 +22,7 @@ import model.roi.ROI;
 import util.DataFilter;
 import util.FutureMonitor;
 import util.LungsException;
+import util.MatUtils;
 import util.MongoHelper;
 
 /**
@@ -73,7 +74,7 @@ public class ROIGenerator extends Importer<ROI> {
         futures.add(es.submit(() -> {
 
           // Load slice mat
-            Mat mat = Lungs.getSliceMat(slice);
+            Mat mat = MatUtils.getSliceMat(slice);
 
             // Segment slice (will only ever be one returned)
             Mat segmented = lungs.segment(Collections.singletonList(mat)).get(0);

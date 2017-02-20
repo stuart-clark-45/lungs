@@ -25,6 +25,7 @@ import model.GroundTruth;
 import model.roi.ROI;
 import util.DataFilter;
 import util.LungsException;
+import util.MatUtils;
 import util.MongoHelper;
 import vision.Matcher;
 
@@ -95,7 +96,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         if (!gtList.isEmpty()) {
 
           // Add Mat for slice into list that will be used in eval(..)
-          mats.add(Lungs.getSliceMat(slice));
+          mats.add(MatUtils.getSliceMat(slice));
 
           // Add gtLists to list that will be used in eval(..)
           groundTruths.add(gtList);
@@ -254,6 +255,10 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         IntegerChromosome.of(1, 2));
   }
 
+  /**
+   * @param args optionally can provide an integer that is used as the reading number
+   * @throws IOException
+   */
   public static void main(String[] args) throws IOException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 

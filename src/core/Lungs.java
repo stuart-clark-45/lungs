@@ -14,6 +14,7 @@ import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
+import static util.MatUtils.getStackMats;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
-import ij.plugin.DICOM;
 import ml.ArffGenerator;
 import ml.FeatureEngine;
 import ml.InstancesBuilder;
@@ -213,39 +213,6 @@ public class Lungs {
     }
 
     return segmented;
-  }
-
-  /**
-   * @param stack
-   * @return List of grey-scale {@link Mat} for the given stack.
-   */
-  public static List<Mat> getStackMats(CTStack stack) {
-    return stack.getSlices().parallelStream().map(Lungs::getSliceMat).collect(Collectors.toList());
-  }
-
-  /**
-   * @param slice
-   * @return a grey-scale {@link Mat} for the given slice.
-   */
-  public static Mat getSliceMat(CTSlice slice) {
-    // TODO remove all this hacky code when problem fully realaised
-    int counter = 0;
-    while (true) {
-      try {
-        DICOM dicom = new DICOM();
-        dicom.open(slice.getFilePath());
-        return MatUtils.fromDICOM(dicom);
-      } catch (Exception e) {
-        LOGGER.error("Trying again in one second wtih slice: " + slice.getId(), e);
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e1) {
-          throw new IllegalStateException(e1);
-        }
-        if (++counter > 3)
-          throw e;
-      }
-    }
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {

@@ -13,7 +13,6 @@ import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import core.Lungs;
 import ml.feature.Area;
 import ml.feature.CoarseHist;
 import ml.feature.Feature;
@@ -27,6 +26,7 @@ import model.CTSlice;
 import model.roi.ROI;
 import util.FutureMonitor;
 import util.LungsException;
+import util.MatUtils;
 import util.MongoHelper;
 
 /**
@@ -72,7 +72,7 @@ public class FeatureEngine {
 
       // Load the Mat
       CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
-      Mat mat = Lungs.getSliceMat(slice);
+      Mat mat = MatUtils.getSliceMat(slice);
 
       // Get all the ROIs for the sopUID
       Query<ROI> rois = ds.createQuery(ROI.class).field(IMAGE_SOP_UID).equal(sopUID);

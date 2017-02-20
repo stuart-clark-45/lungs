@@ -8,8 +8,12 @@ import java.util.stream.Collectors;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ij.plugin.DICOM;
+import model.CTSlice;
+import model.CTStack;
 
 /**
  * Suite of utility methods that can be used to process {@link Mat}s.
@@ -17,6 +21,8 @@ import ij.plugin.DICOM;
  * @author Stuart Clark
  */
 public class MatUtils {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MatUtils.class);
 
   private MatUtils() {
     // Hide constructor
@@ -94,6 +100,40 @@ public class MatUtils {
    */
   public static Mat similarMat(Mat mat) {
     return Mat.zeros(mat.rows(), mat.cols(), mat.type());
+  }
+
+  /**
+   * @param stack
+   * @return List of grey-scale {@link Mat} for the given stack.
+   */
+  public static List<Mat> getStackMats(CTStack stack) {
+    return stack.getSlices().parallelStream().map(MatUtils::getSliceMat)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * @param slice
+   * @return a grey-scale {@link Mat} for the given slice.
+   */
+  public static Mat getSliceMat(CTSlice slice) {
+    // TODO remove all this hacky code when problem fully realaised
+    int counter = 0;
+    while (true) {
+      try {
+        DICOM dicom = new DICOM();
+        dicom.open(slice.getFilePath());
+        return MatUtils.fromDICOM(dicom);
+      } catch (Exception e) {
+        LOGGER.error("Trying again in one second wtih slice: " + slice.getId(), e);
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e1) {
+          throw new IllegalStateException(e1);
+        }
+        if (++counter > 3)
+          throw e;
+      }
+    }
   }
 
 }
