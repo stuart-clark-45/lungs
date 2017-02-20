@@ -73,6 +73,12 @@ public class GroundTruth {
   @Indexed
   private Integer readingNumber;
 
+  /**
+   * The radius of the minimum fitting circle for the {@code region} used to define this
+   * {@link GroundTruth}.
+   */
+  private double minRadius;
+
   public ObjectId getId() {
     return id;
   }
@@ -148,4 +154,13 @@ public class GroundTruth {
   public void setReadingNumber(Integer readingNumber) {
     this.readingNumber = readingNumber;
   }
+
+  public double getMinRadius() {
+    return minRadius;
+  }
+
+  public void setMinRadius(double minRadius) {
+    this.minRadius = minRadius;
+  }
+
 }
