@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import ml.feature.CoarseHist;
 import ml.feature.FineHist;
 import ml.feature.MedHist;
 import model.ROI;
-import util.MongoHelper;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
