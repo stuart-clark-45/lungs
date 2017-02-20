@@ -27,7 +27,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -251,9 +253,21 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         numSmallNodule++;
       } else {
         groundTruth.setType(BIG_NODULE);
-        groundTruth.setEdgePoints(points);
         groundTruth.setCentroid(calculateCentroid(points));
-        groundTruth.setRegion(PointUtils.perim2Region(points, inclusive));
+
+        // Set the region and the edge points. edge points set using this method not just using
+        // points so that all the perimeters use will be inclusive parameters. See
+        // PointUtils.region2perim(..)'s java doc.
+        List<Point> region = PointUtils.perim2Region(points, inclusive);
+        groundTruth.setRegion(region);
+        if (inclusive) {
+          groundTruth.setEdgePoints(points);
+        } else {
+          groundTruth.setEdgePoints(PointUtils.region2perim(region));
+        }
+
+        groundTruth.setMinRadius(computeMinRadius(groundTruth.getEdgePoints()));
+
         numBigNodule++;
       }
 
@@ -318,6 +332,19 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
     x = x / nPoints;
     y = y / nPoints;
     return new Point(x, y);
+  }
+
+  /**
+   * @param contour the contour of the ground truth
+   * @return the radius of the smallest circle that can be fitted to {@code contour}.
+   */
+  float computeMinRadius(List<Point> contour) {
+    Point center = new Point();
+    MatOfPoint2f matOfPoints = new MatOfPoint2f();
+    matOfPoints.fromList(contour);
+    float[] radius = new float[1];
+    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
+    return radius[0];
   }
 
   int getRejected() {

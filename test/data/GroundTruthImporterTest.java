@@ -87,4 +87,16 @@ public class GroundTruthImporterTest {
     assertEquals(Double.valueOf(5), Double.valueOf(centroid.y));
   }
 
+  @Test
+  public void testComputeMinRadius() throws Exception {
+    List<Point> points = new ArrayList<>();
+    points.add(new Point(1d, 4d));
+    points.add(new Point(1d, 5d));
+    points.add(new Point(1d, 6d));
+    points.add(new Point(1d, 7d));
+    points.add(new Point(1d, 8d));
+
+    assertEquals(2d, (double) importer.computeMinRadius(points), 0.001);
+  }
+
 }
