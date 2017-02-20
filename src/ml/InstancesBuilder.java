@@ -38,7 +38,6 @@ public class InstancesBuilder {
   private ArrayList<Attribute> attributes;
   private final int numAttributes;
   private List<Function<ROI, Object>> functions;
-  private Datastore ds;
 
   /**
    * True if the class should be set for the {@link Instance}, false otherwise
@@ -106,8 +105,6 @@ public class InstancesBuilder {
     this.functions.add(ROI::getClassification);
 
     this.numAttributes = attributes.size();
-
-    this.ds = MongoHelper.getDataStore();
   }
 
   /**
