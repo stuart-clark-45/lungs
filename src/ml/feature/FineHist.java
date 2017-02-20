@@ -2,25 +2,22 @@ package ml.feature;
 
 import org.opencv.core.Mat;
 
+import model.roi.Histogram;
 import model.roi.ROI;
 import util.LungsException;
 
 /**
- * Creates a histogram for the {@link ROI} with lots of bins  and updates {@link ROI#fineHist}.
+ * Creates a histogram for the {@link ROI} with lots of bins and updates {@link ROI#fineHist}.
  *
  * @author Stuart Clark
  */
-public class FineHist extends IntensityHist {
+public class FineHist implements Feature {
 
   public static final int BINS = 256;
 
-  public FineHist() {
-    super(BINS);
-  }
-
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setFineHist(createHist(roi, mat));
+    roi.setFineHist(Histogram.createHist(roi, mat, BINS));
   }
 
 }

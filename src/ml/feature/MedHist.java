@@ -2,6 +2,7 @@ package ml.feature;
 
 import org.opencv.core.Mat;
 
+import model.roi.Histogram;
 import model.roi.ROI;
 import util.LungsException;
 
@@ -11,17 +12,13 @@ import util.LungsException;
  *
  * @author Stuart Clark
  */
-public class MedHist extends IntensityHist {
+public class MedHist implements Feature {
 
   public static final int BINS = 128;
 
-  public MedHist() {
-    super(BINS);
-  }
-
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setMedHist(createHist(roi, mat));
+    roi.setMedHist(Histogram.createHist(roi, mat, BINS));
   }
 
 }
