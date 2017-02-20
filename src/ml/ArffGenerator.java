@@ -99,7 +99,7 @@ public class ArffGenerator {
       numNonNodule = numNodules;
     } else {
       nonNodule = query.iterator();
-      numNodules = (int) query.count();
+      numNonNodule = (int) query.count();
     }
 
     // Logging counts for each class
