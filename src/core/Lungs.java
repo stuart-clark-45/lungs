@@ -331,7 +331,12 @@ public class Lungs {
     new MatViewer(original, annotated).display();
   }
 
-  // phone dave
+  public void displaySegmented(CTStack stack) {
+    LOGGER.info("Loading Mats...");
+    List<Mat> original = getStackMats(stack);
+    List<Mat> segmented = segment(original);
+    new MatViewer(original, segmented).display();
+  }
 
   /**
    * Should be run with the following VM args
@@ -349,8 +354,8 @@ public class Lungs {
     CTStack stack = DataFilter.get().test(ds.createQuery(CTStack.class)).get();
 
     Lungs lungs = new Lungs();
-    lungs.gtVsNoduleRoi(stack);
-    // lungs.assistance(stack);
+//    lungs.gtVsNoduleRoi(stack);
+//    lungs.assistance(stack);
+    lungs.displaySegmented(stack);
   }
-
 }
