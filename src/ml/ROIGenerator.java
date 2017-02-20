@@ -18,7 +18,7 @@ import data.Importer;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
-import model.roi.ROI;
+import model.ROI;
 import util.DataFilter;
 import util.FutureMonitor;
 import util.LungsException;

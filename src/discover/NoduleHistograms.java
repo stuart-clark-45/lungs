@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import model.CTSlice;
 import model.GroundTruth;
-import model.roi.Histogram;
+import model.Histogram;
 import util.LungsException;
 import util.MatUtils;
 

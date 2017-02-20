@@ -6,6 +6,8 @@ import static org.junit.Assert.assertArrayEquals;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.Histogram;
+import model.ROI;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

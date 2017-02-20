@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import model.CTSlice;
-import model.roi.Histogram;
+import model.Histogram;
 import util.LungsException;
 import util.MatUtils;
 

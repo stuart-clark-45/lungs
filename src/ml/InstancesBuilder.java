@@ -1,7 +1,7 @@
 package ml;
 
-import static model.roi.ROI.Class.NODULE;
-import static model.roi.ROI.Class.NON_NODULE;
+import static model.ROI.Class.NODULE;
+import static model.ROI.Class.NON_NODULE;
 import static weka.core.Utils.missingValue;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import ml.feature.CoarseHist;
 import ml.feature.FineHist;
 import ml.feature.MedHist;
-import model.roi.ROI;
+import model.ROI;
 import util.MongoHelper;
 import weka.core.Attribute;
 import weka.core.DenseInstance;

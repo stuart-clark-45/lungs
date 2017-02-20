@@ -2,7 +2,7 @@ package ml.feature;
 
 import org.opencv.core.Mat;
 
-import model.roi.ROI;
+import model.ROI;
 
 /**
  * Computes the area of the {@link ROI} and updates {@link ROI#area}.

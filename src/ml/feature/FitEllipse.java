@@ -5,7 +5,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-import model.roi.ROI;
+import model.ROI;
 import util.LungsException;
 
 import java.util.List;

@@ -5,8 +5,8 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-import model.roi.Circle;
-import model.roi.ROI;
+import model.Circle;
+import model.ROI;
 import util.LungsException;
 
 /**

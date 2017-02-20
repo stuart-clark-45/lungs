@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.opencv.core.Point;
 
 import model.GroundTruth;
-import model.roi.ROI;
+import model.ROI;
 
 /**
  * @author Stuart Clark

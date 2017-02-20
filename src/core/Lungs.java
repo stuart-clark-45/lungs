@@ -41,7 +41,7 @@ import ml.InstancesBuilder;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
-import model.roi.ROI;
+import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.DataFilter;
@@ -277,6 +277,10 @@ public class Lungs {
         // Classify the instance
         Instance instance = instances.get(j);
         double v = classifier.classifyInstance(instance);
+        if (v != 0.0) {
+          LOGGER.info("instance value: " + v);
+        }
+
         ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
 
         // If nodule then annotate
@@ -326,6 +330,8 @@ public class Lungs {
     LOGGER.info("Preparing to display Mats...");
     new MatViewer(original, annotated).display();
   }
+
+  // phone dave
 
   /**
    * Should be run with the following VM args

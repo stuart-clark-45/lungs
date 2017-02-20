@@ -1,9 +1,9 @@
 package ml.feature;
 
-import model.roi.Histogram;
+import model.Histogram;
 import org.opencv.core.Mat;
 
-import model.roi.ROI;
+import model.ROI;
 import util.LungsException;
 
 /**

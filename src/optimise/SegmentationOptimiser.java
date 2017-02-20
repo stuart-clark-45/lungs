@@ -22,7 +22,7 @@ import core.Lungs;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
-import model.roi.ROI;
+import model.ROI;
 import util.DataFilter;
 import util.LungsException;
 import util.MatUtils;

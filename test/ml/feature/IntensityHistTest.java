@@ -11,14 +11,12 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 import ij.plugin.DICOM;
-import model.roi.Histogram;
-import model.roi.ROI;
-import util.LungsException;
+import model.Histogram;
+import model.ROI;
 import util.MatUtils;
 import util.Testing;
 

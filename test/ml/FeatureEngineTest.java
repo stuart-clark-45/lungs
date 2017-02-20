@@ -17,7 +17,7 @@ import org.opencv.core.Point;
 
 import ml.feature.MeanIntensity;
 import model.CTSlice;
-import model.roi.ROI;
+import model.ROI;
 import util.MongoHelper;
 import util.Testing;
 

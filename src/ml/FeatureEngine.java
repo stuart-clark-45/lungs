@@ -23,7 +23,7 @@ import ml.feature.MedHist;
 import ml.feature.MinCircle;
 import ml.feature.Perimeter;
 import model.CTSlice;
-import model.roi.ROI;
+import model.ROI;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MatUtils;

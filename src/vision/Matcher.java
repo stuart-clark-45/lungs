@@ -7,7 +7,7 @@ import java.util.Set;
 import org.opencv.core.Point;
 
 import model.GroundTruth;
-import model.roi.ROI;
+import model.ROI;
 
 /**
  * Used to perform a "fuzzy" match between regions.

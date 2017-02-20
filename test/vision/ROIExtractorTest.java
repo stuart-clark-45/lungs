@@ -11,7 +11,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 
-import model.roi.ROI;
+import model.ROI;
 import util.MatUtils;
 import util.Testing;
 

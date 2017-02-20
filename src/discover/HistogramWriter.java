@@ -2,7 +2,7 @@ package discover;
 
 import java.util.StringJoiner;
 
-import model.roi.Histogram;
+import model.Histogram;
 import util.LungsException;
 
 /**

@@ -7,7 +7,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
-import model.roi.ROI;
+import model.ROI;
 import util.LungsException;
 
 /**
