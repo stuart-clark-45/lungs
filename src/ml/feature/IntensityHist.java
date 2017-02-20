@@ -24,6 +24,11 @@ public abstract class IntensityHist implements Feature {
   private int numBins;
 
   /**
+   * The {@link Histogram} computed using {@code this}.
+   */
+  private Histogram histogram;
+
+  /**
    * @param numBins should be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
    */
   public IntensityHist(int numBins) {
@@ -34,7 +39,7 @@ public abstract class IntensityHist implements Feature {
     }
   }
 
-  protected Histogram createHist(ROI roi, Mat mat) throws LungsException {
+  protected void createHist(ROI roi, Mat mat) throws LungsException {
     if (mat.channels() != 1) {
       throw new LungsException("mat must have 1 channel");
     }
@@ -70,7 +75,10 @@ public abstract class IntensityHist implements Feature {
       hist[i] /= points.size();
     }
 
-    return new Histogram(hist);
+    histogram = new Histogram(hist);
   }
 
+  public Histogram getHistogram() {
+    return histogram;
+  }
 }

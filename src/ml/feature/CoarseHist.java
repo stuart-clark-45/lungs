@@ -20,7 +20,8 @@ public class CoarseHist extends IntensityHist {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setCoarseHist(createHist(roi, mat));
+    createHist(roi, mat);
+    roi.setCoarseHist(getHistogram());
   }
 
 }
