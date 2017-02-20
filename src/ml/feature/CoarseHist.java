@@ -17,7 +17,7 @@ public class CoarseHist implements Feature {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setCoarseHist(Histogram.createHist(roi, mat, BINS));
+    roi.setCoarseHist(Histogram.createHist(roi.getRegion(), mat, BINS));
   }
 
 }

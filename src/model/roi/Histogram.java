@@ -82,26 +82,26 @@ public class Histogram implements Iterator<Double> {
   }
 
   /**
-   * @param roi the {@link ROI} that the histogram should be calculated for.
+   * @param region the region of interest that the histogram should be calculated for. i.e. should
+   *        be a list of all the points that belong to the region of interest.
    * @param mat the single channel {@link Mat} to create the histogram for.
    * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
    *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
    * @return
    * @throws LungsException if parameters given are invalid.
    */
-  public static Histogram createHist(ROI roi, Mat mat, int numBins) throws LungsException {
+  public static Histogram createHist(List<Point> region, Mat mat, int numBins)
+      throws LungsException {
     validateParams(mat, numBins);
-
-    List<Point> points = roi.getRegion();
 
     // Count up the number of occurrences for each value
     double[] valCount = new double[NUM_POSSIBLE_VALS];
-    for (Point point : roi.getRegion()) {
+    for (Point point : region) {
       int val = (int) mat.get((int) point.y, (int) point.x)[0];
       valCount[val]++;
     }
 
-    return createHist(valCount, points.size(), numBins);
+    return createHist(valCount, region.size(), numBins);
   }
 
   /**

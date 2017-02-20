@@ -79,7 +79,7 @@ public class HistogramTest {
     ROI roi = new ROI();
     roi.setRegion(region);
 
-    Histogram hist = Histogram.createHist(roi, mat, 4);
+    Histogram hist = Histogram.createHist(roi.getRegion(), mat, 4);
 
     double[] expected = {0.25, 0.375, 0.125, 0.25};
     assertArrayEquals(toObject(expected), toObject(hist.getBins()));

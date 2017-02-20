@@ -18,7 +18,7 @@ public class MedHist implements Feature {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setMedHist(Histogram.createHist(roi, mat, BINS));
+    roi.setMedHist(Histogram.createHist(roi.getRegion(), mat, BINS));
   }
 
 }

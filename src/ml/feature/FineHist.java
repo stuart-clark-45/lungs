@@ -17,7 +17,7 @@ public class FineHist implements Feature {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setFineHist(Histogram.createHist(roi, mat, BINS));
+    roi.setFineHist(Histogram.createHist(roi.getRegion(), mat, BINS));
   }
 
 }
