@@ -2,15 +2,15 @@ package ml;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Iterator;
 
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import model.roi.ROI;
+import util.LimitedIterator;
 import util.MongoHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -74,7 +74,7 @@ public class ArffGenerator {
 
   /**
    * Used to create training and testing sets.
-   * 
+   *
    * @param name the name to give the {@link Instances} returned.
    * @param set the set you would like to create i.e {@link ROI.Set#TRAIN} or {@link ROI.Set#TEST}.
    * @param limitOn true if the number of nodules and non-nodules should be the same in the
@@ -87,26 +87,28 @@ public class ArffGenerator {
         ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NODULE);
     int numNodules = (int) nodules.count();
 
-    // Set the limit on non-nodules if required
-    FindOptions options = new FindOptions();
+    // Find all the non nodules
+    Query<ROI> query =
+        ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NON_NODULE);
+
+    // Get the iterator and the number of non nodules used
+    Iterator<ROI> nonNodule;
+    int numNonNodule = 0;
     if (limitOn) {
-      options.limit(numNodules);
+      nonNodule = new LimitedIterator<>(query.iterator(), numNodules);
+      numNonNodule = numNodules;
+    } else {
+      nonNodule = query.iterator();
+      numNodules = (int) query.count();
     }
 
-    // Find the required number of non-nodules
-    @SuppressWarnings("ConstantConditions")
-    List<ROI> nonNodule =
-        ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NON_NODULE)
-            .asList(options);
-
     // Logging counts for each class
-    int numNonNodule = nonNodule.size();
     LOGGER.info(name + " will have:\n" + numNodules + " NODULES\n" + numNonNodule + " NON_NODULES");
 
     // Create the instances
     Instances instances = builder.createSet(name, numNodules + numNonNodule);
     builder.addInstances(instances, nodules);
-    builder.addInstances(instances, nonNodule);
+    builder.addInstances(instances, nonNodule, numNonNodule);
 
     return instances;
   }
