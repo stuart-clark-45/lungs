@@ -1,6 +1,6 @@
 package data;
 
-import static util.TimeUtils.milliToString;
+import static util.TimeUtils.elapsedTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public class DataPipeline {
     for (Future f : futures) {
       f.get();
     }
-    LOGGER.info("Finished running importers. Time elapsed: " + milliToString(start));
+    LOGGER.info("Finished running importers. Time elapsed: " + elapsedTime(start));
 
     // Generators (Must be run after importers)
     LOGGER.info("Running Generators...");
@@ -52,7 +52,7 @@ public class DataPipeline {
       f.get();
     }
 
-    LOGGER.info("DataPipeLine complete. Time elapsed: " + milliToString(start));
+    LOGGER.info("DataPipeLine complete. Time elapsed: " + elapsedTime(start));
   }
 
 }

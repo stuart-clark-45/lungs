@@ -1,6 +1,6 @@
 package ml;
 
-import static util.TimeUtils.milliToString;
+import static util.TimeUtils.elapsedTime;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,15 +31,15 @@ public class MLPipeline {
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     new ROIGenerator(es).run();
-    LOGGER.info("ROIGenerator finished, Time elapsed: " + milliToString(start));
+    LOGGER.info("ROIGenerator finished, Time elapsed: " + elapsedTime(start));
 
     new FeatureEngine().run(es);
-    LOGGER.info("FeatureEngine finished, Time elapsed: " + milliToString(start));
+    LOGGER.info("FeatureEngine finished, Time elapsed: " + elapsedTime(start));
 
     new ArffGenerator().run();
-    LOGGER.info("ArffGenerator finished, Time elapsed: " + milliToString(start));
+    LOGGER.info("ArffGenerator finished, Time elapsed: " + elapsedTime(start));
 
-    LOGGER.info("MLPipeLine complete, Time elapsed: " + milliToString(start));
+    LOGGER.info("MLPipeLine complete, Time elapsed: " + elapsedTime(start));
   }
 
 }
