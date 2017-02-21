@@ -83,11 +83,13 @@ public class ArffGenerator {
    */
   private Instances createInstances(String name, ROI.Set set, boolean limitOn) {
     // Find all the nodules
+    LOGGER.info("Finding all NODULE for " + name);
     Query<ROI> nodules =
         ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NODULE);
     int numNodules = (int) nodules.count();
 
     // Find all the non nodules
+    LOGGER.info("Finding all NON_NODULE for " + name);
     Query<ROI> query =
         ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NON_NODULE);
 
