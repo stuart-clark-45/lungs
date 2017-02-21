@@ -1,7 +1,6 @@
 package core;
 
 import static config.Segmentation.Opening;
-import static config.Segmentation.THRESHOLD;
 import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
@@ -12,7 +11,6 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
-import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
@@ -35,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
+import config.Segmentation;
 import ml.ArffGenerator;
 import ml.FeatureEngine;
 import ml.InstancesBuilder;
@@ -51,6 +50,7 @@ import util.MatViewer;
 import util.MongoHelper;
 import util.PointUtils;
 import vision.ROIExtractor;
+import vision.SliceSegmenter;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
@@ -79,6 +79,7 @@ public class Lungs {
 
   private Datastore ds;
   private final ROIExtractor extractor;
+  private SliceSegmenter segmenter;
 
   /*
    * Parameters used during segmentation
@@ -86,27 +87,27 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
-  private int threshold;
   private int openingWidth;
   private int openingHeight;
   private int openingKernel;
 
   public Lungs() {
-    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE), getInt(THRESHOLD),
-        getInt(WIDTH), getInt(HEIGHT), getInt(Opening.KERNEL));
+    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
+        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG), getInt(WIDTH), getInt(HEIGHT),
+        getInt(Opening.KERNEL));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int threshold, int openingWidth,
-      int openingHeight, int openingKernel) {
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG,
+      int openingWidth, int openingHeight, int openingKernel) {
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.kernelSize = kernelSize;
-    this.threshold = threshold;
     this.openingWidth = openingWidth;
     this.openingHeight = openingHeight;
     this.openingKernel = openingKernel;
     this.extractor = new ROIExtractor(FOREGROUND);
+    this.segmenter = new SliceSegmenter(FOREGROUND, sureFG, sureBG);
   }
 
   /**
@@ -197,8 +198,7 @@ public class Lungs {
       Imgproc.bilateralFilter(orig, filtered, kernelSize, sigmaColour, sigmaSpace);
 
       // Segment it
-      Mat seg = MatUtils.similarMat(filtered);
-      Imgproc.threshold(orig, seg, threshold, FOREGROUND, THRESH_BINARY);
+      Mat seg = segmenter.segment(filtered);
 
       // Apply opening
       Mat opened = MatUtils.similarMat(seg);
