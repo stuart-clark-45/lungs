@@ -110,21 +110,17 @@ public class Lungs {
   }
 
   /**
+   * Annotated {@code bgrs} with the ground truth.
+   *
    * @param slices the slices to annotations.
-   * @param bgrs 3 channel {@link Mat}s for the {@code slices}.
-   * @return the {@code bgrs} {@link Mat}s with the ground truth annotated upon then.
+   * @param bgrs 3 channel {@link Mat}s for the {@code slices} that will be annotated.
    */
-  private List<Mat> groundTruth(List<CTSlice> slices, List<Mat> bgrs) {
-    List<Mat> annotated = new ArrayList<>(slices.size());
-
+  private void groundTruth(List<CTSlice> slices, List<Mat> bgrs) {
     for (int i = 0; i < slices.size(); i++) {
       CTSlice slice = slices.get(i);
       Mat bgr = bgrs.get(i);
       annotate(bgr, slice);
-      annotated.add(bgr);
     }
-
-    return annotated;
   }
 
   /**
@@ -256,13 +252,13 @@ public class Lungs {
     LOGGER.info("Creating nodule predictions for stack");
     FeatureEngine fEngine = new FeatureEngine();
     InstancesBuilder iBuilder = new InstancesBuilder(false);
-    List<Mat> predictions =
+    List<Mat> annotated =
         original.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
     // For each slice
     for (int i = 0; i < segmented.size(); i++) {
       Mat seg = segmented.get(i);
       Mat orig = original.get(i);
-      Mat predict = predictions.get(i);
+      Mat predict = annotated.get(i);
 
       // Create Instances
       List<ROI> rois = extractRois(seg);
@@ -296,7 +292,7 @@ public class Lungs {
     }
 
     // Add ground truth
-    List<Mat> annotated = groundTruth(stack.getSlices(), predictions);
+    groundTruth(stack.getSlices(), annotated);
 
     // Display Mats
     new MatViewer(original, annotated).display();
@@ -305,7 +301,7 @@ public class Lungs {
   public void gtVsNoduleRoi(CTStack stack) {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
-    List<Mat> bgr = MatUtils.grey2BGR(original);
+    List<Mat> annotated = MatUtils.grey2BGR(original);
 
     List<CTSlice> slices = stack.getSlices();
 
@@ -318,24 +314,27 @@ public class Lungs {
           ds.createQuery(ROI.class).field("imageSopUID").equal(slice.getImageSopUID())
               .field("classification").equal(ROI.Class.NODULE);
       for (ROI roi : rois) {
-        paintROI(bgr.get(i), roi, ColourBGR.GREEN);
+        paintROI(annotated.get(i), roi, ColourBGR.GREEN);
       }
 
       LOGGER.info(i + 1 + "/" + numSlice + " processed");
     }
 
     LOGGER.info("Annotating ground truth");
-    List<Mat> annotated = groundTruth(slices, bgr);
+    groundTruth(slices, annotated);
 
     LOGGER.info("Preparing to display Mats...");
     new MatViewer(original, annotated).display();
   }
 
-  public void displaySegmented(CTStack stack) {
+  public void annotatedSegmented(CTStack stack) {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
     List<Mat> segmented = segment(original);
-    new MatViewer(original, segmented).display();
+    List<Mat> annotated =
+        segmented.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+    groundTruth(stack.getSlices(), annotated);
+    new MatViewer(original, annotated).display();
   }
 
   /**
@@ -354,8 +353,8 @@ public class Lungs {
     CTStack stack = DataFilter.get().test(ds.createQuery(CTStack.class)).get();
 
     Lungs lungs = new Lungs();
-//    lungs.gtVsNoduleRoi(stack);
-//    lungs.assistance(stack);
-    lungs.displaySegmented(stack);
+    // lungs.gtVsNoduleRoi(stack);
+    // lungs.assistance(stack);
+    lungs.annotatedSegmented(stack);
   }
 }
