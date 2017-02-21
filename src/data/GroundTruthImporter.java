@@ -255,20 +255,16 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         groundTruth.setType(BIG_NODULE);
         groundTruth.setCentroid(calculateCentroid(points));
 
-        // Set the region and the edge points. edge points set using this method not just using
-        // points so that all the perimeters use will be inclusive parameters. See
-        // PointUtils.region2perim(..)'s java doc.
+        // Set the region and the edge points and min radius.
         List<Point> region = PointUtils.perim2Region(points, inclusive);
         groundTruth.setRegion(region);
-        if (inclusive) {
-          groundTruth.setEdgePoints(points);
-        } else {
-          groundTruth.setEdgePoints(PointUtils.region2perim(region));
-        }
-
-        groundTruth.setMinRadius(computeMinRadius(groundTruth.getEdgePoints()));
+        groundTruth.setEdgePoints(points);
+        // -1 for not inclusive as edge pixel pixel should not be included in radius
+        float minRadius = inclusive ? computeMinRadius(points) : computeMinRadius(points) - 1;
+        groundTruth.setMinRadius(minRadius);
 
         numBigNodule++;
+
       }
 
       ds.save(groundTruth);
