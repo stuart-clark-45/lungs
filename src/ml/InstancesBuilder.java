@@ -151,6 +151,8 @@ public class InstancesBuilder {
         LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
       }
     }
+    
+    LOGGER.info("Finished adding instances to " + name);
   }
 
   public Instances createSet(String name, int size) {
