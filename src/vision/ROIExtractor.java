@@ -22,16 +22,31 @@ import util.MatUtils;
 public class ROIExtractor {
 
   /**
-   * The value used for the foreground in the segmented images that are returned.
+   * The value used for the foreground in the segmented images.
    */
-  private int foreground;
+  private static final int FOREGROUND = 255;
 
+  /**
+   * The threshold value that when used returns a thresholded image where the foreground is the
+   * pixels of the original image that are known to be in the foreground of the original image
+   */
   private int sureFG;
 
+  /**
+   * The threshold value that when used returns a thresholded image where the background is the
+   * pixels of the original image that are known to be in the background of the original image
+   */
   private int sureBG;
 
-  public ROIExtractor(int foreground, int sureFG, int sureBG) {
-    this.foreground = foreground;
+  /**
+   * @param sureFG The threshold value that when used returns a thresholded image where the
+   *        foreground is the pixels of the original image that are known to be in the foreground of
+   *        the original image
+   * @param sureBG The threshold value that when used returns a thresholded image where the
+   *        background is the pixels of the original image that are known to be in the background of
+   *        the original image
+   */
+  public ROIExtractor(int sureFG, int sureBG) {
     this.sureFG = sureFG;
     this.sureBG = sureBG;
   }
@@ -39,17 +54,17 @@ public class ROIExtractor {
   public List<ROI> extractROIs(Mat original) {
     // Apply threshold to find the sure foreground
     Mat foregroundMat = MatUtils.similarMat(original);
-    Imgproc.threshold(original, foregroundMat, sureFG, foreground, THRESH_BINARY);
+    Imgproc.threshold(original, foregroundMat, sureFG, FOREGROUND, THRESH_BINARY);
 
     // Apply threshold to find the sure background
     Mat backgroundMat = MatUtils.similarMat(original);
-    Imgproc.threshold(original, backgroundMat, sureBG, foreground, THRESH_BINARY);
+    Imgproc.threshold(original, backgroundMat, sureBG, FOREGROUND, THRESH_BINARY);
 
     // Subtract the sure foreground from the sure background to find the unknown region
     Mat unknownMat = MatUtils.similarMat(original);
     Core.subtract(backgroundMat, foregroundMat, unknownMat);
 
-    // Label the connected components found in the sure forground
+    // Label the connected components found in the sure foreground
     Mat labels = MatUtils.similarMat(original);
     Imgproc.connectedComponents(foregroundMat, labels);
 
@@ -63,7 +78,7 @@ public class ROIExtractor {
     // Mark the unknown region with 0's so that labels can be used by Imgproc.watershed(..)
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
-        if (unknownMat.get(row, col)[0] == foreground) {
+        if (unknownMat.get(row, col)[0] == FOREGROUND) {
           labels.put(row, col, 0);
         }
       }
