@@ -1,11 +1,8 @@
 package core;
 
-import static config.Segmentation.Opening;
 import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
-import static config.Segmentation.Opening.HEIGHT;
-import static config.Segmentation.Opening.WIDTH;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
@@ -89,25 +86,17 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
-  private int openingWidth;
-  private int openingHeight;
-  private int openingKernel;
 
   public Lungs() {
     this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
-        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG), getInt(WIDTH), getInt(HEIGHT),
-        getInt(Opening.KERNEL));
+        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG,
-      int openingWidth, int openingHeight, int openingKernel) {
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG) {
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.kernelSize = kernelSize;
-    this.openingWidth = openingWidth;
-    this.openingHeight = openingHeight;
-    this.openingKernel = openingKernel;
     this.extractor = new ROIExtractor(sureFG, sureBG);
   }
 

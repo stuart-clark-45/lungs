@@ -1,11 +1,11 @@
 package config;
 
-import java.util.List;
+import org.opencv.core.Mat;
 
 import core.Lungs;
 
 /**
- * The keys for configuration variables that relate to {@link Lungs#segment(List)}.
+ * The keys for configuration variables that relate to {@link Lungs#extractRois(Mat)} (List)}.
  *
  * @author Stuart Clark
  */
@@ -23,13 +23,5 @@ public class Segmentation {
 
   public static final String SURE_FG = "segmentation.surefg";
   public static final String SURE_BG = "segmentation.surebg";
-
-  public static class Opening {
-    private Opening() {}
-
-    public static final String KERNEL = "segmentation.opening.kernel";
-    public static final String WIDTH = "segmentation.opening.width";
-    public static final String HEIGHT = "segmentation.opening.height";
-  }
 
 }
