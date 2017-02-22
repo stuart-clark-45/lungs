@@ -15,7 +15,6 @@ import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +26,6 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +46,7 @@ import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
-import util.PointUtils;
 import vision.ROIExtractor;
-import vision.SliceSegmenter;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
@@ -79,7 +75,6 @@ public class Lungs {
 
   private Datastore ds;
   private final ROIExtractor extractor;
-  private SliceSegmenter segmenter;
 
   /*
    * Parameters used during segmentation
@@ -106,8 +101,7 @@ public class Lungs {
     this.openingWidth = openingWidth;
     this.openingHeight = openingHeight;
     this.openingKernel = openingKernel;
-    this.extractor = new ROIExtractor(FOREGROUND);
-    this.segmenter = new SliceSegmenter(FOREGROUND, sureFG, sureBG);
+    this.extractor = new ROIExtractor(sureFG, sureBG);
   }
 
   /**
@@ -188,27 +182,13 @@ public class Lungs {
    * @param original the {@link Mat}s to segment.
    * @return the segmented {@link Mat}s.
    */
-  public List<Mat> segment(List<Mat> original) {
-    int numMat = original.size();
-    List<Mat> segmented = new ArrayList<>(numMat);
+  public List<ROI> extractRois(Mat original) {
+    // Filter the image
+    Mat filtered = MatUtils.similarMat(original);
+    Imgproc.bilateralFilter(original, filtered, kernelSize, sigmaColour, sigmaSpace);
 
-    for (Mat orig : original) {
-      // Filter the image
-      Mat filtered = MatUtils.similarMat(orig);
-      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigmaColour, sigmaSpace);
-
-      // Segment it
-      Mat seg = segmenter.segment(filtered);
-
-      // Apply opening
-      Mat opened = MatUtils.similarMat(seg);
-      Imgproc.morphologyEx(seg, opened, Imgproc.MORPH_OPEN,
-          Imgproc.getStructuringElement(openingKernel, new Size(openingWidth, openingHeight)));
-
-      segmented.add(opened);
-    }
-
-    return segmented;
+    // Extract ROIs and return then
+    return extractor.extractROIs(filtered);
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
@@ -217,27 +197,8 @@ public class Lungs {
     }
   }
 
-  /**
-   * @param segmented a binary segmented {@link Mat} where the foreground has intensity values of
-   *        {@link Lungs#FOREGROUND}.
-   * @return A list of all the the {@link ROI}s that should be processed further by the system.
-   * @throws LungsException
-   */
-  public List<ROI> extractRois(Mat segmented) throws LungsException {
-    List<ROI> rois = extractor.extract(segmented);
-    // Remove the largest
-    Optional<ROI> largest = largest(rois);
-    largest.ifPresent(rois::remove);
-    rois.parallelStream().forEach(roi -> roi.setContour(PointUtils.region2perim(roi.getRegion())));
-    return rois;
-  }
-
   public void assistance(CTStack stack) throws Exception {
-    List<Mat> original = getStackMats(stack);
-
-    // Segment the images
-    LOGGER.info("Segmenting images");
-    List<Mat> segmented = segment(original);
+    List<Mat> mats = getStackMats(stack);
 
     // Train classifier
     LOGGER.info("Training classifier");
@@ -253,16 +214,15 @@ public class Lungs {
     FeatureEngine fEngine = new FeatureEngine();
     InstancesBuilder iBuilder = new InstancesBuilder(false);
     List<Mat> annotated =
-        original.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
+        mats.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
     // For each slice
-    for (int i = 0; i < segmented.size(); i++) {
-      Mat seg = segmented.get(i);
-      Mat orig = original.get(i);
+    for (int i = 0; i < mats.size(); i++) {
+      Mat mat = mats.get(i);
       Mat predict = annotated.get(i);
 
       // Create Instances
-      List<ROI> rois = extractRois(seg);
-      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
+      List<ROI> rois = extractRois(mat);
+      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, mat));
       Instances instances = iBuilder.createSet("Slice Instances", rois.size());
       iBuilder.addInstances(instances, rois);
       Attribute classAttribute = instances.classAttribute();
@@ -288,14 +248,14 @@ public class Lungs {
 
       }
 
-      LOGGER.info((i + 1) + "/" + segmented.size() + " slices processed");
+      LOGGER.info((i + 1) + "/" + mats.size() + " slices processed");
     }
 
     // Add ground truth
     groundTruth(stack.getSlices(), annotated);
 
     // Display Mats
-    new MatViewer(original, annotated).display();
+    new MatViewer(mats, annotated).display();
   }
 
   public void gtVsNoduleRoi(CTStack stack) {
@@ -330,10 +290,24 @@ public class Lungs {
   public void annotatedSegmented(CTStack stack) {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
-    List<Mat> segmented = segment(original);
+
+    // Create bgr copies that can be annotated
     List<Mat> annotated =
-        segmented.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+        original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+
+    // Paint ROIs to annotated Mats
+    for (int i = 0; i < original.size(); i++) {
+      Mat orig = original.get(i);
+      Mat anno = annotated.get(i);
+      for (ROI roi : extractor.extractROIs(orig)) {
+        paintROI(anno, roi, ColourBGR.GREEN);
+      }
+    }
+
+    // Paint ground truth to annotated Mats
     groundTruth(stack.getSlices(), annotated);
+
+    // Display annotated and original Mats
     new MatViewer(original, annotated).display();
   }
 
