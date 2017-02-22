@@ -292,23 +292,33 @@ public class Lungs {
     List<Mat> original = getStackMats(stack);
 
     // Create bgr copies that can be annotated
+    LOGGER.info("Creating BGR Mats for annotations...");
     List<Mat> annotated =
         original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
 
     // Paint ROIs to annotated Mats
+    LOGGER.info("Painting Mats with ROIs...");
     for (int i = 0; i < original.size(); i++) {
       Mat orig = original.get(i);
       Mat anno = annotated.get(i);
-      for (ROI roi : extractor.extractROIs(orig)) {
+      for (ROI roi : extractRois(orig)) {
         paintROI(anno, roi, ColourBGR.GREEN);
       }
+      LOGGER.info(i + 1 + "/" + original.size() + " have had ROIs painted on");
     }
 
     // Paint ground truth to annotated Mats
-    groundTruth(stack.getSlices(), annotated);
+    LOGGER.info("Creating BGR Mats for ground truth...");
+    List<Mat> groundTruth =
+        original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+    LOGGER.info("Paining Mats with ground truth...");
+    groundTruth(stack.getSlices(), groundTruth);
 
     // Display annotated and original Mats
-    new MatViewer(original, annotated).display();
+    LOGGER.info("Preparing to display...");
+    MatViewer matViewer = new MatViewer(groundTruth, annotated);
+    LOGGER.info("Displaying Mats now");
+    matViewer.display();
   }
 
   /**
