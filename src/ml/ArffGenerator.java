@@ -47,7 +47,7 @@ public class ArffGenerator {
     Instances trainingSet = createInstances("Training Set", ROI.Set.TRAIN, true);
 
     // Create testing set
-    Instances testingSet = createInstances("Testing Set", ROI.Set.TEST, false);
+    Instances testingSet = createInstances("Testing Set", ROI.Set.TEST, true);
 
     // Combine testing and training sets
     Instances all = builder.createSet("Combined Set", trainingSet.size() + testingSet.size());
@@ -95,7 +95,7 @@ public class ArffGenerator {
 
     // Get the iterator and the number of non nodules used
     Iterator<ROI> nonNodule;
-    int numNonNodule = 0;
+    int numNonNodule;
     if (limitOn) {
       nonNodule = new LimitedIterator<>(query.iterator(), numNodules);
       numNonNodule = numNodules;
