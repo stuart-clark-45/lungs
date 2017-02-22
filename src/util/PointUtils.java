@@ -66,10 +66,10 @@ public class PointUtils {
 
   /**
    * @param regionPoints as single region given as a list of all of it's {@link Point}s.
-   * @return a list of all the points that form the inclusive parameter of the region. i.e. the
-   *         points are also part of the area. List is not guaranteed to be in raster order.
+   * @return a list of all the points that form the inclusive contour of the region. i.e. the
+   *         points of the countor are also part of the region. List is not guaranteed to be in raster order.
    */
-  public static List<Point> region2perim(List<Point> regionPoints) {
+  public static List<Point> region2Contour(List<Point> regionPoints) {
     MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
     Mat region = points2MinMat(regionPoints, mmXY);
     List<MatOfPoint> contours = new ArrayList<>();

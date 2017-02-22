@@ -7,11 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import core.Lungs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 /**
@@ -91,7 +88,7 @@ public class PointUtilsTest {
     expected.add(new Point(5, 9));
     expected.add(new Point(4, 10));
 
-    HashSet<Point> actual = new HashSet<>(PointUtils.region2perim(region));
+    HashSet<Point> actual = new HashSet<>(PointUtils.region2Contour(region));
 
     assertEquals(new HashSet<>(expected), actual);
   }
