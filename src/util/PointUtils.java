@@ -53,9 +53,8 @@ public class PointUtils {
         FORE_GROUND));
 
     // Extract the region points
-    ROIExtractor extractor = new ROIExtractor(FORE_GROUND);
     Point point = perimeter.get(0);
-    List<Point> region = extractor.extractOne(filled, point).getRegion();
+    List<Point> region = ROIExtractor.extractOne(filled, point).getRegion();
 
     // Remove the perimeter if it was not inclusive
     if (!inclusive) {
