@@ -35,6 +35,7 @@ import config.Segmentation;
 import ml.ArffGenerator;
 import ml.FeatureEngine;
 import ml.InstancesBuilder;
+import ml.feature.MinCircle;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
@@ -46,6 +47,7 @@ import util.LungsException;
 import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
+import util.PointUtils;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -72,6 +74,11 @@ public class Lungs {
    * The value used to represent the foreground in segmented images.
    */
   public static final int FOREGROUND = 255;
+
+  /**
+   * The maximum size of a nodule in the data set provided.
+   */
+  private static final double MAX_NODULE_RADIUS = 35.2279;
 
   private Datastore ds;
   private final ROIExtractor extractor;
@@ -187,8 +194,28 @@ public class Lungs {
     Mat filtered = MatUtils.similarMat(original);
     Imgproc.bilateralFilter(original, filtered, kernelSize, sigmaColour, sigmaSpace);
 
-    // Extract ROIs and return then
-    return extractor.extractROIs(filtered);
+    // Extract ROIs
+    List<ROI> rois = extractor.extractROIs(filtered);
+
+    // Compute the contours for the ROIs
+    rois.parallelStream()
+        .forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
+
+    /*
+     * Remove any ROIs that are too big to be a nodule. By using the MAX_NODULE_RADIUS some
+     * abnormally big nodules could be ignored here. However if they are very large they are likely
+     * to be visible over many slices where they will have a cross section with a reduced radius. As
+     * such they should still be detectable by the system.
+     */
+    return rois.parallelStream().filter(roi -> {
+      try {
+        new MinCircle().compute(roi, original);
+        return roi.getMinCircle().getRadius() <= MAX_NODULE_RADIUS;
+      } catch (LungsException e) {
+        LOGGER.error("Failed to compute min circle for ROI", e);
+        return true;
+      }
+    }).collect(Collectors.toList());
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
