@@ -127,7 +127,6 @@ public class FeatureEngine {
     features.add(new MeanIntensity());
     features.add(new Area());
     features.add(new Perimeter());
-    features.add(new MinCircle());
     features.add(new FitEllipse());
     features.add(new CoarseHist());
     features.add(new MedHist());
