@@ -78,25 +78,31 @@ public class ROIClassifier {
    * @param groundTruths
    * @param matchThreshold
    */
+  @SuppressWarnings("ConstantConditions")
   public static void setClass(ROI roi, List<GroundTruth> groundTruths, double matchThreshold) {
     // Find the highest matching score
     double bestScore = 0.0;
+    GroundTruth bestMatch = null;
     for (GroundTruth gt : groundTruths) {
       double score = Matcher.match(roi, gt);
       if (score > bestScore) {
         bestScore = score;
+        bestMatch = gt;
       }
-    }
-
-    // Set the class
-    if (bestScore > matchThreshold) {
-      roi.setClassification(NODULE);
-    } else {
-      roi.setClassification(NON_NODULE);
     }
 
     // Set the match threshold used
     roi.setMatchThreshold(matchThreshold);
+
+    // Set the class
+    if (bestScore > matchThreshold) {
+      roi.setClassification(NODULE);
+      bestMatch.setMatchedToRoi(true);
+      bestMatch.setRoi(roi);
+    } else {
+      roi.setClassification(NON_NODULE);
+    }
+
   }
 
   public static void main(String... args) {

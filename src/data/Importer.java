@@ -60,6 +60,7 @@ public abstract class Importer<T> implements Runnable {
 
       LOGGER.info("Ensuring indexes for " + clazz.getName() + "...");
       ds.ensureIndexes(clazz);
+      LOGGER.info("Finished ensuring indexes for " + clazz.getName());
     } catch (LungsException e) {
       throw new IllegalStateException("Failed to import models", e);
     }
