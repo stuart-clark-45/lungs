@@ -135,20 +135,24 @@ public class InstancesBuilder {
     // Iterate over rois
     int counter = 0;
     while (rois.hasNext()) {
-      ROI roi = rois.next();
+      try {
+        ROI roi = rois.next();
 
-      // Add to the instances
-      Instance instance = new DenseInstance(numAttributes);
-      // Don't try to set class if setClass if false
-      int end = setClass ? numAttributes : numAttributes - 1;
-      for (int i = 0; i < end; i++) {
-        setValue(instance, attributes.get(i), functions.get(i).apply(roi));
-      }
-      set.add(instance);
+        // Add to the instances
+        Instance instance = new DenseInstance(numAttributes);
+        // Don't try to set class if setClass if false
+        int end = setClass ? numAttributes : numAttributes - 1;
+        for (int i = 0; i < end; i++) {
+          setValue(instance, attributes.get(i), functions.get(i).apply(roi));
+        }
+        set.add(instance);
 
-      // Logging
-      if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
+        // Logging
+        if (++counter % LOG_INTERVAL == 0) {
+          LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
+        }
+      }catch (Exception e){
+        LOGGER.error("Something went wrong when adding instances", e);
       }
     }
     
