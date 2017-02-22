@@ -1,7 +1,6 @@
 package ml;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,7 +8,6 @@ import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,35 +71,24 @@ public class ROIGenerator extends Importer<ROI> {
       for (CTSlice slice : stack.getSlices()) {
         futures.add(es.submit(() -> {
 
-          // Load slice mat
-            Mat mat = MatUtils.getSliceMat(slice);
-
-            // Segment slice (will only ever be one returned)
-            Mat segmented = lungs.segment(Collections.singletonList(mat)).get(0);
-
-            // Get ground truths for slice
+          // Get ground truths for slice
             List<GroundTruth> groundTruths =
                 ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
                     .field("imageSopUID").equal(slice.getImageSopUID()).asList();
 
             // Create ROIs and save them
-            try {
-              List<ROI> rois = lungs.extractRois(segmented);
+            List<ROI> rois = lungs.extractRois(MatUtils.getSliceMat(slice));
 
-              // Set ROI fields
-              for (ROI roi : rois) {
-                roi.setImageSopUID(slice.getImageSopUID());
-                roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
-                roi.setSet(set);
-                ROIClassifier.setClass(roi, groundTruths);
-              }
-
-              // Save rois
-              ds.save(rois);
-            } catch (LungsException e) {
-              LOGGER.error(
-                  "Failed to extract ROI for slice with SOP UID: " + slice.getImageSopUID(), e);
+            // Set ROI fields
+            for (ROI roi : rois) {
+              roi.setImageSopUID(slice.getImageSopUID());
+              roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
+              roi.setSet(set);
+              ROIClassifier.setClass(roi, groundTruths);
             }
+
+            // Save rois
+            ds.save(rois);
           }));
       }
     }
