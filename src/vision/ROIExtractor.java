@@ -3,7 +3,9 @@ package vision;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -25,6 +27,17 @@ public class ROIExtractor {
    * The value used for the foreground in the segmented images.
    */
   private static final int FOREGROUND = 255;
+
+  /**
+   * The label given to boundaries by {@link Imgproc#watershed(Mat, Mat)}.
+   */
+  private static final double BOUNDRIES = -1;
+
+  /**
+   * The label given to pixels that have been extracted into an {@link ROI} by
+   * {@link ROIExtractor#populateROI(int, int, Mat, double, ROI)}.
+   */
+  private static final double EXTRACTED = -2;
 
   /**
    * The threshold value that when used returns a thresholded image where the foreground is the
@@ -90,15 +103,18 @@ public class ROIExtractor {
 
     // Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
     // background (0)
-    int id = 1;
+    Set<Double> ingoreIds = new HashSet<>();
+    ingoreIds.add(BOUNDRIES);
+    ingoreIds.add(EXTRACTED);
     List<ROI> rois = new ArrayList<>();
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
-        if (labels.get(row, col)[0] == id) {
+        double id = labels.get(row, col)[0];
+        if (!ingoreIds.contains(id)) {
           ROI roi = new ROI();
           populateROI(row, col, labels, id, roi);
           rois.add(roi);
-          id++;
+          ingoreIds.add(id);
         }
       }
     }
@@ -134,7 +150,7 @@ public class ROIExtractor {
       roi.addPoint(new Point(col, row));
       // By setting this pixel to -2 we can show that it has already been visited and extracted into
       // an ROI. This avoids duplicate pints in the region lists.
-      labels.put(row, col, -2);
+      labels.put(row, col, EXTRACTED);
 
       // Label pixel up and left from current
       if (row - 1 > -1 && col - 1 > -1) {
