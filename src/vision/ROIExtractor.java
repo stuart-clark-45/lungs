@@ -14,11 +14,12 @@ import model.ROI;
 import util.MatUtils;
 
 /**
- * Used segment CT slices.
+ * Used extract ROIs from {@link Mat}s using a combination of the watershed algorithm and the
+ * connected component algorithm.
  *
  * @author Stuart Clark
  */
-public class SliceSegmenter {
+public class ROIExtractor {
 
   /**
    * The value used for the foreground in the segmented images that are returned.
@@ -29,7 +30,7 @@ public class SliceSegmenter {
 
   private int sureBG;
 
-  public SliceSegmenter(int foreground, int sureFG, int sureBG) {
+  public ROIExtractor(int foreground, int sureFG, int sureBG) {
     this.foreground = foreground;
     this.sureFG = sureFG;
     this.sureBG = sureBG;
