@@ -9,13 +9,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Mode;
 import model.CTStack;
+import model.StringResult;
 
 /**
  * Used to provide global access to a singleton {@link DataFilter} used to obtain useful subsets of
@@ -102,8 +102,8 @@ public class DataFilter {
     List<String> all = new ArrayList<>();
     Datastore ds = MongoHelper.getDataStore();
     Query<CTStack> match = ds.createQuery(CTStack.class).field("model").equal(MODEL);
-    ds.createAggregation(CTStack.class).match(match).group(UID).aggregate(Result.class)
-        .forEachRemaining(result -> all.add(result.seriesInstanceUID));
+    ds.createAggregation(CTStack.class).match(match).group(UID).aggregate(StringResult.class)
+        .forEachRemaining(result -> all.add(result.getId()));
 
     // Calculate the number that should be in the test and training sets
     int total = all.size();
@@ -174,14 +174,6 @@ public class DataFilter {
     }
 
     return DATA_FILTER;
-  }
-
-  /**
-   * Used as the return class for the aggregation that takes place in {@link DataFilter#initProd()}
-   */
-  private static class Result {
-    @Id
-    private String seriesInstanceUID;
   }
 
 }
