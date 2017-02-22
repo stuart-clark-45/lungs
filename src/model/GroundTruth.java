@@ -79,6 +79,17 @@ public class GroundTruth {
    */
   private double minRadius;
 
+  /**
+   * True if this ground truth was matched to an ROI (nodules only).
+   */
+  @Indexed
+  private boolean matchedToRoi;
+
+  /**
+   * The roi this ground truth was matched to.
+   */
+  private ROI roi;
+
   public ObjectId getId() {
     return id;
   }
@@ -163,4 +174,20 @@ public class GroundTruth {
     this.minRadius = minRadius;
   }
 
+  public boolean isMatchedToRoi() {
+    return matchedToRoi;
+  }
+
+  public void setMatchedToRoi(boolean matchedToRoi) {
+    this.matchedToRoi = matchedToRoi;
+  }
+
+  public ROI getRoi() {
+    return roi;
+  }
+
+  public void setRoi(ROI roi) {
+    this.roi = roi;
+  }
+  
 }
