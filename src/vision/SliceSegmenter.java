@@ -1,14 +1,16 @@
 package vision;
 
-import static org.opencv.imgproc.Imgproc.COLORMAP_HSV;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
-import static org.opencv.imgproc.Imgproc.applyColorMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
+import model.ROI;
 import util.MatUtils;
 
 /**
@@ -33,17 +35,20 @@ public class SliceSegmenter {
     this.sureBG = sureBG;
   }
 
-  public Mat segment(Mat original) {
+  public List<ROI> extractROIs(Mat original) {
+    // Apply threshold to find the sure foreground
     Mat foregroundMat = MatUtils.similarMat(original);
     Imgproc.threshold(original, foregroundMat, sureFG, foreground, THRESH_BINARY);
 
+    // Apply threshold to find the sure background
     Mat backgroundMat = MatUtils.similarMat(original);
     Imgproc.threshold(original, backgroundMat, sureBG, foreground, THRESH_BINARY);
 
+    // Subtract the sure foreground from the sure background to find the unknown region
     Mat unknownMat = MatUtils.similarMat(original);
     Core.subtract(backgroundMat, foregroundMat, unknownMat);
 
-    // Temp label with become the wrong CvType when connected Components is called
+    // Label the connected components found in the sure forground
     Mat labels = MatUtils.similarMat(original);
     Imgproc.connectedComponents(foregroundMat, labels);
 
@@ -54,7 +59,7 @@ public class SliceSegmenter {
       }
     }
 
-    // Mark the unknown region with 0's
+    // Mark the unknown region with 0's so that labels can be used by Imgproc.watershed(..)
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
         if (unknownMat.get(row, col)[0] == foreground) {
@@ -63,19 +68,86 @@ public class SliceSegmenter {
       }
     }
 
+    // Run the watershed algorithm (this will update labels)
     Mat bgr = MatUtils.grey2BGR(original);
     Imgproc.watershed(bgr, labels);
 
-    Mat thresholded = MatUtils.similarMat(original);
+    // Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
+    // background (0)
+    int id = 1;
+    List<ROI> rois = new ArrayList<>();
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
-        if (labels.get(row, col)[0] == -1) {
-          thresholded.put(row, col, foreground);
+        if (labels.get(row, col)[0] == id) {
+          ROI roi = new ROI();
+          populateROI(row, col, labels, id, roi);
+          rois.add(roi);
+          id++;
         }
       }
     }
 
-    return thresholded;
+    return rois;
+  }
+
+  /**
+   * Recursive method used to populate the {@link ROI#region}.
+   * 
+   * @param row the row of the current pixel being examined.
+   * @param col the column of the current pixel being examined.
+   * @param labels the {@link Mat} containing the labels.
+   * @param id the id for the roi that is being extracted.
+   * @param roi the {@link ROI} to populate.
+   */
+  private void populateROI(int row, int col, Mat labels, int id, ROI roi) {
+    // If the pixel is white and has not been accepted as part of an ROI yet
+    if (labels.get(row, col)[0] == id) {
+      roi.addPoint(new Point(col, row));
+      // By setting this pixel to -2 we can show that it has already been visited and extracted into
+      // an ROI. This avoids duplicate pints in the region lists.
+      labels.put(row, col, -2);
+
+      // Label pixel up and left from current
+      if (row - 1 > -1 && col - 1 > -1) {
+        populateROI(row - 1, col - 1, labels, id, roi);
+      }
+
+      // Label pixel up from current
+      if (col - 1 > -1) {
+        populateROI(row, col - 1, labels, id, roi);
+      }
+
+      // Label pixel up and right from current
+      if (row + 1 < labels.rows() && col - 1 > -1) {
+        populateROI(row + 1, col - 1, labels, id, roi);
+      }
+
+      // Label pixel right from current
+      if (row + 1 < labels.rows()) {
+        populateROI(row + 1, col, labels, id, roi);
+      }
+
+      // Label pixel down and right from current
+      if (row + 1 < labels.rows() && col + 1 < labels.cols()) {
+        populateROI(row + 1, col + 1, labels, id, roi);
+      }
+
+      // Label pixel down from current
+      if (col + 1 < labels.cols()) {
+        populateROI(row, col + 1, labels, id, roi);
+      }
+
+      // Label pixel left and down from current
+      if (row - 1 > -1 && col + 1 < labels.cols()) {
+        populateROI(row - 1, col + 1, labels, id, roi);
+      }
+
+      // Label pixel left from current
+      if (row - 1 > -1) {
+        populateROI(row - 1, col, labels, id, roi);
+      }
+
+    }
   }
 
 }
