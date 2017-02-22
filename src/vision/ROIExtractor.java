@@ -107,6 +107,19 @@ public class ROIExtractor {
   }
 
   /**
+   * @param labels a {@link Mat} with labeled connected components.
+   * @param point one of the points in the connected component that should be extracted into an ROI.
+   * @return the {@link ROI} for the connected component that has a pixel at {@code point}.
+   */
+  public static ROI extractOne(Mat labels, Point point) {
+    ROI roi = new ROI();
+    int row = (int) point.y;
+    int col = (int) point.x;
+    populateROI(row, col, labels, labels.get(row, col)[0], roi);
+    return roi;
+  }
+
+  /**
    * Recursive method used to populate the {@link ROI#region}.
    * 
    * @param row the row of the current pixel being examined.
@@ -115,7 +128,7 @@ public class ROIExtractor {
    * @param id the id for the roi that is being extracted.
    * @param roi the {@link ROI} to populate.
    */
-  private void populateROI(int row, int col, Mat labels, int id, ROI roi) {
+  private static void populateROI(int row, int col, Mat labels, double id, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
     if (labels.get(row, col)[0] == id) {
       roi.addPoint(new Point(col, row));
