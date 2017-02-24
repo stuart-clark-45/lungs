@@ -101,8 +101,18 @@ public class ROIExtractor {
     Mat bgr = MatUtils.grey2BGR(original);
     Imgproc.watershed(bgr, labels);
 
-    // Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
-    // background (0)
+
+    return labelsToROIs(labels);
+  }
+
+  /**
+   * Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
+   * background (0)
+   *
+   * @param labels a {@link Mat} containing labels created using the connected component algorithm.
+   * @return the rois.
+   */
+  public static List<ROI> labelsToROIs(Mat labels) {
     Set<Double> ignoreIds = new HashSet<>();
     ignoreIds.add(BOUNDARIES);
     ignoreIds.add(EXTRACTED);
@@ -131,7 +141,8 @@ public class ROIExtractor {
     ROI roi = new ROI();
     int row = (int) point.y;
     int col = (int) point.x;
-    populateROI(row, col, labels, labels.get(row, col)[0], roi);
+    double id = labels.get(row, col)[0];
+    populateROI(row, col, labels, id, roi);
     return roi;
   }
 
