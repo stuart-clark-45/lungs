@@ -31,7 +31,7 @@ public class ROIExtractor {
   /**
    * The label given to boundaries by {@link Imgproc#watershed(Mat, Mat)}.
    */
-  private static final double BOUNDRIES = -1;
+  private static final double BOUNDARIES = -1;
 
   /**
    * The label given to pixels that have been extracted into an {@link ROI} by
@@ -103,18 +103,18 @@ public class ROIExtractor {
 
     // Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
     // background (0)
-    Set<Double> ingoreIds = new HashSet<>();
-    ingoreIds.add(BOUNDRIES);
-    ingoreIds.add(EXTRACTED);
+    Set<Double> ignoreIds = new HashSet<>();
+    ignoreIds.add(BOUNDARIES);
+    ignoreIds.add(EXTRACTED);
     List<ROI> rois = new ArrayList<>();
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
         double id = labels.get(row, col)[0];
-        if (!ingoreIds.contains(id)) {
+        if (!ignoreIds.contains(id)) {
           ROI roi = new ROI();
           populateROI(row, col, labels, id, roi);
           rois.add(roi);
-          ingoreIds.add(id);
+          ignoreIds.add(id);
         }
       }
     }
