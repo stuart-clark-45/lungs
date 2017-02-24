@@ -8,6 +8,7 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
+import static org.opencv.imgproc.Imgproc.MORPH_ELLIPSE;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
@@ -23,6 +24,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,6 +188,19 @@ public class Lungs {
     // Extract ROIs
     List<ROI> rois = extractor.extractROIs(filtered);
 
+    // Get largest
+    ROI largest = null;
+    int maxSize = -1;
+    for (ROI roi : rois) {
+      int size = roi.getRegion().size();
+      if (size > maxSize) {
+        largest = roi;
+        maxSize = size;
+      }
+    }
+
+    rois.addAll(extractJuxtapleural(largest, original));
+
     // Compute the contours for the ROIs
     rois.parallelStream()
         .forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
@@ -205,6 +220,25 @@ public class Lungs {
         return true;
       }
     }).collect(Collectors.toList());
+  }
+
+  private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
+    Mat roiMat = MatUtils.similarMat(original);
+    for (Point point : largest.getRegion()) {
+      roiMat.put((int) point.y, (int) point.x, FOREGROUND);
+    }
+
+    Mat mask = MatUtils.similarMat(roiMat);
+    Imgproc.morphologyEx(roiMat, mask, Imgproc.MORPH_ERODE,
+        Imgproc.getStructuringElement(MORPH_ELLIPSE, new Size(3, 3)));
+
+    Mat masked = roiMat.clone();
+    Core.subtract(roiMat, mask, masked);
+
+    Mat labels = MatUtils.similarMat(masked);
+    Imgproc.connectedComponents(mask, labels);
+
+    return ROIExtractor.labelsToROIs(labels);
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
