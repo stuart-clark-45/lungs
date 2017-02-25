@@ -8,11 +8,11 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
-import static org.opencv.imgproc.Imgproc.MORPH_ELLIPSE;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -21,10 +21,12 @@ import java.util.stream.Collectors;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,6 +201,8 @@ public class Lungs {
       }
     }
 
+    rois = extractJuxtapleural(largest, original);
+
     rois.addAll(extractJuxtapleural(largest, original));
 
     // Compute the contours for the ROIs
@@ -223,21 +227,58 @@ public class Lungs {
   }
 
   private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
+    // Create a mat with just the largest in
     Mat roiMat = MatUtils.similarMat(original);
     for (Point point : largest.getRegion()) {
       roiMat.put((int) point.y, (int) point.x, FOREGROUND);
     }
 
-    Mat mask = MatUtils.similarMat(roiMat);
-    Imgproc.morphologyEx(roiMat, mask, Imgproc.MORPH_ERODE,
-        Imgproc.getStructuringElement(MORPH_ELLIPSE, new Size(3, 3)));
+    // Create list of internal contours for the ROI
+    List<MatOfPoint> contours = new ArrayList<>();
+    Imgproc.findContours(roiMat, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+    // Removed external contour
+    contours.remove(0);
 
-    Mat masked = roiMat.clone();
-    Core.subtract(roiMat, mask, masked);
+    // Create a list of convex hulls for the contours
+    List<MatOfPoint> hulls = new ArrayList<>();
+    for (MatOfPoint contour : contours) {
 
-    Mat labels = MatUtils.similarMat(masked);
-    Imgproc.connectedComponents(mask, labels);
+      // Find the convex hull for the contour
+      MatOfInt hull = new MatOfInt();
+      Imgproc.convexHull(contour, hull);
 
+      // Convert MatOfInt to MatOfPoint
+      MatOfPoint matOfPoint = new MatOfPoint();
+      matOfPoint.create((int) hull.size().height, 1, CvType.CV_32SC2);
+      for (int i = 0; i < hull.size().height; i++) {
+        int index = (int) hull.get(i, 0)[0];
+        double[] point = new double[] {contour.get(index, 0)[0], contour.get(index, 0)[1]};
+        matOfPoint.put(i, 0, point);
+      }
+
+      // Add to list
+      hulls.add(matOfPoint);
+    }
+
+    // Fill a Mat with the convex hulls
+    Mat bgr = Mat.zeros(original.rows(), original.cols(), CvType.CV_8UC3);
+    Imgproc.fillPoly(bgr, hulls, new Scalar(ColourBGR.WHITE));
+
+    // Invert to create mask
+    Mat mask = MatUtils.similarMat(bgr);
+    Core.bitwise_not(bgr, mask);
+
+    // Apply mask
+    Mat masked = MatUtils.similarMat(mask);
+    Core.subtract(MatUtils.grey2BGR(roiMat), mask, masked);
+
+    // TODO Errosion
+
+    // TODO masked needs to be single channel may be worth converting earlier mats back to single
+    // channel for efficentcy
+    // Extract ROIs and return
+    Mat labels = MatUtils.similarMat(original);
+    Imgproc.connectedComponents(masked, labels);
     return ROIExtractor.labelsToROIs(labels);
   }
 
@@ -371,6 +412,7 @@ public class Lungs {
     matViewer.display();
   }
 
+
   /**
    * Should be run with the following VM args
    * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
@@ -389,6 +431,17 @@ public class Lungs {
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
-    lungs.annotatedSegmented(stack);
+    // lungs.annotatedSegmented(stack);
+
+
+    List<Mat> stackMats = MatUtils.getStackMats(stack);
+    Mat mat = stackMats.get(128);
+    Mat bgr = MatUtils.grey2BGR(mat);
+    List<ROI> rois = lungs.extractRois(mat);
+    for (ROI roi : rois) {
+      lungs.paintROI(bgr, roi, ColourBGR.GREEN);
+    }
+    new MatViewer(bgr).display();
+
   }
 }
