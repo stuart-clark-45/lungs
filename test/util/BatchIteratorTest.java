@@ -1,9 +1,7 @@
 package util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +26,6 @@ public class BatchIteratorTest {
     }
     assertEquals(Arrays.asList("1", "2"), output);
     assertNull(iterator.next());
-    assertFalse(iterator.isFinished());
 
     iterator.nextBatch();
     output = new ArrayList<>();
@@ -37,7 +34,6 @@ public class BatchIteratorTest {
     }
     assertEquals(Collections.singletonList("3"), output);
     assertNull(iterator.next());
-    assertTrue(iterator.isFinished());
   }
 
 }

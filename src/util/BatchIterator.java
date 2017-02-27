@@ -42,8 +42,4 @@ public class BatchIterator<T> implements Iterator<T> {
     limit += batchSize;
   }
 
-  public boolean isFinished() {
-    return !iterator.hasNext();
-  }
-
 }
