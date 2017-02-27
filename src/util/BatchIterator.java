@@ -7,19 +7,21 @@ import java.util.Iterator;
  *
  * @author Stuart Clark
  */
-public class LimitedIterator<T> implements Iterator<T> {
+public class BatchIterator<T> implements Iterator<T> {
 
   private final Iterator<T> iterator;
-  private final int limit;
+  private final int batchSize;
+  private int limit;
   private int counter;
 
   /**
    * @param iterator the {@link Iterator} to limit.
-   * @param limit the number of times it should be possible to call {@link LimitedIterator#next()}.
+   * @param batchSize the size of a single batch.
    */
-  public LimitedIterator(Iterator<T> iterator, int limit) {
+  public BatchIterator(Iterator<T> iterator, int batchSize) {
     this.iterator = iterator;
-    this.limit = limit;
+    this.batchSize = batchSize;
+    this.limit = batchSize;
     this.counter = 0;
   }
 
@@ -35,5 +37,13 @@ public class LimitedIterator<T> implements Iterator<T> {
     }
     return iterator.next();
   }
-  
+
+  public void nextBatch() {
+    limit += batchSize;
+  }
+
+  public boolean isFinished() {
+    return !iterator.hasNext();
+  }
+
 }
