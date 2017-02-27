@@ -40,10 +40,11 @@
 
     <target name="dist" depends="compile" description="build a distribution-ready package">
         <echo message="Building for commit: "/>
+        <touch file="${dir.dist}/version.txt" mkdirs="true"/>
         <exec executable="git" failonerror="true">
             <arg value="rev-parse"/>
             <arg value="HEAD"/>
-            <redirector output="version.txt" alwayslog="true"/>
+            <redirector output="${dir.dist}/version.txt" alwayslog="true"/>
         </exec>
 
         <mkdir dir="${dir.dist}/lib"/>
