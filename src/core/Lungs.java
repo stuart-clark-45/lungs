@@ -27,6 +27,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,8 +202,6 @@ public class Lungs {
       }
     }
 
-    rois = extractJuxtapleural(largest, original);
-
     rois.addAll(extractJuxtapleural(largest, original));
 
     // Compute the contours for the ROIs
@@ -224,6 +223,7 @@ public class Lungs {
         return true;
       }
     }).collect(Collectors.toList());
+
   }
 
   private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
@@ -260,22 +260,23 @@ public class Lungs {
       hulls.add(matOfPoint);
     }
 
-    // Fill a Mat with the convex hulls
-    Mat bgr = Mat.zeros(original.rows(), original.cols(), CvType.CV_8UC3);
-    Imgproc.fillPoly(bgr, hulls, new Scalar(ColourBGR.WHITE));
-
-    // Invert to create mask
-    Mat mask = MatUtils.similarMat(bgr);
-    Core.bitwise_not(bgr, mask);
+    // Create a mask
+    Mat temp = MatUtils.similarMat(original);
+    // Draw the convex hull
+    Imgproc.fillPoly(temp, hulls, new Scalar(255));
+    Mat eroded = MatUtils.similarMat(temp);
+    // Erode the convex hull so that very small protrusions into cavity of the lungs are ignored
+    int erosionSize = 5;
+    Imgproc.erode(temp, eroded,
+        Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(erosionSize, erosionSize)));
+    // Invert the mat to create the mask
+    Mat mask = MatUtils.similarMat(eroded);
+    Core.bitwise_not(eroded, mask);
 
     // Apply mask
     Mat masked = MatUtils.similarMat(mask);
-    Core.subtract(MatUtils.grey2BGR(roiMat), mask, masked);
+    Core.subtract(roiMat, mask, masked);
 
-    // TODO Errosion
-
-    // TODO masked needs to be single channel may be worth converting earlier mats back to single
-    // channel for efficentcy
     // Extract ROIs and return
     Mat labels = MatUtils.similarMat(original);
     Imgproc.connectedComponents(masked, labels);
@@ -431,17 +432,7 @@ public class Lungs {
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
-    // lungs.annotatedSegmented(stack);
-
-
-    List<Mat> stackMats = MatUtils.getStackMats(stack);
-    Mat mat = stackMats.get(128);
-    Mat bgr = MatUtils.grey2BGR(mat);
-    List<ROI> rois = lungs.extractRois(mat);
-    for (ROI roi : rois) {
-      lungs.paintROI(bgr, roi, ColourBGR.GREEN);
-    }
-    new MatViewer(bgr).display();
-
+    lungs.annotatedSegmented(stack);
   }
+  
 }
