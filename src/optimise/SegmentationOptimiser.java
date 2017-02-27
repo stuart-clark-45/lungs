@@ -18,11 +18,13 @@ import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.SegOpt;
 import core.Lungs;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.ROI;
+import util.ConfigHelper;
 import util.DataFilter;
 import util.MatUtils;
 import util.MongoHelper;
@@ -240,15 +242,17 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Create optimiser
-    int popSize = 50;
-    int generations = 20000;
-    int numStacks = 10;
-    int readingNumber = args.length == 1 ? Integer.parseInt(args[0]) : 0;
+    int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
+    int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
+    int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
+    int readingNumber = ConfigHelper.getInt(SegOpt.READING_NUMBER);
     SegmentationOptimiser optimiser =
         new SegmentationOptimiser(popSize, generations, numStacks, readingNumber);
 
-    // Load the persisted population if there is one
-    // optimiser.loadPopulation();
+    // Load the persisted population if configured to
+    if (ConfigHelper.getBoolean(SegOpt.LOAD_POPULATION)) {
+      optimiser.loadPopulation();
+    }
 
     // Run the optimiser
     optimiser.run();
