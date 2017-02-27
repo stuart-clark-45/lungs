@@ -91,17 +91,21 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
+  private int erosionSize;
 
   public Lungs() {
     this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
-        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
+        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG),
+        getInt(Segmentation.EROSION_SIZE));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG) {
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG,
+      int erosionSize) {
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.kernelSize = kernelSize;
+    this.erosionSize = erosionSize;
     this.extractor = new ROIExtractor(sureFG, sureBG);
   }
 
@@ -266,7 +270,6 @@ public class Lungs {
     Imgproc.fillPoly(temp, hulls, new Scalar(255));
     Mat eroded = MatUtils.similarMat(temp);
     // Erode the convex hull so that very small protrusions into cavity of the lungs are ignored
-    int erosionSize = 5;
     Imgproc.erode(temp, eroded,
         Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(erosionSize, erosionSize)));
     // Invert the mat to create the mask
@@ -434,5 +437,5 @@ public class Lungs {
     // lungs.assistance(stack);
     lungs.annotatedSegmented(stack);
   }
-  
+
 }
