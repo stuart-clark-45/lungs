@@ -29,7 +29,8 @@ import util.MongoHelper;
 import vision.Matcher;
 
 /**
- * Used to optimise the parameters that are used to segment
+ * Used to optimise the parameters that are used to segment only focuses of maximising the
+ * segmentation of true positives.
  *
  * @author Stuart Clark
  */
@@ -124,22 +125,12 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
     List<List<ROI>> allROIs = new ArrayList<>();
-    int numROIs = 0;
     for (Mat mat : mats) {
       List<ROI> rois = lungs.extractRois(mat);
       allROIs.add(rois);
-      numROIs += rois.size();
     }
 
-    double inclusion = noduleInclusion(allROIs);
-
-    double fitness = inclusion;
-    if (inclusion > 0.7) {
-      fitness += Double.MAX_VALUE / 2;
-      fitness -= numROIs;
-    }
-
-    return fitness;
+    return noduleInclusion(allROIs);
   }
 
   /**
