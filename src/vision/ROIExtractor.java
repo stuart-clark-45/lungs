@@ -40,6 +40,11 @@ public class ROIExtractor {
   private static final double EXTRACTED = -2;
 
   /**
+   * The label given to pixels that are part of the background.
+   */
+  private static final double BACKGROUND = 0;
+
+  /**
    * The threshold value that when used returns a thresholded image where the foreground is the
    * pixels of the original image that are known to be in the foreground of the original image
    */
@@ -116,6 +121,7 @@ public class ROIExtractor {
     Set<Double> ignoreIds = new HashSet<>();
     ignoreIds.add(BOUNDARIES);
     ignoreIds.add(EXTRACTED);
+    ignoreIds.add(BACKGROUND);
     List<ROI> rois = new ArrayList<>();
     for (int row = 0; row < labels.rows(); row++) {
       for (int col = 0; col < labels.cols(); col++) {
