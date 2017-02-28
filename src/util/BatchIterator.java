@@ -3,16 +3,32 @@ package util;
 import java.util.Iterator;
 
 /**
- * Used to place a limit on the number of elements that can be obtained from an {@link Iterator}.
+ * Used iterate through elements in an {@link Iterator} in batches. Also allows for a limit to be
+ * placed on the number of elements that can bit iterated thorough.
  *
  * @author Stuart Clark
  */
 public class BatchIterator<T> implements Iterator<T> {
 
+  /**
+   * The {@link Iterator} that to iterate over in batches.
+   */
   private final Iterator<T> iterator;
+
+  /**
+   * The maximum number of elements that should be in each batch.
+   */
   private final int batchSize;
-  private int batchStop;
+
+  /**
+   * Counts the number of times that {@link BatchIterator#next()} has been called.
+   */
   private int counter;
+
+  /**
+   * The maximum value that {@code counter} should reach for this batch
+   */
+  private int batchStop;
 
   /**
    * The number of times that {@link BatchIterator#next()} can be called before it returns
