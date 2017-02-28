@@ -128,7 +128,7 @@ public class InstancesBuilder {
    * @param rois iterator for the {@link ROI}s.
    * @return {@link Instances} for the given {@link ROI}s
    */
-  public void addInstances(Instances set, Iterator<ROI> rois, int numROI) {
+  public void addInstances(Instances set, Iterator<ROI> rois, int maxNumROI) {
     String name = set.relationName();
 
     LOGGER.info("Adding instances to " + name + "...");
@@ -149,7 +149,7 @@ public class InstancesBuilder {
 
         // Logging
         if (++counter % LOG_INTERVAL == 0) {
-          LOGGER.info(counter + " / max " + numROI + " " + name + " instances added");
+          LOGGER.info(counter + " / max " + maxNumROI + " " + name + " instances added");
         }
       }catch (Exception e){
         LOGGER.error("Something went wrong when adding instances", e);
