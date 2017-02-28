@@ -149,7 +149,7 @@ public class InstancesBuilder {
 
         // Logging
         if (++counter % LOG_INTERVAL == 0) {
-          LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
+          LOGGER.info(counter + " / max " + numROI + " " + name + " instances added");
         }
       }catch (Exception e){
         LOGGER.error("Something went wrong when adding instances", e);

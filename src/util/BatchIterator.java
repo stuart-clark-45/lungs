@@ -11,8 +11,14 @@ public class BatchIterator<T> implements Iterator<T> {
 
   private final Iterator<T> iterator;
   private final int batchSize;
-  private int limit;
+  private int batchStop;
   private int counter;
+
+  /**
+   * The number of times that {@link BatchIterator#next()} can be called before it returns
+   * {@code null}.
+   */
+  private Integer limit;
 
   /**
    * @param iterator the {@link Iterator} to limit.
@@ -21,25 +27,28 @@ public class BatchIterator<T> implements Iterator<T> {
   public BatchIterator(Iterator<T> iterator, int batchSize) {
     this.iterator = iterator;
     this.batchSize = batchSize;
-    this.limit = batchSize;
+    this.batchStop = batchSize;
     this.counter = 0;
   }
 
   @Override
   public boolean hasNext() {
-    return iterator.hasNext() && counter < limit;
+    return iterator.hasNext() && counter < batchStop && (limit == null || counter < limit);
   }
 
   @Override
   public T next() {
-    if (counter++ >= limit) {
+    if (counter++ >= batchStop || (limit != null && counter > limit)) {
       return null;
     }
     return iterator.next();
   }
 
   public void nextBatch() {
-    limit += batchSize;
+    batchStop += batchSize;
   }
 
+  public void setLimit(Integer limit) {
+    this.limit = limit;
+  }
 }
