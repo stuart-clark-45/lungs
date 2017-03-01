@@ -331,15 +331,10 @@ public class Lungs {
         // Classify the instance
         Instance instance = instances.get(j);
         double v = classifier.classifyInstance(instance);
-        if (v != 0.0) {
-          LOGGER.info("instance value: " + v);
-        }
-
         ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
 
         // If nodule then annotate
-        // TODO class labels appear to be backwards no idea why
-        if (!classification.equals(ROI.Class.NODULE)) {
+        if (classification.equals(ROI.Class.NODULE)) {
           LOGGER.info("Nodule Found!");
           paintROI(predict, rois.get(j), ColourBGR.GREEN);
         }
@@ -437,8 +432,8 @@ public class Lungs {
 
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
-    // lungs.assistance(stack);
-    lungs.annotatedSegmented(stack);
+    lungs.assistance(stack);
+    // lungs.annotatedSegmented(stack);
   }
 
 }
