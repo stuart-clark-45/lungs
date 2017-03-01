@@ -32,6 +32,7 @@ public class InstancesBuilder {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InstancesBuilder.class);
   private static final int LOG_INTERVAL = 5000;
+  private final Instances structure;
 
   private ArrayList<Attribute> attributes;
   private final int numAttributes;
@@ -102,6 +103,7 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
     this.functions.add(ROI::getClassification);
 
+    this.structure = createSet("Structure", 0);
     this.numAttributes = attributes.size();
   }
 
@@ -136,27 +138,32 @@ public class InstancesBuilder {
     int counter = 0;
     while (rois.hasNext()) {
       try {
-        ROI roi = rois.next();
-
-        // Add to the instances
-        Instance instance = new DenseInstance(numAttributes);
-        // Don't try to set class if setClass if false
-        int end = setClass ? numAttributes : numAttributes - 1;
-        for (int i = 0; i < end; i++) {
-          setValue(instance, attributes.get(i), functions.get(i).apply(roi));
-        }
-        set.add(instance);
+        set.add(createInstance(rois.next()));
 
         // Logging
         if (++counter % LOG_INTERVAL == 0) {
           LOGGER.info(counter + " / max " + maxNumROI + " " + name + " instances added");
         }
-      }catch (Exception e){
+      } catch (Exception e) {
         LOGGER.error("Something went wrong when adding instances", e);
       }
     }
-    
+
     LOGGER.info("Finished adding instances to " + name);
+  }
+
+  /**
+   * @param roi
+   * @return an {@link Instance} for the {@code roi}.
+   */
+  public Instance createInstance(ROI roi) {
+    Instance instance = new DenseInstance(numAttributes);
+    // Don't try to set class if setClass if false
+    int end = setClass ? numAttributes : numAttributes - 1;
+    for (int i = 0; i < end; i++) {
+      setValue(instance, attributes.get(i), functions.get(i).apply(roi));
+    }
+    return instance;
   }
 
   public Instances createSet(String name, int size) {
@@ -165,9 +172,13 @@ public class InstancesBuilder {
     return instances;
   }
 
+  public Instances getStructure() {
+    return structure;
+  }
+
   /**
    * Set {@code attribute} {@code value} for the {@code instance} by casting it to the correct type.
-   *
+   * 
    * @param instance
    * @param attribute
    * @param value
