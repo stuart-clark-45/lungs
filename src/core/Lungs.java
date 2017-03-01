@@ -82,6 +82,11 @@ public class Lungs {
    */
   private static final double MAX_NODULE_RADIUS = 35.2279;
 
+  /**
+   * The minimum size of a nodule in the data set provided.
+   */
+  private static final double MIN_NODULE_RADIUS = 1.0;
+
   private Datastore ds;
   private final ROIExtractor extractor;
 
@@ -213,15 +218,16 @@ public class Lungs {
         .forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
 
     /*
-     * Remove any ROIs that are too big to be a nodule. By using the MAX_NODULE_RADIUS some
-     * abnormally big nodules could be ignored here. However if they are very large they are likely
-     * to be visible over many slices where they will have a cross section with a reduced radius. As
-     * such they should still be detectable by the system.
+     * Remove any ROIs that are too big or too small to be a nodule. By using the MAX_NODULE_RADIUS
+     * some abnormally big nodules could be ignored here. However if they are very large they are
+     * likely to be visible over many slices where they will have a cross section with a reduced
+     * radius. As such they should still be detectable by the system.
      */
     return rois.parallelStream().filter(roi -> {
       try {
         new MinCircle().compute(roi, original);
-        return roi.getMinCircle().getRadius() <= MAX_NODULE_RADIUS;
+        double radius = roi.getMinCircle().getRadius();
+        return radius >= MIN_NODULE_RADIUS && radius <= MAX_NODULE_RADIUS;
       } catch (LungsException e) {
         LOGGER.error("Failed to compute min circle for ROI", e);
         return true;
