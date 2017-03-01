@@ -26,12 +26,17 @@ public class ROIClassifier {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIClassifier.class);
   private static final String IMAGE_SOP_UID = "imageSopUID";
-  private static final double MATCH_THRESHOLD = ConfigHelper.getDouble(Misc.MATCH_THRESHOLD);
   private static final int LOG_INTERVAL = 10;
 
   private Datastore ds;
+  private double matchThreshold;
 
   public ROIClassifier() {
+    this(ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
+  }
+
+  public ROIClassifier(double matchThreshold) {
+    this.matchThreshold = matchThreshold;
     this.ds = MongoHelper.getDataStore();
   }
 
@@ -52,7 +57,7 @@ public class ROIClassifier {
               .equal(BIG_NODULE).asList();
 
       // Classify each of the rois
-      rois.parallelStream().forEach(roi -> setClass(roi, gts, MATCH_THRESHOLD));
+      rois.parallelStream().forEach(roi -> setClass(roi, gts));
 
       // Save the updated ROIs
       ds.save(rois);
@@ -66,20 +71,15 @@ public class ROIClassifier {
     LOGGER.info("ROIClassifier finished");
   }
 
-  public static void setClass(ROI roi, List<GroundTruth> groundTruths) {
-    setClass(roi, groundTruths, MATCH_THRESHOLD);
-  }
-
   /**
    * Set the {@link ROI#classification} for {@code roi} by matching the {@link ROI} to a
    * {@link GroundTruth}.
    *
    * @param roi
    * @param groundTruths
-   * @param matchThreshold
    */
   @SuppressWarnings("ConstantConditions")
-  public static void setClass(ROI roi, List<GroundTruth> groundTruths, double matchThreshold) {
+  public void setClass(ROI roi, List<GroundTruth> groundTruths) {
     // Find the highest matching score
     double bestScore = 0.0;
     GroundTruth bestMatch = null;

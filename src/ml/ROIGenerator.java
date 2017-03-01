@@ -31,14 +31,16 @@ import util.MongoHelper;
 public class ROIGenerator extends Importer<ROI> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
-  private final Lungs lungs;
 
   private ExecutorService es;
+  private final Lungs lungs;
+  private final ROIClassifier classifier;
 
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
     this.es = es;
-    lungs = new Lungs();
+    this.lungs = new Lungs();
+    this.classifier = new ROIClassifier();
   }
 
   @Override
@@ -84,7 +86,7 @@ public class ROIGenerator extends Importer<ROI> {
               roi.setImageSopUID(slice.getImageSopUID());
               roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
               roi.setSet(set);
-              ROIClassifier.setClass(roi, groundTruths);
+              classifier.setClass(roi, groundTruths);
             }
 
             // Save rois
