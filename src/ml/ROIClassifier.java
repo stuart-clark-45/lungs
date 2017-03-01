@@ -63,7 +63,7 @@ public class ROIClassifier {
       ds.save(rois);
 
       // Logging
-      if (i % LOG_INTERVAL == 0) {
+      if ((i + 1) % LOG_INTERVAL == 0) {
         LOGGER.info(i + "/" + sopUIDs.size() + " images processed");
       }
     }
