@@ -46,6 +46,11 @@ public class ROIClassifier {
     // For each of the images we have created ROIs for
     List sopUIDs = ds.getCollection(ROI.class).distinct(IMAGE_SOP_UID);
     for (int i = 0; i < sopUIDs.size(); i++) {
+      // Logging
+      if (i % LOG_INTERVAL == 0) {
+        LOGGER.info(i + "/" + sopUIDs.size() + " images processed");
+      }
+
       String sopUID = (String) sopUIDs.get(i);
 
       // Get the corresponding ROIs
@@ -61,11 +66,6 @@ public class ROIClassifier {
 
       // Save the updated ROIs
       ds.save(rois);
-
-      // Logging
-      if ((i + 1) % LOG_INTERVAL == 0) {
-        LOGGER.info(i + "/" + sopUIDs.size() + " images processed");
-      }
     }
 
     LOGGER.info("ROIClassifier finished");
