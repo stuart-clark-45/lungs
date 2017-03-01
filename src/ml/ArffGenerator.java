@@ -1,6 +1,8 @@
 package ml;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 import org.mongodb.morphia.Datastore;
@@ -16,6 +18,7 @@ import weka.classifiers.Evaluation;
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.converters.ArffLoader;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils;
 import weka.core.converters.Saver;
@@ -63,11 +66,19 @@ public class ArffGenerator {
     cls.buildClassifier(trainData);
 
     // Load testData
-    Instances testData = ConverterUtils.DataSource.read(TEST_FILE);
+    BufferedReader reader = new BufferedReader(new FileReader(TEST_FILE));
+    ArffLoader.ArffReader arff = new ArffLoader.ArffReader(reader, 0);
+    Instances testData = arff.getStructure();
     testData.setClassIndex(testData.numAttributes() - 1);
 
-    // Evaluate classifier and print some statistics
+    // Incrementally classify each of the instances in testData
     Evaluation eval = new Evaluation(testData);
+    Instance inst;
+    while ((inst = arff.readInstance(testData)) != null) {
+      eval.evaluationForSingleInstance(cls.distributionForInstance(inst), inst, true);
+    }
+
+    // Evaluate classifier and print some statistics
     eval.evaluateModel(cls, testData);
     LOGGER.info(eval.toSummaryString("\nResults\n======\n", false));
     LOGGER.info(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n"));
