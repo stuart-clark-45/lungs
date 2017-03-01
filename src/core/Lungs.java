@@ -11,7 +11,6 @@ import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -56,7 +55,7 @@ import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ArffLoader;
+import weka.core.converters.ConverterUtils;
 
 public class Lungs {
 
@@ -303,9 +302,7 @@ public class Lungs {
 
     // Train classifier
     LOGGER.info("Training classifier");
-    ArffLoader loader = new ArffLoader();
-    loader.setFile(new File(ArffGenerator.TRAIN_FILE));
-    Instances trainingData = loader.getStructure();
+    Instances trainingData = ConverterUtils.DataSource.read(ArffGenerator.TRAIN_FILE);
     trainingData.setClassIndex(trainingData.numAttributes() - 1);
     Classifier classifier = new J48();
     classifier.buildClassifier(trainingData);
