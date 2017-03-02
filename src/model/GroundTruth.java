@@ -1,12 +1,16 @@
 package model;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
+
+import util.MongoHelper;
 
 /**
  * Used to hold information about a single region of interest identified by a radiologist(s).
@@ -15,6 +19,8 @@ import org.opencv.core.Point;
  */
 @Entity
 public class GroundTruth {
+
+  private static final Datastore DS = MongoHelper.getDataStore();
 
   public enum Type {
     /**
@@ -86,9 +92,9 @@ public class GroundTruth {
   private boolean matchedToRoi;
 
   /**
-   * The rois this ground truth was matched to.
+   * The ids for the rois this ground truth was matched to.
    */
-  private List<ROI> rois;
+  private List<ObjectId> rois;
 
   public ObjectId getId() {
     return id;
@@ -183,15 +189,15 @@ public class GroundTruth {
   }
 
   public List<ROI> getRois() {
-    return rois;
+    return DS.createQuery(ROI.class).field("_id").in(rois).asList();
   }
 
   public void setRois(List<ROI> rois) {
-    this.rois = rois;
+    this.rois = rois.stream().map(ROI::getId).collect(Collectors.toList());
   }
 
   public void addRoi(ROI roi) {
-    this.rois.add(roi);
+    this.rois.add(roi.getId());
   }
 
 }
