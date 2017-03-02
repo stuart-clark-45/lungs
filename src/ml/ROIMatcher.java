@@ -17,25 +17,25 @@ import util.MongoHelper;
 import vision.Matcher;
 
 /**
- * Used {@link GroundTruth} to decide which ROIs belong which {@link ROI.Class}.
+ * Used to match {@link ROI}s to the {@link GroundTruth} that they
  *
  * @author Stuart Clark
  */
-public class ROIClassifier {
+public class ROIMatcher {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ROIClassifier.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ROIMatcher.class);
   private static final String IMAGE_SOP_UID = "imageSopUID";
   private static final int LOG_INTERVAL = 10;
 
   private Datastore ds;
   private Double matchThreshold;
 
-  public ROIClassifier(double matchThreshold) {
+  public ROIMatcher(double matchThreshold) {
     this();
     this.matchThreshold = matchThreshold;
   }
 
-  public ROIClassifier() {
+  public ROIMatcher() {
     this.ds = MongoHelper.getDataStore();
   }
 
@@ -104,26 +104,30 @@ public class ROIClassifier {
       }
     }
 
-    // Set the match score found
-    roi.setMatchScore(bestScore);
+    // If there were any matches at all
+    if(bestMatch != null){
+      // Set the match score found
+      roi.setMatchScore(bestScore);
 
-    // Update the ground truth
-    bestMatch.setMatchedToRoi(true);
-    bestMatch.addRoi(roi);
+      // Update the ground truth
+      bestMatch.setMatchedToRoi(true);
+      bestMatch.addRoi(roi);
 
-    // Classify the ROI if matchThreshold has been set
-    if (matchThreshold != null) {
-      if (bestScore >= matchThreshold) {
-        roi.setClassification(ROI.Class.NODULE);
-      } else {
-        roi.setClassification(ROI.Class.NON_NODULE);
+      // Classify the ROI if matchThreshold has been set
+      if (matchThreshold != null) {
+        if (bestScore >= matchThreshold) {
+          roi.setClassification(ROI.Class.NODULE);
+        } else {
+          roi.setClassification(ROI.Class.NON_NODULE);
+        }
+        roi.setMatchThreshold(matchThreshold);
       }
-      roi.setMatchThreshold(matchThreshold);
     }
+
   }
 
   public static void main(String... args) {
-    new ROIClassifier().run();
+    new ROIMatcher().run();
   }
 
 }
