@@ -65,7 +65,7 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Min Circle Radius"));
     this.functions.add(roi -> roi.getMinCircle().getRadius());
 
-    // Add Fitted Ellipse (Avoiding NPEs will ternary expression)
+    // Add Fitted Ellipse (Avoiding NPEs with ternary expression)
     this.attributes.add(new Attribute("Fitted Ellipse Angle"));
     this.functions.add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().angle
         : missingValue());
@@ -80,6 +80,10 @@ public class InstancesBuilder {
     this.functions
         .add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().boundingRect().height
             : missingValue());
+
+    // Add aspect ratio (Avoiding NPEs with ternary expression)
+    this.attributes.add(new Attribute("Elongation"));
+    this.functions.add(roi -> roi.getElongation() != null ? roi.getElongation() : missingValue());
 
     // Add Coarse Histogram
     for (int i = 0; i < CoarseHist.BINS; i++) {

@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import ml.feature.BoundingBox;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
@@ -131,6 +132,7 @@ public class FeatureEngine {
     features.add(new CoarseHist());
     features.add(new MedHist());
     features.add(new FineHist());
+    features.add(new BoundingBox());
     return features;
   }
 

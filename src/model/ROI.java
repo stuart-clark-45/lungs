@@ -98,6 +98,19 @@ public class ROI {
    */
   private RotatedRect fitEllipse;
 
+
+  /**
+   * The minimum rotated rect that contains the {@link ROI}, computed using
+   * {@link ml.feature.BoundingBox}.
+   */
+  private RotatedRect boundingBox;
+
+  /**
+   * A rotation and scale invariant comparison of the width and height of the
+   * {@link ROI#boundingBox}.
+   */
+  private Double elongation;
+
   public ROI() {
     region = new ArrayList<>();
   }
@@ -230,4 +243,19 @@ public class ROI {
     this.set = set;
   }
 
+  public RotatedRect getBoundingBox() {
+    return boundingBox;
+  }
+
+  public void setBoundingBox(RotatedRect boundingBox) {
+    this.boundingBox = boundingBox;
+  }
+
+  public Double getElongation() {
+    return elongation;
+  }
+
+  public void setElongation(Double elongation) {
+    this.elongation = elongation;
+  }
 }
