@@ -41,7 +41,8 @@ public class ROIClassifier {
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     Datastore ds = MongoHelper.getDataStore();
 
-    Query<ROI> query = ds.createQuery(ROI.class);
+    // Create futures that classify ROIs
+    Query<ROI> query = ds.createQuery(ROI.class).field("matchThreshold").notEqual(null);
     List<Future> futures = new ArrayList<>((int) query.count());
     for (ROI roi : query) {
       futures.add(es.submit(() -> {
@@ -50,6 +51,7 @@ public class ROIClassifier {
       }));
     }
 
+    // Monitor futures
     FutureMonitor monitor = new FutureMonitor(futures);
     monitor.setLogString("ROIs classified");
     monitor.monitor();
@@ -58,17 +60,20 @@ public class ROIClassifier {
   }
 
   /**
-   * Classify {@code roi} by setting {@link ROI#classification} and {@link ROI#matchThreshold}
+   * Classify {@code roi} by setting {@link ROI#classification} and {@link ROI#matchThreshold}.
    * 
    * @param roi
    */
   public void classify(ROI roi) {
-    if (roi.getMatchScore() >= matchThreshold) {
-      roi.setClassification(ROI.Class.NODULE);
-    } else {
-      roi.setClassification(ROI.Class.NON_NODULE);
+    Double matchScore = roi.getMatchScore();
+    if (matchScore != null) {
+      if (matchScore >= matchThreshold) {
+        roi.setClassification(ROI.Class.NODULE);
+      } else {
+        roi.setClassification(ROI.Class.NON_NODULE);
+      }
+      roi.setMatchThreshold(matchThreshold);
     }
-    roi.setMatchThreshold(matchThreshold);
   }
 
   public static void main(String[] args) {
