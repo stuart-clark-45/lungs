@@ -36,6 +36,7 @@ public class MongoHelper {
     LOGGER.info(result.toJson());
 
     Morphia morphia = new Morphia();
+    morphia.getMapper().getOptions().setStoreEmpties(true);
     DS = morphia.createDatastore(mongo, dbName);
   }
 
