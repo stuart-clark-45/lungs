@@ -3,7 +3,6 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
-import ml.ROIMatcher;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
@@ -57,7 +56,7 @@ public class ROI {
 
   /**
    * The score obtained for the best match of this {@link ROI} to a {@link GroundTruth} in
-   * {@link ROIMatcher#match(ROI, List)}.
+   * {@link ml.ROIClassifier#classify(ROI)}.
    */
   @Indexed
   private Double matchScore;
