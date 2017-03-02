@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import config.Misc;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.ROI;
+import util.ConfigHelper;
 import util.DataFilter;
 import util.FutureMonitor;
 import util.LungsException;
@@ -40,7 +42,7 @@ public class ROIGenerator extends Importer<ROI> {
     super(ROI.class);
     this.es = es;
     this.lungs = new Lungs();
-    this.classifier = new ROIClassifier();
+    this.classifier = new ROIClassifier(ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
   }
 
   @Override
@@ -56,6 +58,8 @@ public class ROIGenerator extends Importer<ROI> {
   @Override
   protected void importModels(Datastore ds) throws LungsException {
     LOGGER.info("Generating ROIs this may take some time...");
+
+    classifier.clearGtRois();
 
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
@@ -86,7 +90,7 @@ public class ROIGenerator extends Importer<ROI> {
               roi.setImageSopUID(slice.getImageSopUID());
               roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
               roi.setSet(set);
-              classifier.setClass(roi, groundTruths);
+              classifier.match(roi, groundTruths);
             }
 
             // Save rois

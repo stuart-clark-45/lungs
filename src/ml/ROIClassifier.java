@@ -1,19 +1,18 @@
 package ml;
 
 import static model.GroundTruth.Type.BIG_NODULE;
-import static model.ROI.Class.NODULE;
-import static model.ROI.Class.NON_NODULE;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.Misc;
 import model.GroundTruth;
 import model.ROI;
-import util.ConfigHelper;
 import util.MongoHelper;
 import vision.Matcher;
 
@@ -29,20 +28,23 @@ public class ROIClassifier {
   private static final int LOG_INTERVAL = 10;
 
   private Datastore ds;
-  private double matchThreshold;
-
-  public ROIClassifier() {
-    this(ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
-  }
+  private Double matchThreshold;
 
   public ROIClassifier(double matchThreshold) {
+    this();
     this.matchThreshold = matchThreshold;
+  }
+
+  public ROIClassifier() {
     this.ds = MongoHelper.getDataStore();
   }
 
   public void run() {
     LOGGER.info("Running ROIClassifier...");
 
+    clearGtRois();
+
+    LOGGER.info("Beginning matching...");
     // For each of the images we have created ROIs for
     List sopUIDs = ds.getCollection(ROI.class).distinct(IMAGE_SOP_UID);
     for (int i = 0; i < sopUIDs.size(); i++) {
@@ -62,13 +64,24 @@ public class ROIClassifier {
               .equal(BIG_NODULE).asList();
 
       // Classify each of the rois
-      rois.parallelStream().forEach(roi -> setClass(roi, gts));
+      rois.parallelStream().forEach(roi -> match(roi, gts));
 
       // Save the updated ROIs
       ds.save(rois);
     }
 
     LOGGER.info("ROIClassifier finished");
+  }
+
+  /**
+   * Set all {@link GroundTruth#rois} in database to an empty list.
+   */
+  public void clearGtRois() {
+    LOGGER.info("Setting GroundTruth.rois for empty list for all in database...");
+    UpdateOperations<GroundTruth> updateOperation =
+        ds.createUpdateOperations(GroundTruth.class).set("rois", new ArrayList<>());
+    Query<GroundTruth> query = ds.createQuery(GroundTruth.class);
+    ds.update(query, updateOperation);
   }
 
   /**
@@ -79,7 +92,7 @@ public class ROIClassifier {
    * @param groundTruths
    */
   @SuppressWarnings("ConstantConditions")
-  public void setClass(ROI roi, List<GroundTruth> groundTruths) {
+  public void match(ROI roi, List<GroundTruth> groundTruths) {
     // Find the highest matching score
     double bestScore = 0.0;
     GroundTruth bestMatch = null;
@@ -91,20 +104,22 @@ public class ROIClassifier {
       }
     }
 
-    // Set the match threshold used
-    roi.setMatchThreshold(matchThreshold);
     // Set the match score found
     roi.setMatchScore(bestScore);
 
-    // Set the class
-    if (bestScore > matchThreshold) {
-      roi.setClassification(NODULE);
-      bestMatch.setMatchedToRoi(true);
-      bestMatch.setRoi(roi);
-    } else {
-      roi.setClassification(NON_NODULE);
-    }
+    // Update the ground truth
+    bestMatch.setMatchedToRoi(true);
+    bestMatch.addRoi(roi);
 
+    // Classify the ROI if matchThreshold has been set
+    if (matchThreshold != null) {
+      if (bestScore >= matchThreshold) {
+        roi.setClassification(ROI.Class.NODULE);
+      } else {
+        roi.setClassification(ROI.Class.NON_NODULE);
+      }
+      roi.setMatchThreshold(matchThreshold);
+    }
   }
 
   public static void main(String... args) {
