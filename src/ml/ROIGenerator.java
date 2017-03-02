@@ -6,12 +6,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import config.Misc;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
 import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Misc;
 import core.Lungs;
 import data.Importer;
 import model.CTSlice;
@@ -24,6 +26,7 @@ import util.FutureMonitor;
 import util.LungsException;
 import util.MatUtils;
 import util.MongoHelper;
+import vision.Matcher;
 
 /**
  * Used to import {@link ROI}s detected
@@ -33,16 +36,19 @@ import util.MongoHelper;
 public class ROIGenerator extends Importer<ROI> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIGenerator.class);
+  private static final double MATCH_THRESHOLD = ConfigHelper.getDouble(Misc.MATCH_THRESHOLD);
 
   private ExecutorService es;
   private final Lungs lungs;
-  private final ROIClassifier classifier;
+  private final Datastore ds;
+  private final DataFilter filter;
 
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
     this.es = es;
     this.lungs = new Lungs();
-    this.classifier = new ROIClassifier(ConfigHelper.getDouble(Misc.MATCH_THRESHOLD));
+    this.ds = MongoHelper.getDataStore();
+    this.filter = DataFilter.get();
   }
 
   @Override
@@ -59,16 +65,15 @@ public class ROIGenerator extends Importer<ROI> {
   protected void importModels(Datastore ds) throws LungsException {
     LOGGER.info("Generating ROIs this may take some time...");
 
-    classifier.clearGtRois();
+    clearGtRois();
 
     // Submit a runnable for slice that is used to extract the ROIs
     List<Future> futures = new ArrayList<>();
-    for (CTStack stack : DataFilter.get()
-        .all(MongoHelper.getDataStore().createQuery(CTStack.class))) {
+    for (CTStack stack : filter.all(MongoHelper.getDataStore().createQuery(CTStack.class))) {
 
       // Determine the set that the stack belongs too
       ROI.Set set;
-      if (DataFilter.get().getTrainInstances().contains(stack.getSeriesInstanceUID())) {
+      if (filter.getTrainInstances().contains(stack.getSeriesInstanceUID())) {
         set = ROI.Set.TRAIN;
       } else {
         set = ROI.Set.TEST;
@@ -90,11 +95,12 @@ public class ROIGenerator extends Importer<ROI> {
               roi.setImageSopUID(slice.getImageSopUID());
               roi.setSeriesInstanceUID(slice.getSeriesInstanceUID());
               roi.setSet(set);
-              classifier.match(roi, groundTruths);
+              match(roi, groundTruths);
             }
 
-            // Save rois
+            // Save updated rois and ground truths
             ds.save(rois);
+            ds.save(groundTruths);
           }));
       }
     }
@@ -105,6 +111,55 @@ public class ROIGenerator extends Importer<ROI> {
     monitor.monitor();
 
     LOGGER.info("Finished generating ROIs");
+  }
+
+  /**
+   * Set all {@link GroundTruth#rois} in database to an empty list.
+   */
+  private void clearGtRois() {
+    LOGGER.info("Setting GroundTruth.rois for empty list for all in database...");
+    UpdateOperations<GroundTruth> updateOperation =
+        ds.createUpdateOperations(GroundTruth.class).set("rois", new ArrayList<>());
+    Query<GroundTruth> query = ds.createQuery(GroundTruth.class);
+    ds.update(query, updateOperation);
+  }
+
+  /**
+   * Set the {@link ROI#classification} for {@code roi} by matching the {@link ROI} to a
+   * {@link GroundTruth}.
+   *
+   * @param roi
+   * @param groundTruths
+   */
+  @SuppressWarnings("ConstantConditions")
+  public void match(ROI roi, List<GroundTruth> groundTruths) {
+    // Find the highest matching score
+    double bestScore = 0.0;
+    GroundTruth bestMatch = null;
+    for (GroundTruth gt : groundTruths) {
+      double score = Matcher.match(roi, gt);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = gt;
+      }
+    }
+
+    // If there were any matches at all
+    if (bestMatch != null) {
+      // Update the roi
+      roi.setMatchScore(bestScore);
+      if (bestScore >= MATCH_THRESHOLD) {
+        roi.setClassification(ROI.Class.NODULE);
+      } else {
+        roi.setClassification(ROI.Class.NON_NODULE);
+      }
+      roi.setMatchThreshold(MATCH_THRESHOLD);
+
+      // Update the ground truth
+      bestMatch.setMatchedToRoi(true);
+      bestMatch.addRoi(roi);
+    }
+
   }
 
   public static void main(String[] args) {
