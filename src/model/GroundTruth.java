@@ -86,9 +86,9 @@ public class GroundTruth {
   private boolean matchedToRoi;
 
   /**
-   * The roi this ground truth was matched to.
+   * The rois this ground truth was matched to.
    */
-  private ROI roi;
+  private List<ROI> rois;
 
   public ObjectId getId() {
     return id;
@@ -182,12 +182,16 @@ public class GroundTruth {
     this.matchedToRoi = matchedToRoi;
   }
 
-  public ROI getRoi() {
-    return roi;
+  public List<ROI> getRois() {
+    return rois;
   }
 
-  public void setRoi(ROI roi) {
-    this.roi = roi;
+  public void setRois(List<ROI> rois) {
+    this.rois = rois;
   }
-  
+
+  public void addRoi(ROI roi) {
+    this.rois.add(roi);
+  }
+
 }
