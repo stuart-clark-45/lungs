@@ -54,6 +54,12 @@ public class ROI {
    */
   private Double matchThreshold;
 
+  /**
+   * The score obtained for the best match of this {@link ROI} to a {@link GroundTruth} in
+   * {@link ml.ROIClassifier#setClass(ROI, List)}.
+   */
+  private Double matchScore;
+
   /*
    * The follow fields are used as features for the classifier
    */
@@ -258,4 +264,13 @@ public class ROI {
   public void setElongation(Double elongation) {
     this.elongation = elongation;
   }
+
+  public Double getMatchScore() {
+    return matchScore;
+  }
+
+  public void setMatchScore(Double matchScore) {
+    this.matchScore = matchScore;
+  }
+
 }

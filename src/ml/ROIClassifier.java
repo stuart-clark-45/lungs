@@ -93,6 +93,8 @@ public class ROIClassifier {
 
     // Set the match threshold used
     roi.setMatchThreshold(matchThreshold);
+    // Set the match score found
+    roi.setMatchScore(bestScore);
 
     // Set the class
     if (bestScore > matchThreshold) {
