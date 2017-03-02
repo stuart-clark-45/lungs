@@ -333,10 +333,12 @@ public class Lungs {
         double v = classifier.classifyInstance(instance);
         ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
 
-        // If nodule then annotate
+        // If nodule then annotate green else annotate orange
         if (classification.equals(ROI.Class.NODULE)) {
           LOGGER.info("Nodule Found!");
           paintROI(predict, rois.get(j), ColourBGR.GREEN);
+        } else {
+          paintROI(predict, rois.get(j), ColourBGR.ORANGE);
         }
 
       }
@@ -414,6 +416,32 @@ public class Lungs {
     matViewer.display();
   }
 
+  public void roiContours(CTStack stack) {
+    LOGGER.info("Loading Mats...");
+    List<Mat> original = getStackMats(stack);
+
+    LOGGER.info("Drawing contours on Mats...");
+    List<Mat> annotated = new ArrayList<>();
+    for (int i = 0; i < original.size(); i++) {
+      LOGGER.info(i + "/" + original.size() + " processed");
+
+      Mat mat = original.get(i);
+
+      Mat bgr = MatUtils.grey2BGR(mat);
+      for (ROI roi : extractRois(mat)) {
+        paintROI(bgr, roi, ColourBGR.GREEN);
+        for (Point point : roi.getContour()) {
+          bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
+        }
+      }
+
+      annotated.add(bgr);
+    }
+
+    LOGGER.info("Preparing to display Mats...");
+    new MatViewer(annotated).display();
+  }
+
 
   /**
    * Should be run with the following VM args
@@ -432,8 +460,9 @@ public class Lungs {
 
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
-    lungs.assistance(stack);
+    // lungs.assistance(stack);
     // lungs.annotatedSegmented(stack);
+    lungs.roiContours(stack);
   }
 
 }
