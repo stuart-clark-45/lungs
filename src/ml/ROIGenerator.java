@@ -42,6 +42,7 @@ public class ROIGenerator extends Importer<ROI> {
   private final Lungs lungs;
   private final Datastore ds;
   private final DataFilter filter;
+  private final ROIClassifier classifier;
 
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
@@ -49,6 +50,7 @@ public class ROIGenerator extends Importer<ROI> {
     this.lungs = new Lungs();
     this.ds = MongoHelper.getDataStore();
     this.filter = DataFilter.get();
+    this.classifier = new ROIClassifier(MATCH_THRESHOLD);
   }
 
   @Override
@@ -148,12 +150,7 @@ public class ROIGenerator extends Importer<ROI> {
     if (bestMatch != null) {
       // Update the roi
       roi.setMatchScore(bestScore);
-      if (bestScore >= MATCH_THRESHOLD) {
-        roi.setClassification(ROI.Class.NODULE);
-      } else {
-        roi.setClassification(ROI.Class.NON_NODULE);
-      }
-      roi.setMatchThreshold(MATCH_THRESHOLD);
+      classifier.classify(roi);
 
       // Update the ground truth
       bestMatch.setMatchedToRoi(true);
