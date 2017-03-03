@@ -25,6 +25,7 @@ import util.MongoHelper;
 public class ROIClassifier {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIClassifier.class);
+  private static final int LOG_INTERVAL = 1000;
 
   private final double matchThreshold;
 
@@ -43,12 +44,18 @@ public class ROIClassifier {
 
     // Create futures that classify ROIs
     Query<ROI> query = ds.createQuery(ROI.class);
-    List<Future> futures = new ArrayList<>((int) query.count());
+    int numROI = (int) query.count();
+    List<Future> futures = new ArrayList<>(numROI);
+    int counter = 0;
     for (ROI roi : query) {
       futures.add(es.submit(() -> {
         classify(roi);
         ds.save(roi);
       }));
+
+      if(++counter % LOG_INTERVAL == 0){
+        LOGGER.info(counter + "/" + numROI + " futures created");
+      }
     }
 
     // Monitor futures
