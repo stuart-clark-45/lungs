@@ -146,12 +146,12 @@ public class ROIGenerator extends Importer<ROI> {
       }
     }
 
+    roi.setMatchScore(bestScore);
     classifier.classify(roi);
 
     // If there were any matches at all
     if (bestMatch != null) {
       // Update the roi
-      roi.setMatchScore(bestScore);
       roi.setGroundTruth(bestMatch);
       // Set the id as it hasn't been saved yet and the id is required when adding ROI to
       // groundTruth
