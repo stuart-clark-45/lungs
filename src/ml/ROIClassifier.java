@@ -42,7 +42,7 @@ public class ROIClassifier {
     Datastore ds = MongoHelper.getDataStore();
 
     // Create futures that classify ROIs
-    Query<ROI> query = ds.createQuery(ROI.class).field("matchThreshold").notEqual(null);
+    Query<ROI> query = ds.createQuery(ROI.class);
     List<Future> futures = new ArrayList<>((int) query.count());
     for (ROI roi : query) {
       futures.add(es.submit(() -> {
@@ -66,14 +66,12 @@ public class ROIClassifier {
    */
   public void classify(ROI roi) {
     Double matchScore = roi.getMatchScore();
-    if (matchScore != null) {
-      if (matchScore >= matchThreshold) {
-        roi.setClassification(ROI.Class.NODULE);
-      } else {
-        roi.setClassification(ROI.Class.NON_NODULE);
-      }
-      roi.setMatchThreshold(matchThreshold);
+    if (matchScore != null && matchScore >= matchThreshold) {
+      roi.setClassification(ROI.Class.NODULE);
+    } else {
+      roi.setClassification(ROI.Class.NON_NODULE);
     }
+    roi.setMatchThreshold(matchThreshold);
   }
 
   public static void main(String[] args) {
