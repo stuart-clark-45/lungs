@@ -49,6 +49,10 @@ public class InstancesBuilder {
     this.attributes = new ArrayList<>();
     this.functions = new ArrayList<>();
 
+    // Add juxtapleural
+    this.attributes.add(new Attribute("Juxtapleural"));
+    this.functions.add(ROI::isJuxtapleural);
+
     // Add mean intensity
     this.attributes.add(new Attribute("Mean Intensity"));
     this.functions.add(ROI::getMeanIntensity);
@@ -191,6 +195,8 @@ public class InstancesBuilder {
     if (value == null) {
       throw new IllegalStateException("Value for " + attribute.name()
           + " is null you may need to run the FeatureEngine again");
+    } else if (value instanceof Boolean) {
+      instance.setValue(attribute, ((Boolean) value) ? 1 : 0);
     } else if (value instanceof Number) {
       instance.setValue(attribute, ((Number) value).doubleValue());
     } else if (value instanceof ROI.Class) {

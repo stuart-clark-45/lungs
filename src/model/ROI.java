@@ -76,6 +76,8 @@ public class ROI {
    * The follow fields are used as features for the classifier
    */
 
+  private boolean juxtapleural;
+
   private Double meanIntensity;
 
   /**
@@ -295,6 +297,14 @@ public class ROI {
 
   public void setGroundTruth(GroundTruth groundTruth) {
     this.groundTruth = groundTruth.getId();
+  }
+
+  public boolean isJuxtapleural() {
+    return juxtapleural;
+  }
+
+  public void setJuxtapleural(boolean juxtapleural) {
+    this.juxtapleural = juxtapleural;
   }
 
 }

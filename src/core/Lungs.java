@@ -288,7 +288,9 @@ public class Lungs {
     // Extract ROIs and return
     Mat labels = MatUtils.similarMat(original);
     Imgproc.connectedComponents(masked, labels);
-    return ROIExtractor.labelsToROIs(labels);
+    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
+    rois.forEach(roi -> roi.setJuxtapleural(true));
+    return rois;
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
