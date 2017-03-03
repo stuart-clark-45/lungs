@@ -76,18 +76,6 @@ public class GroundTruthImporterTest {
   }
 
   @Test
-  public void testCalculateCentroid() throws Exception {
-    List<Point> points = new ArrayList<>();
-    points.add(new Point(1d, 4d));
-    points.add(new Point(2d, 5d));
-    points.add(new Point(3d, 6d));
-
-    Point centroid = importer.calculateCentroid(points);
-    assertEquals(Double.valueOf(2), Double.valueOf(centroid.x));
-    assertEquals(Double.valueOf(5), Double.valueOf(centroid.y));
-  }
-
-  @Test
   public void testComputeMinRadius() throws Exception {
     List<Point> points = new ArrayList<>();
     points.add(new Point(1d, 4d));

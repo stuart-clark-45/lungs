@@ -201,4 +201,21 @@ public class PointUtils {
     return sorted;
   }
 
+  /**
+   * @param points
+   * @return the centroid of the list of points given.
+   */
+  public static Point centroid(List<Point> points) {
+    double x = 0;
+    double y = 0;
+    for (Point point : points) {
+      x += point.x;
+      y += point.y;
+    }
+    int nPoints = points.size();
+    x = x / nPoints;
+    y = y / nPoints;
+    return new Point(x, y);
+  }
+
 }

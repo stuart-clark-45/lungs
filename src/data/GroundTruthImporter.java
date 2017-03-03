@@ -253,7 +253,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         numSmallNodule++;
       } else {
         groundTruth.setType(BIG_NODULE);
-        groundTruth.setCentroid(calculateCentroid(points));
+        groundTruth.setCentroid(PointUtils.centroid(points));
 
         // Set the region and the edge points and min radius.
         List<Point> region = PointUtils.perim2Region(points, inclusive);
@@ -311,23 +311,6 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       edgePoints.add(new Point(map.getXCoord().doubleValue(), map.getYCoord().doubleValue()));
     }
     return edgePoints;
-  }
-
-  /**
-   * @param points
-   * @return the centroid of the list of points given.
-   */
-  Point calculateCentroid(List<Point> points) {
-    double x = 0;
-    double y = 0;
-    for (Point point : points) {
-      x += point.x;
-      y += point.y;
-    }
-    int nPoints = points.size();
-    x = x / nPoints;
-    y = y / nPoints;
-    return new Point(x, y);
   }
 
   /**

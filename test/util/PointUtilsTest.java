@@ -132,4 +132,14 @@ public class PointUtilsTest {
     assertEquals(expected, PointUtils.dedupe(points));
   }
 
+  @Test
+  public void testCentroid() throws Exception {
+    List<Point> points = new ArrayList<>();
+    points.add(new Point(-1, -1));
+    points.add(new Point(-2, -2));
+    points.add(new Point(1, 1));
+    points.add(new Point(2, 2));
+
+    assertEquals(new Point(0,0), PointUtils.centroid(points));
+  }
 }
