@@ -126,6 +126,10 @@ public class ROI {
     return id;
   }
 
+  public void setId(ObjectId id) {
+    this.id = id;
+  }
+
   public List<Point> getRegion() {
     return region;
   }
