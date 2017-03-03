@@ -28,10 +28,6 @@ public class MinCircle implements Feature {
     // Store the result in the ROI
     float radius = radiusArray[0];
     roi.setMinCircle(new Circle(center, radius));
-
-    // Compute the circularity
-    double minCircleArea = Math.PI * Math.pow(radius, 2);
-    roi.setCircularity(roi.getArea() / minCircleArea);
   }
 
 }
