@@ -14,7 +14,7 @@ import util.LungsException;
  */
 public class MedHist implements Feature {
 
-  public static final int BINS = 128;
+  public static final int BINS = 64;
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
