@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -151,6 +152,9 @@ public class ROIGenerator extends Importer<ROI> {
       // Update the roi
       roi.setMatchScore(bestScore);
       classifier.classify(roi);
+      // Set the id as it hasn't been saved yet and the id is required when adding ROI to
+      // groundTruth
+      roi.setId(ObjectId.get());
 
       // Update the ground truth
       bestMatch.setMatchedToRoi(true);
