@@ -65,9 +65,13 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Perimeter"));
     this.functions.add(ROI::getPerimLength);
 
-    // Add Min Circle
+    // Add Min Circle Radius
     this.attributes.add(new Attribute("Min Circle Radius"));
     this.functions.add(roi -> roi.getMinCircle().getRadius());
+
+    // Add Circularity
+    this.attributes.add(new Attribute("Circularity"));
+    this.functions.add(ROI::getCircularity);
 
     // Add Fitted Ellipse (Avoiding NPEs with ternary expression)
     this.attributes.add(new Attribute("Fitted Ellipse Angle"));

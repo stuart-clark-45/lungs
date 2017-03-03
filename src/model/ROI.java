@@ -113,6 +113,11 @@ public class ROI {
   private Circle minCircle;
 
   /**
+   * The circularity of the {@link ROI} computed using {@link ml.feature.MinCircle}.
+   */
+  private Double circularity;
+
+  /**
    * The rotated rect that contains the a fitted ellipse computed using
    * {@link ml.feature.FitEllipse}.
    */
@@ -305,6 +310,15 @@ public class ROI {
 
   public void setJuxtapleural(boolean juxtapleural) {
     this.juxtapleural = juxtapleural;
+
+  }
+
+  public Double getCircularity() {
+    return circularity;
+  }
+
+  public void setCircularity(Double circularity) {
+    this.circularity = circularity;
   }
 
 }

@@ -133,6 +133,7 @@ public class FeatureEngine {
     features.add(new MedHist());
     features.add(new FineHist());
     features.add(new BoundingBox());
+    features.add(new MinCircle());
     return features;
   }
 
