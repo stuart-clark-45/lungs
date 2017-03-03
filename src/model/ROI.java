@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 
 import ml.ROIGenerator;
+import util.MongoHelper;
 
 /**
  * Model used to hold information about single region of interest in a matrix.
@@ -17,6 +19,8 @@ import ml.ROIGenerator;
  * @author Stuart Clark
  */
 public class ROI {
+
+  private static final Datastore DS = MongoHelper.getDataStore();
 
   public enum Class {
     NODULE, NON_NODULE
@@ -60,6 +64,13 @@ public class ROI {
    */
   @Indexed
   private Double matchScore;
+
+  /**
+   * The {@link ObjectId} for the best matching {@link GroundTruth} for this {@link ROI} was
+   * matched. {@code null} if the {@link ROI} was not matched to any {@link GroundTruth}.
+   */
+  @Indexed
+  private ObjectId groundTruth;
 
   /*
    * The follow fields are used as features for the classifier
@@ -276,6 +287,14 @@ public class ROI {
 
   public void setMatchScore(Double matchScore) {
     this.matchScore = matchScore;
+  }
+
+  public GroundTruth getGroundTruth() {
+    return DS.get(GroundTruth.class, groundTruth);
+  }
+
+  public void setGroundTruth(GroundTruth groundTruth) {
+    this.groundTruth = groundTruth.getId();
   }
 
 }
