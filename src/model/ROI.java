@@ -105,7 +105,7 @@ public class ROI {
    * The area of the region calculated using {@link ml.feature.Area}. This value may not be the same
    * as {@code region.size()}.
    */
-  private int area;
+  private Integer area;
 
   /**
    * The minimum bounding circle computed using {@link ml.feature.MinCircle}.
@@ -211,11 +211,11 @@ public class ROI {
     this.perimLength = perimLength;
   }
 
-  public int getArea() {
+  public Integer getArea() {
     return area;
   }
 
-  public void setArea(int area) {
+  public void setArea(Integer area) {
     this.area = area;
   }
 
