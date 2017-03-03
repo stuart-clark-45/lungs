@@ -11,6 +11,7 @@ import java.util.Set;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -216,6 +217,19 @@ public class PointUtils {
     x = x / nPoints;
     y = y / nPoints;
     return new Point(x, y);
+  }
+
+  /**
+   * @param contour the contour of the ground truth
+   * @return the radius of the smallest circle that can be fitted to {@code contour}.
+   */
+  public static double minCircleRadius(List<Point> contour) {
+    Point center = new Point();
+    MatOfPoint2f matOfPoints = new MatOfPoint2f();
+    matOfPoints.fromList(contour);
+    float[] radius = new float[1];
+    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
+    return radius[0];
   }
 
 }
