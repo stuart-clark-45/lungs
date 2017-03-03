@@ -1,13 +1,13 @@
 package util;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
 /**
  * @author Stuart Clark
@@ -20,7 +20,7 @@ public class LimitedIteratorTest {
     LimitedIterator<String> iterator = new LimitedIterator<>(input.iterator(), 2);
 
     List<String> output = new ArrayList<>();
-    while (iterator.hasNext()){
+    while (iterator.hasNext()) {
       output.add(iterator.next());
     }
     assertEquals(Arrays.asList("1", "2"), output);

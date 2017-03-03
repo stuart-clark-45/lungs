@@ -7,11 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import core.Lungs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 /**
@@ -91,7 +88,7 @@ public class PointUtilsTest {
     expected.add(new Point(5, 9));
     expected.add(new Point(4, 10));
 
-    HashSet<Point> actual = new HashSet<>(PointUtils.region2perim(region));
+    HashSet<Point> actual = new HashSet<>(PointUtils.region2Contour(region));
 
     assertEquals(new HashSet<>(expected), actual);
   }
@@ -133,6 +130,29 @@ public class PointUtilsTest {
     expected.add(new Point(3, 3));
 
     assertEquals(expected, PointUtils.dedupe(points));
+  }
+
+  @Test
+  public void testCentroid() throws Exception {
+    List<Point> points = new ArrayList<>();
+    points.add(new Point(-1, -1));
+    points.add(new Point(-2, -2));
+    points.add(new Point(1, 1));
+    points.add(new Point(2, 2));
+
+    assertEquals(new Point(0, 0), PointUtils.centroid(points));
+  }
+
+  @Test
+  public void testMinCircleRadius() throws Exception {
+    List<Point> points = new ArrayList<>();
+    points.add(new Point(1d, 4d));
+    points.add(new Point(1d, 5d));
+    points.add(new Point(1d, 6d));
+    points.add(new Point(1d, 7d));
+    points.add(new Point(1d, 8d));
+
+    assertEquals(2d, PointUtils.minCircleRadius(points), 0.001);
   }
 
 }

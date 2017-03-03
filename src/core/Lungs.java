@@ -1,22 +1,16 @@
 package core;
 
-import static config.Segmentation.Opening;
-import static config.Segmentation.THRESHOLD;
 import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
-import static config.Segmentation.Opening.HEIGHT;
-import static config.Segmentation.Opening.WIDTH;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
-import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +20,10 @@ import java.util.stream.Collectors;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -35,9 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Annotation;
+import config.Segmentation;
 import ml.ArffGenerator;
 import ml.FeatureEngine;
 import ml.InstancesBuilder;
+import ml.feature.MinCircle;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
@@ -56,7 +55,7 @@ import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ArffLoader;
+import weka.core.converters.ConverterUtils;
 
 public class Lungs {
 
@@ -77,6 +76,16 @@ public class Lungs {
    */
   public static final int FOREGROUND = 255;
 
+  /**
+   * The maximum size of a nodule in the data set provided.
+   */
+  private static final double MAX_NODULE_RADIUS = 35.2279;
+
+  /**
+   * The minimum size of a nodule in the data set provided.
+   */
+  private static final double MIN_NODULE_RADIUS = 1.0;
+
   private Datastore ds;
   private final ROIExtractor extractor;
 
@@ -86,27 +95,22 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
-  private int threshold;
-  private int openingWidth;
-  private int openingHeight;
-  private int openingKernel;
+  private int erosionSize;
 
   public Lungs() {
-    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE), getInt(THRESHOLD),
-        getInt(WIDTH), getInt(HEIGHT), getInt(Opening.KERNEL));
+    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
+        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG),
+        getInt(Segmentation.EROSION_SIZE));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int threshold, int openingWidth,
-      int openingHeight, int openingKernel) {
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG,
+      int erosionSize) {
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.kernelSize = kernelSize;
-    this.threshold = threshold;
-    this.openingWidth = openingWidth;
-    this.openingHeight = openingHeight;
-    this.openingKernel = openingKernel;
-    this.extractor = new ROIExtractor(FOREGROUND);
+    this.erosionSize = erosionSize;
+    this.extractor = new ROIExtractor(sureFG, sureBG);
   }
 
   /**
@@ -187,28 +191,106 @@ public class Lungs {
    * @param original the {@link Mat}s to segment.
    * @return the segmented {@link Mat}s.
    */
-  public List<Mat> segment(List<Mat> original) {
-    int numMat = original.size();
-    List<Mat> segmented = new ArrayList<>(numMat);
+  public List<ROI> extractRois(Mat original) {
+    // Filter the image
+    Mat filtered = MatUtils.similarMat(original);
+    Imgproc.bilateralFilter(original, filtered, kernelSize, sigmaColour, sigmaSpace);
 
-    for (Mat orig : original) {
-      // Filter the image
-      Mat filtered = MatUtils.similarMat(orig);
-      Imgproc.bilateralFilter(orig, filtered, kernelSize, sigmaColour, sigmaSpace);
+    // Extract ROIs
+    List<ROI> rois = extractor.extractROIs(filtered);
 
-      // Segment it
-      Mat seg = MatUtils.similarMat(filtered);
-      Imgproc.threshold(orig, seg, threshold, FOREGROUND, THRESH_BINARY);
-
-      // Apply opening
-      Mat opened = MatUtils.similarMat(seg);
-      Imgproc.morphologyEx(seg, opened, Imgproc.MORPH_OPEN,
-          Imgproc.getStructuringElement(openingKernel, new Size(openingWidth, openingHeight)));
-
-      segmented.add(opened);
+    // Get largest
+    ROI largest = null;
+    int maxSize = -1;
+    for (ROI roi : rois) {
+      int size = roi.getRegion().size();
+      if (size > maxSize) {
+        largest = roi;
+        maxSize = size;
+      }
     }
 
-    return segmented;
+    rois.addAll(extractJuxtapleural(largest, original));
+
+    // Compute the contours for the ROIs
+    rois.parallelStream()
+        .forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
+
+    /*
+     * Remove any ROIs that are too big or too small to be a nodule. By using the MAX_NODULE_RADIUS
+     * some abnormally big nodules could be ignored here. However if they are very large they are
+     * likely to be visible over many slices where they will have a cross section with a reduced
+     * radius. As such they should still be detectable by the system.
+     */
+    return rois.parallelStream().filter(roi -> {
+      try {
+        new MinCircle().compute(roi, original);
+        double radius = roi.getMinCircle().getRadius();
+        return radius >= MIN_NODULE_RADIUS && radius <= MAX_NODULE_RADIUS;
+      } catch (LungsException e) {
+        LOGGER.error("Failed to compute min circle for ROI", e);
+        return true;
+      }
+    }).collect(Collectors.toList());
+
+  }
+
+  private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
+    // Create a mat with just the largest in
+    Mat roiMat = MatUtils.similarMat(original);
+    for (Point point : largest.getRegion()) {
+      roiMat.put((int) point.y, (int) point.x, FOREGROUND);
+    }
+
+    // Create list of internal contours for the ROI
+    List<MatOfPoint> contours = new ArrayList<>();
+    Imgproc.findContours(roiMat, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+    // Removed external contour
+    contours.remove(0);
+
+    // Create a list of convex hulls for the contours
+    List<MatOfPoint> hulls = new ArrayList<>();
+    for (MatOfPoint contour : contours) {
+
+      // Find the convex hull for the contour
+      MatOfInt hull = new MatOfInt();
+      Imgproc.convexHull(contour, hull);
+
+      // Convert MatOfInt to MatOfPoint
+      MatOfPoint matOfPoint = new MatOfPoint();
+      matOfPoint.create((int) hull.size().height, 1, CvType.CV_32SC2);
+      for (int i = 0; i < hull.size().height; i++) {
+        int index = (int) hull.get(i, 0)[0];
+        double[] point = new double[] {contour.get(index, 0)[0], contour.get(index, 0)[1]};
+        matOfPoint.put(i, 0, point);
+      }
+
+      // Add to list
+      hulls.add(matOfPoint);
+    }
+
+    // Create a mask
+    Mat temp = MatUtils.similarMat(original);
+    // Draw the convex hull
+    Imgproc.fillPoly(temp, hulls, new Scalar(255));
+    Mat eroded = MatUtils.similarMat(temp);
+    // Erode the convex hull so that very small protrusions into cavity of the lungs are ignored
+    Imgproc.erode(temp, eroded,
+        Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(erosionSize, erosionSize)));
+    // Invert the mat to create the mask
+    Mat mask = MatUtils.similarMat(eroded);
+    Core.bitwise_not(eroded, mask);
+
+    // Apply mask
+    Mat masked = MatUtils.similarMat(mask);
+    Core.subtract(roiMat, mask, masked);
+
+    // Extract ROIs and return
+    Mat labels = MatUtils.similarMat(original);
+    Imgproc.connectedComponents(masked, labels);
+    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
+    rois.forEach(roi -> roi.setJuxtapleural(true));
+    return rois;
   }
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
@@ -217,33 +299,12 @@ public class Lungs {
     }
   }
 
-  /**
-   * @param segmented a binary segmented {@link Mat} where the foreground has intensity values of
-   *        {@link Lungs#FOREGROUND}.
-   * @return A list of all the the {@link ROI}s that should be processed further by the system.
-   * @throws LungsException
-   */
-  public List<ROI> extractRois(Mat segmented) throws LungsException {
-    List<ROI> rois = extractor.extract(segmented);
-    // Remove the largest
-    Optional<ROI> largest = largest(rois);
-    largest.ifPresent(rois::remove);
-    rois.parallelStream().forEach(roi -> roi.setContour(PointUtils.region2perim(roi.getRegion())));
-    return rois;
-  }
-
   public void assistance(CTStack stack) throws Exception {
-    List<Mat> original = getStackMats(stack);
-
-    // Segment the images
-    LOGGER.info("Segmenting images");
-    List<Mat> segmented = segment(original);
+    List<Mat> mats = getStackMats(stack);
 
     // Train classifier
     LOGGER.info("Training classifier");
-    ArffLoader loader = new ArffLoader();
-    loader.setFile(new File(ArffGenerator.TRAIN_FILE));
-    Instances trainingData = loader.getStructure();
+    Instances trainingData = ConverterUtils.DataSource.read(ArffGenerator.TRAIN_FILE);
     trainingData.setClassIndex(trainingData.numAttributes() - 1);
     Classifier classifier = new J48();
     classifier.buildClassifier(trainingData);
@@ -253,16 +314,15 @@ public class Lungs {
     FeatureEngine fEngine = new FeatureEngine();
     InstancesBuilder iBuilder = new InstancesBuilder(false);
     List<Mat> annotated =
-        original.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
+        mats.stream().map(Mat::clone).map(MatUtils::grey2BGR).collect(Collectors.toList());
     // For each slice
-    for (int i = 0; i < segmented.size(); i++) {
-      Mat seg = segmented.get(i);
-      Mat orig = original.get(i);
+    for (int i = 0; i < mats.size(); i++) {
+      Mat mat = mats.get(i);
       Mat predict = annotated.get(i);
 
       // Create Instances
-      List<ROI> rois = extractRois(seg);
-      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, orig));
+      List<ROI> rois = extractRois(mat);
+      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, mat));
       Instances instances = iBuilder.createSet("Slice Instances", rois.size());
       iBuilder.addInstances(instances, rois);
       Attribute classAttribute = instances.classAttribute();
@@ -273,29 +333,26 @@ public class Lungs {
         // Classify the instance
         Instance instance = instances.get(j);
         double v = classifier.classifyInstance(instance);
-        if (v != 0.0) {
-          LOGGER.info("instance value: " + v);
-        }
-
         ROI.Class classification = ROI.Class.valueOf(classAttribute.value((int) v));
 
-        // If nodule then annotate
-        // TODO class labels appear to be backwards no idea why
-        if (!classification.equals(ROI.Class.NODULE)) {
+        // If nodule then annotate green else annotate orange
+        if (classification.equals(ROI.Class.NODULE)) {
           LOGGER.info("Nodule Found!");
           paintROI(predict, rois.get(j), ColourBGR.GREEN);
+        } else {
+          paintROI(predict, rois.get(j), ColourBGR.ORANGE);
         }
 
       }
 
-      LOGGER.info((i + 1) + "/" + segmented.size() + " slices processed");
+      LOGGER.info((i + 1) + "/" + mats.size() + " slices processed");
     }
 
     // Add ground truth
     groundTruth(stack.getSlices(), annotated);
 
     // Display Mats
-    new MatViewer(original, annotated).display();
+    new MatViewer(mats, annotated).display();
   }
 
   public void gtVsNoduleRoi(CTStack stack) {
@@ -330,12 +387,63 @@ public class Lungs {
   public void annotatedSegmented(CTStack stack) {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
-    List<Mat> segmented = segment(original);
+
+    // Create bgr copies that can be annotated
+    LOGGER.info("Creating BGR Mats for annotations...");
     List<Mat> annotated =
-        segmented.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
-    groundTruth(stack.getSlices(), annotated);
-    new MatViewer(original, annotated).display();
+        original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+
+    // Paint ROIs to annotated Mats
+    LOGGER.info("Painting Mats with ROIs...");
+    for (int i = 0; i < original.size(); i++) {
+      Mat orig = original.get(i);
+      Mat anno = annotated.get(i);
+      for (ROI roi : extractRois(orig)) {
+        paintROI(anno, roi, ColourBGR.GREEN);
+      }
+      LOGGER.info(i + 1 + "/" + original.size() + " have had ROIs painted on");
+    }
+
+    // Paint ground truth to annotated Mats
+    LOGGER.info("Creating BGR Mats for ground truth...");
+    List<Mat> groundTruth =
+        original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+    LOGGER.info("Paining Mats with ground truth...");
+    groundTruth(stack.getSlices(), groundTruth);
+
+    // Display annotated and original Mats
+    LOGGER.info("Preparing to display...");
+    MatViewer matViewer = new MatViewer(groundTruth, annotated);
+    LOGGER.info("Displaying Mats now");
+    matViewer.display();
   }
+
+  public void roiContours(CTStack stack) {
+    LOGGER.info("Loading Mats...");
+    List<Mat> original = getStackMats(stack);
+
+    LOGGER.info("Drawing contours on Mats...");
+    List<Mat> annotated = new ArrayList<>();
+    for (int i = 0; i < original.size(); i++) {
+      LOGGER.info(i + "/" + original.size() + " processed");
+
+      Mat mat = original.get(i);
+
+      Mat bgr = MatUtils.grey2BGR(mat);
+      for (ROI roi : extractRois(mat)) {
+        paintROI(bgr, roi, ColourBGR.GREEN);
+        for (Point point : roi.getContour()) {
+          bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
+        }
+      }
+
+      annotated.add(bgr);
+    }
+
+    LOGGER.info("Preparing to display Mats...");
+    new MatViewer(annotated).display();
+  }
+
 
   /**
    * Should be run with the following VM args
@@ -355,6 +463,8 @@ public class Lungs {
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
-    lungs.annotatedSegmented(stack);
+    // lungs.annotatedSegmented(stack);
+    lungs.roiContours(stack);
   }
+
 }

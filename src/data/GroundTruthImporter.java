@@ -3,6 +3,7 @@ package data;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
+import static util.PointUtils.minCircleRadius;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -27,9 +28,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -95,7 +94,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
   }
 
   @Override
-  protected void importModels(Datastore ds) throws LungsException {
+  protected void importModels() throws LungsException {
     try {
       LOGGER.info("Importing GroundTruths...");
 
@@ -253,14 +252,14 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         numSmallNodule++;
       } else {
         groundTruth.setType(BIG_NODULE);
-        groundTruth.setCentroid(calculateCentroid(points));
+        groundTruth.setCentroid(PointUtils.centroid(points));
 
         // Set the region and the edge points and min radius.
         List<Point> region = PointUtils.perim2Region(points, inclusive);
         groundTruth.setRegion(region);
         groundTruth.setEdgePoints(points);
         // -1 for not inclusive as edge pixel pixel should not be included in radius
-        float minRadius = inclusive ? computeMinRadius(points) : computeMinRadius(points) - 1;
+        double minRadius = inclusive ? minCircleRadius(points) : minCircleRadius(points) - 1;
         groundTruth.setMinRadius(minRadius);
 
         numBigNodule++;
@@ -311,36 +310,6 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       edgePoints.add(new Point(map.getXCoord().doubleValue(), map.getYCoord().doubleValue()));
     }
     return edgePoints;
-  }
-
-  /**
-   * @param points
-   * @return the centroid of the list of points given.
-   */
-  Point calculateCentroid(List<Point> points) {
-    double x = 0;
-    double y = 0;
-    for (Point point : points) {
-      x += point.x;
-      y += point.y;
-    }
-    int nPoints = points.size();
-    x = x / nPoints;
-    y = y / nPoints;
-    return new Point(x, y);
-  }
-
-  /**
-   * @param contour the contour of the ground truth
-   * @return the radius of the smallest circle that can be fitted to {@code contour}.
-   */
-  float computeMinRadius(List<Point> contour) {
-    Point center = new Point();
-    MatOfPoint2f matOfPoints = new MatOfPoint2f();
-    matOfPoints.fromList(contour);
-    float[] radius = new float[1];
-    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
-    return radius[0];
   }
 
   int getRejected() {

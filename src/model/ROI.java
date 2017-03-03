@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Indexed;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 
 import ml.ROIGenerator;
+import util.MongoHelper;
 
 /**
  * Model used to hold information about single region of interest in a matrix.
@@ -17,6 +19,8 @@ import ml.ROIGenerator;
  * @author Stuart Clark
  */
 public class ROI {
+
+  private static final Datastore DS = MongoHelper.getDataStore();
 
   public enum Class {
     NODULE, NON_NODULE
@@ -54,9 +58,25 @@ public class ROI {
    */
   private Double matchThreshold;
 
+  /**
+   * The score obtained for the best match of this {@link ROI} to a {@link GroundTruth} in
+   * {@link ml.ROIClassifier#classify(ROI)}.
+   */
+  @Indexed
+  private Double matchScore;
+
+  /**
+   * The {@link ObjectId} for the best matching {@link GroundTruth} for this {@link ROI} was
+   * matched. {@code null} if the {@link ROI} was not matched to any {@link GroundTruth}.
+   */
+  @Indexed
+  private ObjectId groundTruth;
+
   /*
    * The follow fields are used as features for the classifier
    */
+
+  private boolean juxtapleural;
 
   private Double meanIntensity;
 
@@ -85,7 +105,7 @@ public class ROI {
    * The area of the region calculated using {@link ml.feature.Area}. This value may not be the same
    * as {@code region.size()}.
    */
-  private int area;
+  private Integer area;
 
   /**
    * The minimum bounding circle computed using {@link ml.feature.MinCircle}.
@@ -93,10 +113,28 @@ public class ROI {
   private Circle minCircle;
 
   /**
+   * The circularity of the {@link ROI} computed using {@link ml.feature.MinCircle}.
+   */
+  private Double circularity;
+
+  /**
    * The rotated rect that contains the a fitted ellipse computed using
    * {@link ml.feature.FitEllipse}.
    */
   private RotatedRect fitEllipse;
+
+
+  /**
+   * The minimum rotated rect that contains the {@link ROI}, computed using
+   * {@link ml.feature.BoundingBox}.
+   */
+  private RotatedRect boundingBox;
+
+  /**
+   * A rotation and scale invariant comparison of the width and height of the
+   * {@link ROI#boundingBox}.
+   */
+  private Double elongation;
 
   public ROI() {
     region = new ArrayList<>();
@@ -104,6 +142,10 @@ public class ROI {
 
   public ObjectId getId() {
     return id;
+  }
+
+  public void setId(ObjectId id) {
+    this.id = id;
   }
 
   public List<Point> getRegion() {
@@ -174,11 +216,11 @@ public class ROI {
     this.perimLength = perimLength;
   }
 
-  public int getArea() {
+  public Integer getArea() {
     return area;
   }
 
-  public void setArea(int area) {
+  public void setArea(Integer area) {
     this.area = area;
   }
 
@@ -228,6 +270,55 @@ public class ROI {
 
   public void setSet(Set set) {
     this.set = set;
+  }
+
+  public RotatedRect getBoundingBox() {
+    return boundingBox;
+  }
+
+  public void setBoundingBox(RotatedRect boundingBox) {
+    this.boundingBox = boundingBox;
+  }
+
+  public Double getElongation() {
+    return elongation;
+  }
+
+  public void setElongation(Double elongation) {
+    this.elongation = elongation;
+  }
+
+  public Double getMatchScore() {
+    return matchScore;
+  }
+
+  public void setMatchScore(Double matchScore) {
+    this.matchScore = matchScore;
+  }
+
+  public GroundTruth getGroundTruth() {
+    return DS.get(GroundTruth.class, groundTruth);
+  }
+
+  public void setGroundTruth(GroundTruth groundTruth) {
+    this.groundTruth = groundTruth.getId();
+  }
+
+  public boolean isJuxtapleural() {
+    return juxtapleural;
+  }
+
+  public void setJuxtapleural(boolean juxtapleural) {
+    this.juxtapleural = juxtapleural;
+
+  }
+
+  public Double getCircularity() {
+    return circularity;
+  }
+
+  public void setCircularity(Double circularity) {
+    this.circularity = circularity;
   }
 
 }

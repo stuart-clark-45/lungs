@@ -18,19 +18,21 @@ import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.SegOpt;
 import core.Lungs;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.ROI;
+import util.ConfigHelper;
 import util.DataFilter;
-import util.LungsException;
 import util.MatUtils;
 import util.MongoHelper;
 import vision.Matcher;
 
 /**
- * Used to optimise the parameters that are used to segment
+ * Used to optimise the parameters that are used to segment only focuses of maximising the
+ * segmentation of true positives.
  *
  * @author Stuart Clark
  */
@@ -44,10 +46,9 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int SIGMA_COLOUR = 0;
   private static final int SIGMA_SPACE = 1;
   private static final int KERNEL_SIZE = 2;
-  private static final int THRESHOLD = 3;
-  private static final int OPENING_WIDTH = 4;
-  private static final int OPENING_HEIGHT = 5;
-  private static final int OPENING_KERNEL = 6;
+  private static final int SURE_FG = 3;
+  private static final int SURE_BG = 4;
+  private static final int EROSION_SIZE = 5;
 
   /**
    * The {@link Mat}s to segment.
@@ -67,30 +68,29 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   /**
    * @param generations the maximum number of generations that should be used.
    * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
-   * @param readingNumber The reading number that should be used when selecting ground truths. See
-   *        documentation at {@link GroundTruth#readingNumber}.
    */
-  public SegmentationOptimiser(int popSize, int generations, int numStacks, int readingNumber) {
+  public SegmentationOptimiser(int popSize, int generations, int numStacks) {
     super(popSize, generations);
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
+    DataFilter filter = DataFilter.get();
 
     // Load some stacks
     Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> query = DataFilter.get().all(ds.createQuery(CTStack.class));
+    Query<CTStack> query = filter.all(ds.createQuery(CTStack.class));
     List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
     for (CTStack stack : stacks) {
       for (CTSlice slice : stack.getSlices()) {
 
-        // Find all the first readings for the slice that contain a nodule. Only the first reading
+        // Find all the first readings for the slice that contain a nodule. Only one reading
         // is used as we need to know exactingly how many nodules there are in the set of Mats we
         // will use
         List<GroundTruth> gtList =
-            ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                .field("imageSopUID").equal(slice.getImageSopUID()).field("readingNumber")
-                .equal(readingNumber).asList();
+            filter.singleReading(
+                ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
+                    .field("imageSopUID").equal(slice.getImageSopUID())).asList();
 
         // If there are nodules in the slice
         if (!gtList.isEmpty()) {
@@ -121,34 +121,17 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     // Segment the Mats
     Lungs lungs =
         new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
-            getInt(gt, THRESHOLD), getInt(gt, OPENING_WIDTH), getInt(gt, OPENING_HEIGHT), getInt(
-                gt, OPENING_KERNEL));
-    List<Mat> segmented = lungs.segment(mats);
+            getInt(gt, SURE_FG), getInt(gt, SURE_BG), getInt(gt, EROSION_SIZE));
 
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
     List<List<ROI>> allROIs = new ArrayList<>();
-    int numROIs = 0;
-    for (Mat mat : segmented) {
-      List<ROI> rois;
-      try {
-        rois = lungs.extractRois(mat);
-        allROIs.add(rois);
-        numROIs += rois.size();
-      } catch (LungsException e) {
-        throw new IllegalStateException("Failed to extract ROIs", e);
-      }
+    for (Mat mat : mats) {
+      List<ROI> rois = lungs.extractRois(mat);
+      allROIs.add(rois);
     }
 
-    double inclusion = noduleInclusion(allROIs);
-
-    double fitness = inclusion;
-    if (inclusion > 0.7) {
-      fitness += Double.MAX_VALUE / 2;
-      fitness -= numROIs;
-    }
-
-    return fitness;
+    return noduleInclusion(allROIs);
   }
 
   /**
@@ -201,20 +184,17 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         + "segmentation.filter.sigmaspace = "
         + getInt(gt, SIGMA_SPACE)
         + "\n"
-        + "# The threshold used\n"
-        + "segmentation.threshold = "
-        + getInt(gt, THRESHOLD)
+        + "# The threshold used to obtain the sure foreground\n"
+        + "segmentation.surefg = "
+        + getInt(gt, SURE_FG)
         + "\n"
-        + "# The type of kernel to use MORPH_RECT = 0, MORPH_CROSS = 1, MORPH_ELLIPSE = 2\n"
-        + "segmentation.opening.kernel = "
-        + getInt(gt, OPENING_KERNEL)
+        + "# The threshold used to obtain the sure background\n"
+        + "segmentation.surebg = "
+        + getInt(gt, SURE_BG)
         + "\n"
-        + "# The width of the kernel to use\n"
-        + "segmentation.opening.width = "
-        + getInt(gt, OPENING_WIDTH)
-        + "\n"
-        + "# The height of the kernel to use\n"
-        + "segmentation.opening.height = " + getInt(gt, OPENING_HEIGHT);
+        + "# The size of the structure to use when eroding the mask used to obtain rois joined to the lung cavity\n"
+        + "segmentation.erosion = " + getInt(gt, EROSION_SIZE);
+
   }
 
   /**
@@ -245,14 +225,12 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         IntegerChromosome.of(1, 10),
         // Kernel Size
         IntegerChromosome.of(3, 5),
-        // Threshold
+        // Sure Foreground
         IntegerChromosome.of(0, 255),
-        // Opening Width
-        IntegerChromosome.of(1, 10),
-        // Opening Height
-        IntegerChromosome.of(1, 10),
-        // Opening Kernel
-        IntegerChromosome.of(1, 2));
+        // Sure Background
+        IntegerChromosome.of(0, 255),
+        // Erosion Size
+        IntegerChromosome.of(1, 9));
   }
 
   /**
@@ -263,15 +241,15 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Create optimiser
-    int popSize = 50;
-    int generations = 20000;
-    int numStacks = 10;
-    int readingNumber = args.length == 1 ? Integer.parseInt(args[0]) : 0;
-    SegmentationOptimiser optimiser =
-        new SegmentationOptimiser(popSize, generations, numStacks, readingNumber);
+    int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
+    int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
+    int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
+    SegmentationOptimiser optimiser = new SegmentationOptimiser(popSize, generations, numStacks);
 
-    // Load the persisted population if there is one
-    // optimiser.loadPopulation();
+    // Load the persisted population if configured to
+    if (ConfigHelper.getBoolean(SegOpt.LOAD_POPULATION)) {
+      optimiser.loadPopulation();
+    }
 
     // Run the optimiser
     optimiser.run();

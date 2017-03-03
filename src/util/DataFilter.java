@@ -13,8 +13,10 @@ import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Misc;
 import config.Mode;
 import model.CTStack;
+import model.GroundTruth;
 import model.StringResult;
 
 /**
@@ -26,6 +28,11 @@ import model.StringResult;
 public class DataFilter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataFilter.class);
+
+  /**
+   * The reading number that is being used to select {@link GroundTruth}s
+   */
+  private static final int READING_NUMBER = ConfigHelper.getInt(Misc.READING_NUMBER);
 
   /**
    * Field name used for queries
@@ -151,6 +158,14 @@ public class DataFilter {
    */
   public <T> Query<T> test(Query<T> query) {
     return all(query).field(UID).in(testInstances);
+  }
+
+  /**
+   * @param query
+   * @return a query used for obtaining ground truths of a single reading number
+   */
+  public Query<GroundTruth> singleReading(Query<GroundTruth> query) {
+    return all(query).field("readingNumber").equal(READING_NUMBER);
   }
 
   public Set<String> getTrainInstances() {

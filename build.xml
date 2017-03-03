@@ -1,94 +1,102 @@
 <project name="lungs" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant"
-         xmlns:jacoco="antlib:org.jacoco.ant">
+>
 
-  <property name="dir.build" value="bin"/>
-  <property name="dir.lib" value="lib"/>
-  <property name="dir.src" value="src"/>
-  <property name="dir.test" value="test"/>
-  <property name="dir.conf" value="conf"/>
-  <property name="dir.rsrc" value="resource"/>
-  <property name="dir.dist" value="dist"/>
-  <property name="dir.report" value="reports"/>
+    <property name="dir.build" value="bin"/>
+    <property name="dir.lib" value="lib"/>
+    <property name="dir.src" value="src"/>
+    <property name="dir.test" value="test"/>
+    <property name="dir.conf" value="conf"/>
+    <property name="dir.rsrc" value="resource"/>
+    <property name="dir.dist" value="dist"/>
+    <property name="dir.report" value="reports"/>
 
-  <target name="clean" description="delete all build artifacts">
-    <delete dir="${dir.lib}"/>
-    <delete dir="${dir.build}"/>
-    <delete dir="${dir.dist}"/>
-    <delete dir="${dir.report}"/>
-  </target>
+    <target name="clean" description="delete all build artifacts">
+        <delete dir="${dir.lib}"/>
+        <delete dir="${dir.build}"/>
+        <delete dir="${dir.dist}"/>
+        <delete dir="${dir.report}"/>
+    </target>
 
-  <target name="resolve" description="resolve dependencies">
-    <ivy:retrieve pattern="${dir.lib}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true"
-                  type="jar,bundle" log="quiet"/>
-  </target>
+    <target name="resolve" description="resolve dependencies">
+        <ivy:retrieve pattern="${dir.lib}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true"
+                      type="jar,bundle" log="quiet"/>
+    </target>
 
-  <target name="ivyreport" depends="resolve" description="report ivy dependencies">
-    <ivy:report conf="compile"/>
-  </target>
+    <target name="ivyreport" depends="resolve" description="report ivy dependencies">
+        <ivy:report conf="compile"/>
+    </target>
 
-  <target name="compile" depends="resolve" description="build the application">
-    <mkdir dir="${dir.build}"/>
-    <javac srcdir="${dir.src}" destdir="${dir.build}" target="1.8" source="1.8" includeantruntime="false" debug="on"
-           encoding="UTF-8">
-      <classpath>
-        <fileset dir="${dir.lib}/compile" includes="**/*.jar"/>
-        <fileset dir="/usr/local/Cellar/opencv3/3.2.0/share/OpenCV/java" includes="opencv-320.jar"/>
-      </classpath>
-      <compilerarg line="-XDignore.symbol.file" />
-    </javac>
-  </target>
+    <target name="compile" depends="resolve" description="build the application">
+        <mkdir dir="${dir.build}"/>
+        <javac srcdir="${dir.src}" destdir="${dir.build}" target="1.8" source="1.8" includeantruntime="false" debug="on"
+               encoding="UTF-8">
+            <classpath>
+                <fileset dir="${dir.lib}/compile" includes="**/*.jar"/>
+                <fileset dir="/usr/local/Cellar/opencv3/3.2.0/share/OpenCV/java" includes="opencv-320.jar"/>
+            </classpath>
+            <compilerarg line="-XDignore.symbol.file"/>
+        </javac>
+    </target>
 
-  <target name="dist" depends="compile" description="build a distribution-ready package">
-    <mkdir dir="${dir.dist}/lib"/>
-    <copy todir="${dir.dist}/lib">
-      <fileset dir="${dir.lib}/compile" includes="**/*.jar"/>
-    </copy>
+    <target name="dist" depends="compile" description="build a distribution-ready package">
+        <echo message="Building for commit: "/>
+        <touch file="${dir.dist}/version.txt" mkdirs="true"/>
+        <exec executable="git" failonerror="true">
+            <arg value="rev-parse"/>
+            <arg value="HEAD"/>
+            <redirector output="${dir.dist}/version.txt" alwayslog="true"/>
+        </exec>
 
-    <mkdir dir="${dir.dist}/conf"/>
-    <copy todir="${dir.dist}/conf">
-      <fileset dir="${dir.conf}"/>
-    </copy>
+        <mkdir dir="${dir.dist}/lib"/>
+        <copy todir="${dir.dist}/lib">
+            <fileset dir="${dir.lib}/compile" includes="**/*.jar"/>
+        </copy>
 
-    <mkdir dir="${dir.dist}/resource"/>
-    <copy todir="${dir.dist}/resource">
-      <fileset dir="${dir.rsrc}"/>
-    </copy>
+        <mkdir dir="${dir.dist}/conf"/>
+        <copy todir="${dir.dist}/conf">
+            <fileset dir="${dir.conf}"/>
+        </copy>
+
+        <mkdir dir="${dir.dist}/resource"/>
+        <copy todir="${dir.dist}/resource">
+            <fileset dir="${dir.rsrc}"/>
+        </copy>
 
 
-    <!-- Build up a classpath for the jar -->
-    <manifestclasspath property="dist.jar.classpath" jarfile="${dir.dist}/lungs.jar">
-      <classpath>
-        <fileset dir="${dir.dist}/lib" includes="**/*.jar"/>
-	<fileset dir="${dir.dist}/resource" includes="**/*"/>
-      </classpath>
-    </manifestclasspath>
+        <!-- Build up a classpath for the jar -->
+        <manifestclasspath property="dist.jar.classpath" jarfile="${dir.dist}/lungs.jar">
+            <classpath>
+                <fileset dir="${dir.dist}/lib" includes="**/*.jar"/>
+                <fileset dir="${dir.dist}/resource" includes="**/*"/>
+            </classpath>
+        </manifestclasspath>
 
-    <!-- Check the Git version information -->
-    <exec executable="git" outputproperty="dist.jar.version">
-      <arg value="describe"/>
-      <arg value="--always"/>
-      <arg value="--dirty=-impure"/>
-    </exec>
+        <!-- Check the Git version information -->
+        <exec executable="git" outputproperty="dist.jar.version">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty=-impure"/>
+        </exec>
 
-    <jar destfile="${dir.dist}/lungs.jar">
-      <manifest>
-        <attribute name="Class-Path" value="${dist.jar.classpath}"/>
-        <section name="Build">
-          <attribute name="User" value="${user.name}"/>
-          <attribute name="JVM" value="${java.vm.vendor} ${java.vm.name} ${java.vm.version}"/>
-          <attribute name="JRE" value="${java.vendor} ${java.version}"/>
-          <attribute name="OS" value="${os.name} ${os.version} ${os.arch}"/>
-          <attribute name="Version" value="${dist.jar.version}"/>
-        </section>
-      </manifest>
-      <fileset dir="${dir.build}" includes="**/*.class"/>
-      <fileset dir="${dir.rsrc}"/>
-    </jar>
-  </target>
+        <jar destfile="${dir.dist}/lungs.jar">
+            <manifest>
+                <attribute name="Class-Path" value="${dist.jar.classpath}"/>
+                <section name="Build">
+                    <attribute name="User" value="${user.name}"/>
+                    <attribute name="JVM" value="${java.vm.vendor} ${java.vm.name} ${java.vm.version}"/>
+                    <attribute name="JRE" value="${java.vendor} ${java.version}"/>
+                    <attribute name="OS" value="${os.name} ${os.version} ${os.arch}"/>
+                    <attribute name="Version" value="${dist.jar.version}"/>
+                </section>
+            </manifest>
+            <fileset dir="${dir.build}" includes="**/*.class"/>
+            <fileset dir="${dir.rsrc}"/>
+        </jar>
+    </target>
 
-  <target name="ivy-report" description="Report what Ivy is doing">
-    <mkdir dir="ivy-report" />
-    <ivy:resolve type="${ivy.resolve.types}" />
-    <ivy:report todir="ivy-report" />
-  </target>
+    <target name="ivy-report" description="Report what Ivy is doing">
+        <mkdir dir="ivy-report"/>
+        <ivy:resolve type="${ivy.resolve.types}"/>
+        <ivy:report todir="ivy-report"/>
+    </target>
 </project>

@@ -22,11 +22,12 @@ public class MinCircle implements Feature {
     Point center = new Point();
     MatOfPoint2f matOfPoints = new MatOfPoint2f();
     matOfPoints.fromList(roi.getContour());
-    float[] radius = new float[1];
-    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
+    float[] radiusArray = new float[1];
+    Imgproc.minEnclosingCircle(matOfPoints, center, radiusArray);
 
     // Store the result in the ROI
-    roi.setMinCircle(new Circle(center, radius[0]));
+    float radius = radiusArray[0];
+    roi.setMinCircle(new Circle(center, radius));
   }
 
 }

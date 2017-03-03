@@ -1,112 +1,87 @@
 package ml;
 
-import static model.GroundTruth.Type.BIG_NODULE;
-import static model.ROI.Class.NODULE;
-import static model.ROI.Class.NON_NODULE;
-
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.Misc;
-import model.GroundTruth;
 import model.ROI;
 import util.ConfigHelper;
+import util.FutureMonitor;
 import util.MongoHelper;
-import vision.Matcher;
 
 /**
- * Used {@link GroundTruth} to decide which ROIs belong which {@link ROI.Class}.
+ * Used to classify {@link ROI}s.
  *
  * @author Stuart Clark
  */
 public class ROIClassifier {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ROIClassifier.class);
-  private static final String IMAGE_SOP_UID = "imageSopUID";
-  private static final double MATCH_THRESHOLD = ConfigHelper.getDouble(Misc.MATCH_THRESHOLD);
-  private static final int LOG_INTERVAL = 10;
+  private static final int LOG_INTERVAL = 1000;
 
-  private Datastore ds;
+  private final double matchThreshold;
 
-  public ROIClassifier() {
-    this.ds = MongoHelper.getDataStore();
-  }
-
-  public void run() {
-    LOGGER.info("Running ROIClassifier...");
-
-    // For each of the images we have created ROIs for
-    List sopUIDs = ds.getCollection(ROI.class).distinct(IMAGE_SOP_UID);
-    for (int i = 0; i < sopUIDs.size(); i++) {
-      String sopUID = (String) sopUIDs.get(i);
-
-      // Get the corresponding ROIs
-      List<ROI> rois = ds.createQuery(ROI.class).field(IMAGE_SOP_UID).equal(sopUID).asList();
-
-      // Get the corresponding GroundTruths
-      List<GroundTruth> gts =
-          ds.createQuery(GroundTruth.class).field(IMAGE_SOP_UID).equal(sopUID).field("type")
-              .equal(BIG_NODULE).asList();
-
-      // Classify each of the rois
-      rois.parallelStream().forEach(roi -> setClass(roi, gts, MATCH_THRESHOLD));
-
-      // Save the updated ROIs
-      ds.save(rois);
-
-      // Logging
-      if (i % LOG_INTERVAL == 0) {
-        LOGGER.info(i + "/" + sopUIDs.size() + " images processed");
-      }
-    }
-
-    LOGGER.info("ROIClassifier finished");
-  }
-
-  public static void setClass(ROI roi, List<GroundTruth> groundTruths) {
-    setClass(roi, groundTruths, MATCH_THRESHOLD);
+  public ROIClassifier(double matchThreshold) {
+    this.matchThreshold = matchThreshold;
   }
 
   /**
-   * Set the {@link ROI#classification} for {@code roi} by matching the {@link ROI} to a
-   * {@link GroundTruth}.
-   *
-   * @param roi
-   * @param groundTruths
-   * @param matchThreshold
+   * Classifies all the ROIs in the database.
    */
-  @SuppressWarnings("ConstantConditions")
-  public static void setClass(ROI roi, List<GroundTruth> groundTruths, double matchThreshold) {
-    // Find the highest matching score
-    double bestScore = 0.0;
-    GroundTruth bestMatch = null;
-    for (GroundTruth gt : groundTruths) {
-      double score = Matcher.match(roi, gt);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = gt;
+  public void run() {
+    LOGGER.info("Running ROIClassifier...");
+
+    ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    Datastore ds = MongoHelper.getDataStore();
+
+    // Create futures that classify ROIs
+    Query<ROI> query = ds.createQuery(ROI.class);
+    int numROI = (int) query.count();
+    List<Future> futures = new ArrayList<>(numROI);
+    int counter = 0;
+    for (ROI roi : query) {
+      futures.add(es.submit(() -> {
+        classify(roi);
+        ds.save(roi);
+      }));
+
+      if(++counter % LOG_INTERVAL == 0){
+        LOGGER.info(counter + "/" + numROI + " futures created");
       }
     }
 
-    // Set the match threshold used
-    roi.setMatchThreshold(matchThreshold);
+    // Monitor futures
+    FutureMonitor monitor = new FutureMonitor(futures);
+    monitor.setLogString("ROIs classified");
+    monitor.monitor();
 
-    // Set the class
-    if (bestScore > matchThreshold) {
-      roi.setClassification(NODULE);
-      bestMatch.setMatchedToRoi(true);
-      bestMatch.setRoi(roi);
+    LOGGER.info("Finished running ROIClassifier");
+  }
+
+  /**
+   * Classify {@code roi} by setting {@link ROI#classification} and {@link ROI#matchThreshold}.
+   * 
+   * @param roi
+   */
+  public void classify(ROI roi) {
+    Double matchScore = roi.getMatchScore();
+    if (matchScore != null && matchScore >= matchThreshold) {
+      roi.setClassification(ROI.Class.NODULE);
     } else {
-      roi.setClassification(NON_NODULE);
+      roi.setClassification(ROI.Class.NON_NODULE);
     }
-
+    roi.setMatchThreshold(matchThreshold);
   }
 
-  public static void main(String... args) {
-    new ROIClassifier().run();
+  public static void main(String[] args) {
+    new ROIClassifier(ConfigHelper.getDouble(Misc.MATCH_THRESHOLD)).run();
   }
-
 }

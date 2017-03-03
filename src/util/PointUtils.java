@@ -11,6 +11,7 @@ import java.util.Set;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -53,9 +54,8 @@ public class PointUtils {
         FORE_GROUND));
 
     // Extract the region points
-    ROIExtractor extractor = new ROIExtractor(FORE_GROUND);
     Point point = perimeter.get(0);
-    List<Point> region = extractor.extractOne(filled, point).getRegion();
+    List<Point> region = ROIExtractor.extractOne(filled, point).getRegion();
 
     // Remove the perimeter if it was not inclusive
     if (!inclusive) {
@@ -67,10 +67,10 @@ public class PointUtils {
 
   /**
    * @param regionPoints as single region given as a list of all of it's {@link Point}s.
-   * @return a list of all the points that form the inclusive parameter of the region. i.e. the
-   *         points are also part of the area. List is not guaranteed to be in raster order.
+   * @return a list of all the points that form the inclusive contour of the region. i.e. the
+   *         points of the countor are also part of the region. List is not guaranteed to be in raster order.
    */
-  public static List<Point> region2perim(List<Point> regionPoints) {
+  public static List<Point> region2Contour(List<Point> regionPoints) {
     MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
     Mat region = points2MinMat(regionPoints, mmXY);
     List<MatOfPoint> contours = new ArrayList<>();
@@ -200,6 +200,36 @@ public class PointUtils {
         .forEach(e -> sorted.addAll(e.getValue()));
 
     return sorted;
+  }
+
+  /**
+   * @param points
+   * @return the centroid of the list of points given.
+   */
+  public static Point centroid(List<Point> points) {
+    double x = 0;
+    double y = 0;
+    for (Point point : points) {
+      x += point.x;
+      y += point.y;
+    }
+    int nPoints = points.size();
+    x = x / nPoints;
+    y = y / nPoints;
+    return new Point(x, y);
+  }
+
+  /**
+   * @param contour the contour of the ground truth
+   * @return the radius of the smallest circle that can be fitted to {@code contour}.
+   */
+  public static double minCircleRadius(List<Point> contour) {
+    Point center = new Point();
+    MatOfPoint2f matOfPoints = new MatOfPoint2f();
+    matOfPoints.fromList(contour);
+    float[] radius = new float[1];
+    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
+    return radius[0];
   }
 
 }

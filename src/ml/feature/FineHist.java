@@ -13,7 +13,7 @@ import util.LungsException;
  */
 public class FineHist implements Feature {
 
-  public static final int BINS = 256;
+  public static final int BINS = 128;
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {

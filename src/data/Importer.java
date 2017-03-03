@@ -1,12 +1,12 @@
 package data;
 
 import org.mongodb.morphia.Datastore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.DBCollection;
 
 import config.Mode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import util.ConfigHelper;
 import util.LungsException;
 import util.MongoHelper;
@@ -25,16 +25,19 @@ public abstract class Importer<T> implements Runnable {
    */
   protected final String path;
 
+  protected final Datastore ds;
+
   /**
    * The class of the model that your will parse your data into.
    */
-  private Class<T> clazz;
+  private final Class<T> clazz;
 
   /**
    * @param clazz the class of the model that your will parse your data into.
    */
   public Importer(Class<T> clazz) {
     this.clazz = clazz;
+    ds = MongoHelper.getDataStore();
     Mode.Value mode = ConfigHelper.getMode();
     if (mode == Mode.Value.TEST) {
       path = testPath();
@@ -51,12 +54,10 @@ public abstract class Importer<T> implements Runnable {
   @Override
   public void run() {
     try {
-      Datastore ds = MongoHelper.getDataStore();
       DBCollection collection = ds.getCollection(clazz);
-
       collection.drop();
       collection.dropIndexes();
-      importModels(ds);
+      importModels();
 
       LOGGER.info("Ensuring indexes for " + clazz.getName() + "...");
       ds.ensureIndexes(clazz);
@@ -67,17 +68,17 @@ public abstract class Importer<T> implements Runnable {
   }
 
   /**
-   * @return the path that should be used mode is set to {@link Mode.Value#TEST}. Simply
-   *         return {@code null} file is not used to import models.
+   * @return the path that should be used mode is set to {@link Mode.Value#TEST}. Simply return
+   *         {@code null} file is not used to import models.
    */
   protected abstract String testPath();
 
   /**
-   * @return the path that should be used mode is not set to {@link Mode.Value#TEST}. Simply
-   *         return {@code null} file is not used to import models.
+   * @return the path that should be used mode is not set to {@link Mode.Value#TEST}. Simply return
+   *         {@code null} file is not used to import models.
    */
   protected abstract String normalPath();
 
-  protected abstract void importModels(Datastore ds) throws LungsException;
+  protected abstract void importModels() throws LungsException;
 
 }

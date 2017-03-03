@@ -35,5 +35,5 @@ public class LimitedIterator<T> implements Iterator<T> {
     }
     return iterator.next();
   }
-  
+
 }

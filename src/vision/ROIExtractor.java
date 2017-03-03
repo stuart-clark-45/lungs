@@ -1,64 +1,136 @@
 package vision;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 
-import org.opencv.core.CvType;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
 
 import model.ROI;
-import util.LungsException;
+import util.MatUtils;
 
 /**
- * Used to extract {@link ROI}s from a {@link Mat} that has been segmented.
+ * Used extract ROIs from {@link Mat}s using a combination of the watershed algorithm and the
+ * connected component algorithm.
  *
  * @author Stuart Clark
  */
 public class ROIExtractor {
 
-  private static final int NOT_LABELLED = 0;
-  private static final int LABELLED = 1;
+  /**
+   * The value used for the foreground in the segmented images.
+   */
+  private static final int FOREGROUND = 255;
 
   /**
-   * The intensity value for pixels that are in the foreground.
+   * The label given to boundaries by {@link Imgproc#watershed(Mat, Mat)}.
    */
-  private int foreground;
+  private static final double BOUNDARIES = -1;
 
   /**
-   * @param foreground he intensity value for pixels that are in the foreground.
+   * The label given to pixels that have been extracted into an {@link ROI} by
+   * {@link ROIExtractor#populateROI(int, int, Mat, double, ROI)}.
    */
-  public ROIExtractor(int foreground) {
-    this.foreground = foreground;
+  private static final double EXTRACTED = -2;
+
+  /**
+   * The label given to pixels that are part of the background.
+   */
+  private static final double BACKGROUND = 0;
+
+  /**
+   * The threshold value that when used returns a thresholded image where the foreground is the
+   * pixels of the original image that are known to be in the foreground of the original image
+   */
+  private int sureFG;
+
+  /**
+   * The threshold value that when used returns a thresholded image where the background is the
+   * pixels of the original image that are known to be in the background of the original image
+   */
+  private int sureBG;
+
+  /**
+   * @param sureFG The threshold value that when used returns a thresholded image where the
+   *        foreground is the pixels of the original image that are known to be in the foreground of
+   *        the original image
+   * @param sureBG The threshold value that when used returns a thresholded image where the
+   *        background is the pixels of the original image that are known to be in the background of
+   *        the original image
+   */
+  public ROIExtractor(int sureFG, int sureBG) {
+    this.sureFG = sureFG;
+    this.sureBG = sureBG;
+  }
+
+  public List<ROI> extractROIs(Mat original) {
+    // Apply threshold to find the sure foreground
+    Mat foregroundMat = MatUtils.similarMat(original);
+    Imgproc.threshold(original, foregroundMat, sureFG, FOREGROUND, THRESH_BINARY);
+
+    // Apply threshold to find the sure background
+    Mat backgroundMat = MatUtils.similarMat(original);
+    Imgproc.threshold(original, backgroundMat, sureBG, FOREGROUND, THRESH_BINARY);
+
+    // Subtract the sure foreground from the sure background to find the unknown region
+    Mat unknownMat = MatUtils.similarMat(original);
+    Core.subtract(backgroundMat, foregroundMat, unknownMat);
+
+    // Label the connected components found in the sure foreground
+    Mat labels = MatUtils.similarMat(original);
+    Imgproc.connectedComponents(foregroundMat, labels);
+
+    // Add one to each of the labels so that we can mark the unknown region with 0's
+    for (int row = 0; row < labels.rows(); row++) {
+      for (int col = 0; col < labels.cols(); col++) {
+        labels.put(row, col, labels.get(row, col)[0] + 1);
+      }
+    }
+
+    // Mark the unknown region with 0's so that labels can be used by Imgproc.watershed(..)
+    for (int row = 0; row < labels.rows(); row++) {
+      for (int col = 0; col < labels.cols(); col++) {
+        if (unknownMat.get(row, col)[0] == FOREGROUND) {
+          labels.put(row, col, 0);
+        }
+      }
+    }
+
+    // Run the watershed algorithm (this will update labels)
+    Mat bgr = MatUtils.grey2BGR(original);
+    Imgproc.watershed(bgr, labels);
+
+
+    return labelsToROIs(labels);
   }
 
   /**
-   * Returns a list of {@link ROI}s obtained from {@code segmented} using an implementation of the
-   * connected-component labeling algorithm.
+   * Extract all the rois. id starts from 1 because we want to ignore boundaries (-1) and the
+   * background (0)
    *
-   * @param segmented
-   * @return
-   * @throws LungsException
+   * @param labels a {@link Mat} containing labels created using the connected component algorithm.
+   * @return the rois.
    */
-  public List<ROI> extract(Mat segmented) throws LungsException {
-    if (segmented.channels() != 1) {
-      throw new LungsException("The Mat must have only one channel");
-    }
-
-    // Return list
+  public static List<ROI> labelsToROIs(Mat labels) {
+    Set<Double> ignoreIds = new HashSet<>();
+    ignoreIds.add(BOUNDARIES);
+    ignoreIds.add(EXTRACTED);
+    ignoreIds.add(BACKGROUND);
     List<ROI> rois = new ArrayList<>();
-
-    // Mat used to record object labels
-    Mat objects = Mat.zeros(segmented.rows(), segmented.cols(), CvType.CV_8UC1);
-
-    // Label the objects in mat
-    for (int row = 0; row < segmented.rows(); row++) {
-      for (int col = 0; col < segmented.cols(); col++) {
-        // If the pixel is white and has not been accepted as part of an ROI yet
-        if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
+    for (int row = 0; row < labels.rows(); row++) {
+      for (int col = 0; col < labels.cols(); col++) {
+        double id = labels.get(row, col)[0];
+        if (!ignoreIds.contains(id)) {
           ROI roi = new ROI();
-          labelPixel(segmented, objects, row, col, roi);
+          populateROI(row, col, labels, id, roi);
           rois.add(roi);
+          ignoreIds.add(id);
         }
       }
     }
@@ -67,88 +139,77 @@ public class ROIExtractor {
   }
 
   /**
-   * Returns a single {@link ROI}s obtained from {@code segmented} using an implementation of the
-   * connected-component labeling algorithm.
-   * 
-   * @param segmented
-   * @param seed the point to use as a seed for growing the {@link ROI}.
-   * @return
+   * @param labels a {@link Mat} with labeled connected components.
+   * @param point one of the points in the connected component that should be extracted into an ROI.
+   * @return the {@link ROI} for the connected component that has a pixel at {@code point}.
    */
-  public ROI extractOne(Mat segmented, Point seed) {
+  public static ROI extractOne(Mat labels, Point point) {
     ROI roi = new ROI();
-    Mat objects = Mat.zeros(segmented.rows(), segmented.cols(), CvType.CV_8UC1);
-    labelPixel(segmented, objects, (int) seed.y, (int) seed.x, roi);
+    int row = (int) point.y;
+    int col = (int) point.x;
+    double id = labels.get(row, col)[0];
+    populateROI(row, col, labels, id, roi);
     return roi;
   }
 
-  private void labelPixel(Mat segmented, Mat objects, int row, int col, ROI roi) {
+  /**
+   * Recursive method used to populate the {@link ROI#region}.
+   * 
+   * @param row the row of the current pixel being examined.
+   * @param col the column of the current pixel being examined.
+   * @param labels the {@link Mat} containing the labels.
+   * @param id the id for the roi that is being extracted.
+   * @param roi the {@link ROI} to populate.
+   */
+  private static void populateROI(int row, int col, Mat labels, double id, ROI roi) {
     // If the pixel is white and has not been accepted as part of an ROI yet
-    if (!isLabeled(objects, row, col) && isForeground(segmented, row, col)) {
+    if (labels.get(row, col)[0] == id) {
       roi.addPoint(new Point(col, row));
-      objects.put(row, col, LABELLED);
+      // By setting this pixel to -2 we can show that it has already been visited and extracted into
+      // an ROI. This avoids duplicate pints in the region lists.
+      labels.put(row, col, EXTRACTED);
 
       // Label pixel up and left from current
       if (row - 1 > -1 && col - 1 > -1) {
-        labelPixel(segmented, objects, row - 1, col - 1, roi);
+        populateROI(row - 1, col - 1, labels, id, roi);
       }
 
       // Label pixel up from current
       if (col - 1 > -1) {
-        labelPixel(segmented, objects, row, col - 1, roi);
+        populateROI(row, col - 1, labels, id, roi);
       }
 
       // Label pixel up and right from current
-      if (row + 1 < segmented.rows() && col - 1 > -1) {
-        labelPixel(segmented, objects, row + 1, col - 1, roi);
+      if (row + 1 < labels.rows() && col - 1 > -1) {
+        populateROI(row + 1, col - 1, labels, id, roi);
       }
 
       // Label pixel right from current
-      if (row + 1 < segmented.rows()) {
-        labelPixel(segmented, objects, row + 1, col, roi);
+      if (row + 1 < labels.rows()) {
+        populateROI(row + 1, col, labels, id, roi);
       }
 
       // Label pixel down and right from current
-      if (row + 1 < segmented.rows() && col + 1 < segmented.cols()) {
-        labelPixel(segmented, objects, row + 1, col + 1, roi);
+      if (row + 1 < labels.rows() && col + 1 < labels.cols()) {
+        populateROI(row + 1, col + 1, labels, id, roi);
       }
 
       // Label pixel down from current
-      if (col + 1 < segmented.cols()) {
-        labelPixel(segmented, objects, row, col + 1, roi);
+      if (col + 1 < labels.cols()) {
+        populateROI(row, col + 1, labels, id, roi);
       }
 
       // Label pixel left and down from current
-      if (row - 1 > -1 && col + 1 < segmented.cols()) {
-        labelPixel(segmented, objects, row - 1, col + 1, roi);
+      if (row - 1 > -1 && col + 1 < labels.cols()) {
+        populateROI(row - 1, col + 1, labels, id, roi);
       }
 
       // Label pixel left from current
       if (row - 1 > -1) {
-        labelPixel(segmented, objects, row - 1, col, roi);
+        populateROI(row - 1, col, labels, id, roi);
       }
 
     }
-  }
-
-  /**
-   * @param objects the {@link Mat} that holds the labels for the pixels.
-   * @param row
-   * @param col
-   * @return true if the pixel at (row, col) has been assigned a label, false otherwise.
-   */
-  private boolean isLabeled(Mat objects, int row, int col) {
-    return objects.get(row, col)[0] != NOT_LABELLED;
-  }
-
-  /**
-   * @param segmented a grey-scale segmented image.
-   * @param row
-   * @param col
-   * @return true if the pixel at (row, col) is in the foreground, false otherwise.
-   */
-  private boolean isForeground(Mat segmented, int row, int col) {
-    // Assumed that segmented has one channel and the foreground has maximum possible value.
-    return segmented.get(row, col)[0] == foreground;
   }
 
 }

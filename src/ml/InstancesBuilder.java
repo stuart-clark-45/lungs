@@ -32,6 +32,7 @@ public class InstancesBuilder {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InstancesBuilder.class);
   private static final int LOG_INTERVAL = 5000;
+  private final Instances structure;
 
   private ArrayList<Attribute> attributes;
   private final int numAttributes;
@@ -48,6 +49,10 @@ public class InstancesBuilder {
     this.attributes = new ArrayList<>();
     this.functions = new ArrayList<>();
 
+    // Add juxtapleural
+    this.attributes.add(new Attribute("Juxtapleural"));
+    this.functions.add(ROI::isJuxtapleural);
+
     // Add mean intensity
     this.attributes.add(new Attribute("Mean Intensity"));
     this.functions.add(ROI::getMeanIntensity);
@@ -60,11 +65,15 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Perimeter"));
     this.functions.add(ROI::getPerimLength);
 
-    // Add Min Circle
+    // Add Min Circle Radius
     this.attributes.add(new Attribute("Min Circle Radius"));
     this.functions.add(roi -> roi.getMinCircle().getRadius());
 
-    // Add Fitted Ellipse (Avoiding NPEs will ternary expression)
+    // Add Circularity
+    this.attributes.add(new Attribute("Circularity"));
+    this.functions.add(ROI::getCircularity);
+
+    // Add Fitted Ellipse (Avoiding NPEs with ternary expression)
     this.attributes.add(new Attribute("Fitted Ellipse Angle"));
     this.functions.add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().angle
         : missingValue());
@@ -79,6 +88,10 @@ public class InstancesBuilder {
     this.functions
         .add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().boundingRect().height
             : missingValue());
+
+    // Add aspect ratio (Avoiding NPEs with ternary expression)
+    this.attributes.add(new Attribute("Elongation"));
+    this.functions.add(roi -> roi.getElongation() != null ? roi.getElongation() : missingValue());
 
     // Add Coarse Histogram
     for (int i = 0; i < CoarseHist.BINS; i++) {
@@ -102,6 +115,7 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Class", Arrays.asList(NODULE.name(), NON_NODULE.name())));
     this.functions.add(ROI::getClassification);
 
+    this.structure = createSet("Structure", 0);
     this.numAttributes = attributes.size();
   }
 
@@ -128,31 +142,40 @@ public class InstancesBuilder {
    * @param rois iterator for the {@link ROI}s.
    * @return {@link Instances} for the given {@link ROI}s
    */
-  public void addInstances(Instances set, Iterator<ROI> rois, int numROI) {
+  public void addInstances(Instances set, Iterator<ROI> rois, int maxNumROI) {
     String name = set.relationName();
 
     LOGGER.info("Adding instances to " + name + "...");
     // Iterate over rois
     int counter = 0;
     while (rois.hasNext()) {
-      ROI roi = rois.next();
+      try {
+        set.add(createInstance(rois.next()));
 
-      // Add to the instances
-      Instance instance = new DenseInstance(numAttributes);
-      // Don't try to set class if setClass if false
-      int end = setClass ? numAttributes : numAttributes - 1;
-      for (int i = 0; i < end; i++) {
-        setValue(instance, attributes.get(i), functions.get(i).apply(roi));
-      }
-      set.add(instance);
-
-      // Logging
-      if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numROI + " " + name + " instances added");
+        // Logging
+        if (++counter % LOG_INTERVAL == 0) {
+          LOGGER.info(counter + " / max " + maxNumROI + " " + name + " instances added");
+        }
+      } catch (Exception e) {
+        LOGGER.error("Something went wrong when adding instances", e);
       }
     }
-    
+
     LOGGER.info("Finished adding instances to " + name);
+  }
+
+  /**
+   * @param roi
+   * @return an {@link Instance} for the {@code roi}.
+   */
+  public Instance createInstance(ROI roi) {
+    Instance instance = new DenseInstance(numAttributes);
+    // Don't try to set class if setClass if false
+    int end = setClass ? numAttributes : numAttributes - 1;
+    for (int i = 0; i < end; i++) {
+      setValue(instance, attributes.get(i), functions.get(i).apply(roi));
+    }
+    return instance;
   }
 
   public Instances createSet(String name, int size) {
@@ -161,9 +184,13 @@ public class InstancesBuilder {
     return instances;
   }
 
+  public Instances getStructure() {
+    return structure;
+  }
+
   /**
    * Set {@code attribute} {@code value} for the {@code instance} by casting it to the correct type.
-   *
+   * 
    * @param instance
    * @param attribute
    * @param value
@@ -172,6 +199,8 @@ public class InstancesBuilder {
     if (value == null) {
       throw new IllegalStateException("Value for " + attribute.name()
           + " is null you may need to run the FeatureEngine again");
+    } else if (value instanceof Boolean) {
+      instance.setValue(attribute, ((Boolean) value) ? 1 : 0);
     } else if (value instanceof Number) {
       instance.setValue(attribute, ((Number) value).doubleValue());
     } else if (value instanceof ROI.Class) {
