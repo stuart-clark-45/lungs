@@ -22,10 +22,12 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Misc;
 import model.CTSlice;
 import model.GroundTruth;
 import model.StringResult;
 import util.ColourBGR;
+import util.ConfigHelper;
 import util.DataFilter;
 import util.FutureMonitor;
 import util.MongoHelper;
@@ -43,7 +45,7 @@ public class MissedNodules {
   private static final String ARG_ERROR =
       "Please provide a single argument either --images or --noimages";
   private static final String IMAGE_SOP_UID = "imageSopUID";
-  private static final String IMAGE_DIR = "./missed-nodules/";
+  private static final String IMAGE_DIR = ConfigHelper.getString(Misc.MISSED_NODULES);
   private static final int LOG_INTERVAL = 200;
 
   private final ExecutorService es;
@@ -118,7 +120,7 @@ public class MissedNodules {
             }
 
             // Save the mat
-            Imgcodecs.imwrite(IMAGE_DIR + sopUID + ".jpg", mat);
+            Imgcodecs.imwrite(IMAGE_DIR + "/" + sopUID + ".jpg", mat);
 
           }));
 
