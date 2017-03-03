@@ -68,30 +68,29 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   /**
    * @param generations the maximum number of generations that should be used.
    * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
-   * @param readingNumber The reading number that should be used when selecting ground truths. See
-   *        documentation at {@link GroundTruth#readingNumber}.
    */
-  public SegmentationOptimiser(int popSize, int generations, int numStacks, int readingNumber) {
+  public SegmentationOptimiser(int popSize, int generations, int numStacks) {
     super(popSize, generations);
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
+    DataFilter filter = DataFilter.get();
 
     // Load some stacks
     Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> query = DataFilter.get().all(ds.createQuery(CTStack.class));
+    Query<CTStack> query = filter.all(ds.createQuery(CTStack.class));
     List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
     for (CTStack stack : stacks) {
       for (CTSlice slice : stack.getSlices()) {
 
-        // Find all the first readings for the slice that contain a nodule. Only the first reading
+        // Find all the first readings for the slice that contain a nodule. Only one reading
         // is used as we need to know exactingly how many nodules there are in the set of Mats we
         // will use
         List<GroundTruth> gtList =
-            ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                .field("imageSopUID").equal(slice.getImageSopUID()).field("readingNumber")
-                .equal(readingNumber).asList();
+            filter.singleReading(
+                ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
+                    .field("imageSopUID").equal(slice.getImageSopUID())).asList();
 
         // If there are nodules in the slice
         if (!gtList.isEmpty()) {
@@ -245,9 +244,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
     int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
     int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
-    int readingNumber = ConfigHelper.getInt(SegOpt.READING_NUMBER);
-    SegmentationOptimiser optimiser =
-        new SegmentationOptimiser(popSize, generations, numStacks, readingNumber);
+    SegmentationOptimiser optimiser = new SegmentationOptimiser(popSize, generations, numStacks);
 
     // Load the persisted population if configured to
     if (ConfigHelper.getBoolean(SegOpt.LOAD_POPULATION)) {

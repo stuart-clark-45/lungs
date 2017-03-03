@@ -84,8 +84,10 @@ public class ROIGenerator extends Importer<ROI> {
 
           // Get ground truths for slice
             List<GroundTruth> groundTruths =
-                ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                    .field("imageSopUID").equal(slice.getImageSopUID()).asList();
+                filter.singleReading(
+                    ds.createQuery(GroundTruth.class).field("type")
+                        .equal(GroundTruth.Type.BIG_NODULE).field("imageSopUID")
+                        .equal(slice.getImageSopUID())).asList();
 
             // Create ROIs and save them
             List<ROI> rois = lungs.extractRois(MatUtils.getSliceMat(slice));

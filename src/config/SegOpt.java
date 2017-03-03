@@ -23,11 +23,6 @@ public class SegOpt {
   public static final String STACKS = "segopt.stacks";
 
   /**
-   * The reading number that should be used when selecting the ground truth
-   */
-  public static final String READING_NUMBER = "segopt.readingNumber";
-
-  /**
    * True if the population should be loaded from a file, false otherwise.
    */
   public static final String LOAD_POPULATION = "segopt.loadPopulation";
