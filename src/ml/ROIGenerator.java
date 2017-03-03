@@ -119,7 +119,7 @@ public class ROIGenerator extends Importer<ROI> {
    * Set all {@link GroundTruth#rois} in database to an empty list.
    */
   private void clearGtRois() {
-    LOGGER.info("Setting GroundTruth.rois for empty list for all in database...");
+    LOGGER.info("Setting GroundTruth.rois to empty list for all in database...");
     UpdateOperations<GroundTruth> updateOperation =
         ds.createUpdateOperations(GroundTruth.class).set("rois", new ArrayList<>());
     Query<GroundTruth> query = ds.createQuery(GroundTruth.class);
