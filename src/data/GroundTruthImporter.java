@@ -3,6 +3,7 @@ package data;
 import static model.GroundTruth.Type.BIG_NODULE;
 import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
+import static util.PointUtils.minCircleRadius;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -27,9 +28,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.opencv.core.Core;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -260,7 +259,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
         groundTruth.setRegion(region);
         groundTruth.setEdgePoints(points);
         // -1 for not inclusive as edge pixel pixel should not be included in radius
-        float minRadius = inclusive ? computeMinRadius(points) : computeMinRadius(points) - 1;
+        double minRadius = inclusive ? minCircleRadius(points) : minCircleRadius(points) - 1;
         groundTruth.setMinRadius(minRadius);
 
         numBigNodule++;
@@ -311,19 +310,6 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
       edgePoints.add(new Point(map.getXCoord().doubleValue(), map.getYCoord().doubleValue()));
     }
     return edgePoints;
-  }
-
-  /**
-   * @param contour the contour of the ground truth
-   * @return the radius of the smallest circle that can be fitted to {@code contour}.
-   */
-  float computeMinRadius(List<Point> contour) {
-    Point center = new Point();
-    MatOfPoint2f matOfPoints = new MatOfPoint2f();
-    matOfPoints.fromList(contour);
-    float[] radius = new float[1];
-    Imgproc.minEnclosingCircle(matOfPoints, center, radius);
-    return radius[0];
   }
 
   int getRejected() {
