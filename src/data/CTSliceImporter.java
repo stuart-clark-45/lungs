@@ -44,7 +44,7 @@ public class CTSliceImporter extends Importer<CTSlice> {
   }
 
   @Override
-  protected void importModels(Datastore ds) throws LungsException {
+  protected void importModels() throws LungsException {
     try {
       LOGGER.info("Importing CTSlices...");
 

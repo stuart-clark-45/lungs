@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.opencv.core.Core;
@@ -41,7 +40,6 @@ public class ROIGenerator extends Importer<ROI> {
 
   private ExecutorService es;
   private final Lungs lungs;
-  private final Datastore ds;
   private final DataFilter filter;
   private final ROIClassifier classifier;
 
@@ -49,7 +47,6 @@ public class ROIGenerator extends Importer<ROI> {
     super(ROI.class);
     this.es = es;
     this.lungs = new Lungs();
-    this.ds = MongoHelper.getDataStore();
     this.filter = DataFilter.get();
     this.classifier = new ROIClassifier(MATCH_THRESHOLD);
   }
@@ -65,7 +62,7 @@ public class ROIGenerator extends Importer<ROI> {
   }
 
   @Override
-  protected void importModels(Datastore ds) throws LungsException {
+  protected void importModels() throws LungsException {
     LOGGER.info("Generating ROIs this may take some time...");
 
     clearGtRois();

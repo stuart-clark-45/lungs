@@ -95,7 +95,7 @@ public class GroundTruthImporter extends Importer<GroundTruth> {
   }
 
   @Override
-  protected void importModels(Datastore ds) throws LungsException {
+  protected void importModels() throws LungsException {
     try {
       LOGGER.info("Importing GroundTruths...");
 
