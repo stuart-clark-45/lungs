@@ -1,13 +1,11 @@
 package discover;
 
 import static model.GroundTruth.Type.BIG_NODULE;
-import static org.mongodb.morphia.aggregation.Group.grouping;
 import static util.MatUtils.getSliceMat;
 import static util.MatUtils.grey2BGR;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,11 +23,11 @@ import org.slf4j.LoggerFactory;
 import config.Misc;
 import model.CTSlice;
 import model.GroundTruth;
-import model.StringResult;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.DataFilter;
 import util.FutureMonitor;
+import util.LungsException;
 import util.MongoHelper;
 import util.MultiMap;
 
@@ -39,7 +37,7 @@ import util.MultiMap;
  *
  * @author Stuart Clark
  */
-public class MissedNodules {
+public class MissedNodules extends HistogramWriter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MissedNodules.class);
   private static final String ARG_ERROR =
@@ -58,14 +56,21 @@ public class MissedNodules {
   private final Datastore ds;
   private final DataFilter filter;
 
-  public MissedNodules(ExecutorService es, boolean images) {
+  public MissedNodules(ExecutorService es, boolean images) throws LungsException {
+    super();
     this.es = es;
     this.images = images;
     this.ds = MongoHelper.getDataStore();
     this.filter = DataFilter.get();
   }
 
-  public void run() {
+  @Override
+  protected String fileName() {
+    return "missed-nodules-hists.csv";
+  }
+
+  @Override
+  public void writeToFile() throws LungsException {
     LOGGER.info("MissedNodules running...");
 
     // Get all the nodules that have been missed
@@ -75,68 +80,63 @@ public class MissedNodules {
     long numMissed = query.count();
     LOGGER.info(numMissed + " NODULES have been missed");
 
+    // Collect the nodules by imageSopUID
     MultiMap<String, GroundTruth> uidToGt = new MultiMap<>();
     query.cloneQuery().forEach(gt -> uidToGt.putOne(gt.getImageSopUID(), gt));
-
-    // Get a list of all the imageSopUIDs that will be needed
-    Iterator<StringResult> results =
-        ds.createAggregation(GroundTruth.class).match(query).group(grouping("_id", IMAGE_SOP_UID))
-            .aggregate(StringResult.class);
-    List<String> sopUIDs = new ArrayList<>();
-    results.forEachRemaining(result -> sopUIDs.add(result.getId()));
-    int numSlice = sopUIDs.size();
-    LOGGER.info(numSlice + " slices have missing nodules");
+    LOGGER.info(uidToGt.size() + " slices have missing nodules");
 
     // Create images if required
     if (images) {
-
-      // Clear the image directory
-      File dir = new File(IMAGE_DIR);
-      dir.delete();
-      dir.mkdir();
-
-      // Create a future for each of the slices that needs annotating
-      List<Future> futures = new ArrayList<>(numSlice);
-      for (int i = 0; i < numSlice; i++) {
-
-        // Logging
-        if (i % LOG_INTERVAL == 0) {
-          LOGGER.info(i + "/" + numSlice + " futures created");
-        }
-
-        String sopUID = sopUIDs.get(i);
-
-        // Submit runnable for slice
-        futures.add(es.submit(() -> {
-          // Get a BGR Mat for the slice
-            CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
-            Mat mat = grey2BGR(getSliceMat(slice));
-
-            // Annotate GroundTruths on Mat
-            for (GroundTruth gt : uidToGt.get(sopUID)) {
-              for (Point point : gt.getEdgePoints()) {
-                mat.put((int) point.y, (int) point.x, ColourBGR.RED);
-              }
-            }
-
-            // Save the mat
-            Imgcodecs.imwrite(IMAGE_DIR + "/" + sopUID + ".jpg", mat);
-
-          }));
-
-      }
-
-      // Monitor futures
-      FutureMonitor monitor = new FutureMonitor(futures);
-      monitor.setLogString("slices processed");
-      monitor.monitor();
-
-      LOGGER.info("MissedNodules finished running");
+      createImages(uidToGt);
     }
 
+    LOGGER.info("MissedNodules finished running");
   }
 
-  public static void main(String[] args) {
+  private void createImages(MultiMap<String, GroundTruth> uidToGt) {
+    // Clear the image directory
+    File dir = new File(IMAGE_DIR);
+    dir.delete();
+    dir.mkdir();
+
+    // Create a future for each of the slices that needs annotating
+    int numSlice = uidToGt.size();
+    List<Future> futures = new ArrayList<>(numSlice);
+    int counter = 0;
+    for (String sopUID : uidToGt.keySet()) {
+
+      // Submit runnable for slice
+      futures.add(es.submit(() -> {
+        // Get a BGR Mat for the slice
+          CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
+          Mat mat = grey2BGR(getSliceMat(slice));
+
+          // Annotate GroundTruths on Mat
+          for (GroundTruth gt : uidToGt.get(sopUID)) {
+            for (Point point : gt.getEdgePoints()) {
+              mat.put((int) point.y, (int) point.x, ColourBGR.RED);
+            }
+          }
+
+          // Save the mat
+          Imgcodecs.imwrite(IMAGE_DIR + "/" + sopUID + ".jpg", mat);
+
+        }));
+
+      // Logging
+      if (++counter % LOG_INTERVAL == 0) {
+        LOGGER.info(counter + "/" + numSlice + " futures created");
+      }
+
+    }
+
+    // Monitor futures
+    FutureMonitor monitor = new FutureMonitor(futures);
+    monitor.setLogString("slices processed");
+    monitor.monitor();
+  }
+
+  public static void main(String[] args) throws LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Check there is one arg
