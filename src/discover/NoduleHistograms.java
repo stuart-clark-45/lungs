@@ -53,10 +53,6 @@ public class NoduleHistograms extends HistogramWriter {
         LOGGER.info(counter + "/" + numSlice + " processed");
       }
 
-      if(counter == 2){
-        break;
-      }
-
     }
 
     LOGGER.info("NoduleHistograms has finished");
