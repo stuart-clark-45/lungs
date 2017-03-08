@@ -84,7 +84,7 @@ public class MatViewer {
     final JFrame frame = new JFrame();
     frame.setTitle(getTitle());
     frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.add(panel);
     frame.pack();
     frame.setVisible(true);
