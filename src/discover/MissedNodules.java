@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import config.Misc;
 import model.CTSlice;
 import model.GroundTruth;
+import model.Histogram;
 import util.ColourBGR;
 import util.ConfigHelper;
 import util.DataFilter;
@@ -86,14 +87,12 @@ public class MissedNodules extends HistogramWriter {
     LOGGER.info(uidToGt.size() + " slices have missing nodules");
 
     // Create images if required
-    if (images) {
-      createImages(uidToGt);
-    }
+    analise(uidToGt);
 
     LOGGER.info("MissedNodules finished running");
   }
 
-  private void createImages(MultiMap<String, GroundTruth> uidToGt) {
+  private void analise(MultiMap<String, GroundTruth> uidToGt) {
     // Clear the image directory
     File dir = new File(IMAGE_DIR);
     dir.delete();
@@ -107,21 +106,45 @@ public class MissedNodules extends HistogramWriter {
 
       // Submit runnable for slice
       futures.add(es.submit(() -> {
-        // Get a BGR Mat for the slice
+        try {
+          // Get Mats for the slice
           CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
-          Mat mat = grey2BGR(getSliceMat(slice));
+          Mat mat = getSliceMat(slice);
+          Mat bgr = null;
+          if (images) {
+            bgr = grey2BGR(mat);
+          }
 
           // Annotate GroundTruths on Mat
           for (GroundTruth gt : uidToGt.get(sopUID)) {
-            for (Point point : gt.getEdgePoints()) {
-              mat.put((int) point.y, (int) point.x, ColourBGR.RED);
+
+            // Write line to histogram file
+            try {
+              writeLine(Histogram.createHist(gt.getRegion(), mat, BINS));
+            } catch (LungsException e) {
+              LOGGER.error("Failed to create histogram for GroundTruth with id: " + gt.getId());
             }
+
+            // Annotate
+            if (images) {
+              for (Point point : gt.getEdgePoints()) {
+                bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
+              }
+            }
+
           }
 
           // Save the mat
-          Imgcodecs.imwrite(IMAGE_DIR + "/" + sopUID + ".jpg", mat);
+          if (images) {
+            Imgcodecs.imwrite(IMAGE_DIR + "/" + sopUID + ".jpg", bgr);
+          }
 
-        }));
+          // TODO remove this later
+        } catch (Exception e) {
+          LOGGER.error("Something went wrong when analysing slice with imageSopUID: " + sopUID, e);
+        }
+
+      }));
 
       // Logging
       if (++counter % LOG_INTERVAL == 0) {
