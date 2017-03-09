@@ -12,7 +12,7 @@ import util.LungsException;
  */
 public abstract class HistogramWriter extends CsvWriter {
 
-  protected static final int LOG_INTERVAL = 1000;
+  protected static final int LOG_INTERVAL = 100;
   protected static final int BINS = 256;
 
   public HistogramWriter() throws LungsException {
