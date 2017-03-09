@@ -2,6 +2,7 @@ package ml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -79,8 +80,9 @@ public class ROIGenerator extends Importer<ROI> {
         set = ROI.Set.TEST;
       }
 
+
       for (CTSlice slice : stack.getSlices()) {
-        futures.add(es.submit(() -> {
+        futures.add(es.submit((Callable<Void>) () -> {
 
           // Get ground truths for slice
             List<GroundTruth> groundTruths =
@@ -103,6 +105,8 @@ public class ROIGenerator extends Importer<ROI> {
             // Save updated rois and ground truths
             ds.save(rois);
             ds.save(groundTruths);
+
+            return null;
           }));
       }
     }

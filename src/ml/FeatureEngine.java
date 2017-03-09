@@ -57,7 +57,7 @@ public class FeatureEngine {
    * 
    * @param es
    */
-  public void run(ExecutorService es) {
+  public void run(ExecutorService es) throws LungsException {
     LOGGER.info("Computing Features this may take some time...");
 
     // Find all the distinct SOP UIDs for the ROIs
@@ -139,7 +139,7 @@ public class FeatureEngine {
     return features;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     new FeatureEngine().run(es);

@@ -26,6 +26,7 @@ import model.GroundTruth;
 import model.ROI;
 import util.ConfigHelper;
 import util.DataFilter;
+import util.LungsException;
 import util.MatUtils;
 import util.MongoHelper;
 import vision.Matcher;
@@ -69,7 +70,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    * @param generations the maximum number of generations that should be used.
    * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
    */
-  public SegmentationOptimiser(int popSize, int generations, int numStacks) {
+  public SegmentationOptimiser(int popSize, int generations, int numStacks) throws LungsException {
     super(popSize, generations);
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
@@ -237,7 +238,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    * @param args optionally can provide an integer that is used as the reading number
    * @throws IOException
    */
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Create optimiser
