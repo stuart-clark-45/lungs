@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 
 import org.mongodb.morphia.Datastore;
 
+import config.Misc;
+import util.ConfigHelper;
 import util.DataFilter;
 import util.LungsException;
 import util.MongoHelper;
@@ -17,6 +19,8 @@ import util.MongoHelper;
  */
 public abstract class CsvWriter {
 
+  private static final String DIR = ConfigHelper.getString(Misc.CSV_DIR);
+
   protected final Datastore ds;
   protected final DataFilter filter;
   protected final PrintWriter writer;
@@ -25,7 +29,7 @@ public abstract class CsvWriter {
     ds = MongoHelper.getDataStore();
     filter = DataFilter.get();
     try {
-      writer = new PrintWriter(fileName(), "UTF-8");
+      writer = new PrintWriter(DIR + "/" + fileName(), "UTF-8");
     } catch (FileNotFoundException | UnsupportedEncodingException e) {
       throw new LungsException("Failed to create print writer");
     }
