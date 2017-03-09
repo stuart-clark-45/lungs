@@ -27,6 +27,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,7 +238,7 @@ public class Lungs {
 
   private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
     // Create a mat with just the largest in
-    Mat roiMat = MatUtils.similarMat(original);
+    Mat roiMat = Mat.zeros(original.rows(), original.cols(), CvType.CV_8UC1);
     for (Point point : largest.getRegion()) {
       roiMat.put((int) point.y, (int) point.x, FOREGROUND);
     }
@@ -270,7 +271,7 @@ public class Lungs {
     }
 
     // Create a mask
-    Mat temp = MatUtils.similarMat(original);
+    Mat temp = MatUtils.similarMat(roiMat);
     // Draw the convex hull
     Imgproc.fillPoly(temp, hulls, new Scalar(255));
     Mat eroded = MatUtils.similarMat(temp);
@@ -282,7 +283,7 @@ public class Lungs {
     Core.bitwise_not(eroded, mask);
 
     // Apply mask
-    Mat masked = MatUtils.similarMat(mask);
+    Mat masked = MatUtils.similarMat(roiMat);
     Core.subtract(roiMat, mask, masked);
 
     // Extract ROIs and return
@@ -355,7 +356,7 @@ public class Lungs {
     new MatViewer(mats, annotated).display();
   }
 
-  public void gtVsNoduleRoi(CTStack stack) {
+  public void gtVsNoduleRoi(CTStack stack) throws LungsException {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
     List<Mat> annotated = MatUtils.grey2BGR(original);
@@ -384,7 +385,7 @@ public class Lungs {
     new MatViewer(original, annotated).display();
   }
 
-  public void annotatedSegmented(CTStack stack) {
+  public void annotatedSegmented(CTStack stack) throws LungsException {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
 
@@ -413,12 +414,12 @@ public class Lungs {
 
     // Display annotated and original Mats
     LOGGER.info("Preparing to display...");
-    MatViewer matViewer = new MatViewer(groundTruth, annotated);
+    MatViewer matViewer = new MatViewer(groundTruth);
     LOGGER.info("Displaying Mats now");
     matViewer.display();
   }
 
-  public void roiContours(CTStack stack) {
+  public void roiContours(CTStack stack) throws LungsException {
     LOGGER.info("Loading Mats...");
     List<Mat> original = getStackMats(stack);
 
@@ -463,8 +464,8 @@ public class Lungs {
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
-    // lungs.annotatedSegmented(stack);
-    lungs.roiContours(stack);
+    lungs.annotatedSegmented(stack);
+    // lungs.roiContours(stack);
   }
 
 }
