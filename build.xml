@@ -20,6 +20,9 @@
     <target name="resolve" description="resolve dependencies">
         <ivy:retrieve pattern="${dir.lib}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true"
                       type="jar,bundle" log="quiet"/>
+        <copy todir="${dir.lib}/compile/">
+            <fileset dir="jars/classes" excludes="**/*.java"/>
+        </copy>
     </target>
 
     <target name="ivyreport" depends="resolve" description="report ivy dependencies">
