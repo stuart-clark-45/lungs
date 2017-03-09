@@ -18,7 +18,7 @@ public class Histogram implements Iterator<Double> {
 
   // Plus one as NUM_POSSIBLE_VALS must be a power of 2 however there will never be any occurances
   // of the very highest value
-  private static final int NUM_POSSIBLE_VALS = Short.MAX_VALUE + 1;
+  public static final int NUM_POSSIBLE_VALS = Short.MAX_VALUE + 1;
 
   /**
    * The values in each of the histogram bins. Could be frequencies or summations.
