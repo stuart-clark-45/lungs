@@ -43,7 +43,8 @@ public class NoduleHistograms extends HistogramWriter {
 
       // Create a histogram for each of the nodules
       Query<GroundTruth> nodules =
-          ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE);
+          filter.singleReading(ds.createQuery(GroundTruth.class).field("type")
+              .equal(GroundTruth.Type.BIG_NODULE));
       for (GroundTruth groundTruth : filter.all(nodules)) {
         writeLine(Histogram.createHist(groundTruth.getRegion(), mat, BINS));
       }
