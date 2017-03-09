@@ -9,6 +9,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,9 +69,10 @@ public class MatUtils {
       DataBuffer buffer = new DataBufferShort(cols * rows * channels, channels);
 
       // Create the sample model
-      int[] offsets = new int[channels];
-      ComponentSampleModel sampleModel =
-          new ComponentSampleModel(DataBuffer.TYPE_SHORT, cols, rows, 1, cols, offsets);
+      int[] offsets = channels == 1 ? new int[1] : new int[] {0, 1, 2};
+      SampleModel sampleModel =
+          new ComponentSampleModel(DataBuffer.TYPE_SHORT, cols, rows, channels, cols * channels,
+              offsets);
 
       // Create the raster
       WritableRaster raster = Raster.createWritableRaster(sampleModel, buffer, null);
