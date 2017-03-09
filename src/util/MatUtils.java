@@ -2,9 +2,9 @@ package util;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
+import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.ComponentColorModel;
-import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
@@ -18,6 +18,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -36,7 +37,7 @@ import model.CTStack;
  */
 public class MatUtils {
 
-  private static final int BIT_DEPTH = 16;
+  private static final int BIT_DEPTH = 15;
 
   private MatUtils() {
     // Hide constructor
@@ -69,16 +70,16 @@ public class MatUtils {
       DataBuffer buffer = new DataBufferShort(cols * rows * channels, channels);
 
       // Create the sample model
-      int[] offsets = channels == 1 ? new int[1] : new int[] {0, 1, 2};
-      SampleModel sampleModel =
-          new ComponentSampleModel(DataBuffer.TYPE_SHORT, cols, rows, channels, cols * channels,
-              offsets);
+      SampleModel sampleModel = new BandedSampleModel(DataBuffer.TYPE_SHORT, cols, rows, channels);
 
       // Create the raster
       WritableRaster raster = Raster.createWritableRaster(sampleModel, buffer, null);
       for (int row = 0; row < mat.rows(); row++) {
         for (int col = 0; col < mat.cols(); col++) {
-          raster.setPixel(col, row, mat.get(row, col));
+          double[] val = mat.get(row, col);
+          // Reverse as BGR is used for mats and RGB is used for raster
+          ArrayUtils.reverse(val);
+          raster.setPixel(col, row, val);
         }
       }
 
