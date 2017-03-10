@@ -10,6 +10,7 @@ import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
+import static util.MatUtils.put;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -169,7 +170,7 @@ public class Lungs {
     // Annotate big nodules
     if (type == BIG_NODULE && ConfigHelper.getBoolean(Annotation.BIG_NODULE)) {
       for (Point point : gt.getEdgePoints()) {
-        bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
+        put(bgr, point, ColourBGR.RED);
       }
 
       // Annotate small nodules
@@ -239,7 +240,7 @@ public class Lungs {
     // Create a mat with just the largest in
     Mat roiMat = MatUtils.similarMat(original);
     for (Point point : largest.getRegion()) {
-      roiMat.put((int) point.y, (int) point.x, FOREGROUND);
+      put(roiMat, point, FOREGROUND);
     }
 
     // Create list of internal contours for the ROI
@@ -295,7 +296,7 @@ public class Lungs {
 
   public void paintROI(Mat bgr, ROI roi, double[] colour) {
     for (Point point : roi.getRegion()) {
-      bgr.put((int) point.y, (int) point.x, colour);
+      put(bgr, point, colour);
     }
   }
 
@@ -433,7 +434,7 @@ public class Lungs {
       for (ROI roi : extractRois(mat)) {
         paintROI(bgr, roi, ColourBGR.GREEN);
         for (Point point : roi.getContour()) {
-          bgr.put((int) point.y, (int) point.x, ColourBGR.RED);
+          put(bgr, point, ColourBGR.RED);
         }
       }
 
