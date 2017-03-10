@@ -1,5 +1,7 @@
 package model;
 
+import static util.MatUtils.get;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -97,7 +99,7 @@ public class Histogram implements Iterator<Double> {
     // Count up the number of occurrences for each value
     double[] valCount = new double[NUM_POSSIBLE_VALS];
     for (Point point : region) {
-      int val = (int) mat.get((int) point.y, (int) point.x)[0];
+      int val = (int) get(mat, point)[0];
       valCount[val]++;
     }
 
