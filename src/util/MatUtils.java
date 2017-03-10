@@ -97,6 +97,17 @@ public class MatUtils {
   }
 
   /**
+   * Wrapper method that allows pixel values to be set using a {@link Point}.
+   *
+   * @param mat
+   * @param point
+   * @param val the value that the pixel in {@code mat} at {@code point} should have.
+   */
+  public static void put(Mat mat, Point point, double... val) {
+    mat.put((int) point.y, (int) point.x, val);
+  }
+
+  /**
    * @param mat
    * @return a new {@link Mat} with the same dimentions and type as {@code mat}.
    */
