@@ -60,7 +60,7 @@ public class SliceHistograms extends HistogramWriter {
     // For each slice create the histogram and write it as a line in the csv file
     for (CTSlice slice : query) {
       Mat mat = MatUtils.getSliceMat(slice);
-      writeLine(Histogram.createHist(mat, BINS));
+      writeLine(Histogram.createHist(mat, Histogram.NUM_POSSIBLE_VALS));
 
       // Logging
       if (++counter % LOG_INTERVAL == 0) {
