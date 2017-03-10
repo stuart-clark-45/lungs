@@ -86,6 +86,12 @@ public class MissedNodules {
    */
   private AtomicInteger allBlackNodules;
 
+  /**
+   * Used to give each of the images a unique id so that images for CTSlices with the same
+   * imageSopUID do not overwrite one another.
+   */
+  private AtomicInteger id;
+
   public MissedNodules(ExecutorService es, boolean images) throws LungsException {
     super();
     this.es = es;
@@ -121,8 +127,9 @@ public class MissedNodules {
       resetDirs();
     }
 
-    // Reset the black nodule counter
+    // Reset counters
     allBlackNodules = new AtomicInteger(0);
+    id = new AtomicInteger(0);
 
     // Create a future for each of the slices that needs annotating
     int numSlice = uidToGt.size();
@@ -169,7 +176,7 @@ public class MissedNodules {
               for (Point point : gt.getEdgePoints()) {
                 put(bgr, point, ColourBGR.RED);
               }
-              Imgcodecs.imwrite(dir + "/" + sopUID + ".bmp", bgr);
+              Imgcodecs.imwrite(dir + "/" + id.getAndIncrement() + "-" + sopUID + ".bmp", bgr);
             }
 
           }
@@ -189,7 +196,7 @@ public class MissedNodules {
     monitor.monitor();
 
     LOGGER.info("There were " + allBlackNodules.get() + " nodules that were completely black!");
-    
+
     LOGGER.info("MissedNodules finished running");
   }
 
