@@ -109,6 +109,23 @@ public class MatUtils {
 
   /**
    * @param mat
+   * @param points
+   * @return the mean intensity for all of the {@code points} in {@link Mat}.
+   */
+  public static double mean(Mat mat, List<Point> points) {
+    if (mat.channels() != 1) {
+      throw new IllegalStateException("mat must one channel only");
+    }
+
+    double total = 0;
+    for (Point point : points) {
+      total += MatUtils.get(mat, point)[0];
+    }
+    return total / points.size();
+  }
+
+  /**
+   * @param mat
    * @return a new {@link Mat} with the same dimentions and type as {@code mat}.
    */
   public static Mat similarMat(Mat mat) {
