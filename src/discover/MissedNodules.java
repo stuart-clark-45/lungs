@@ -195,6 +195,9 @@ public class MissedNodules {
     monitor.setLogString("slices processed");
     monitor.monitor();
 
+    darkWriter.close();
+    lightWriter.close();
+
     LOGGER.info("There were " + allBlackNodules.get() + " nodules that were completely black!");
 
     LOGGER.info("MissedNodules finished running");
