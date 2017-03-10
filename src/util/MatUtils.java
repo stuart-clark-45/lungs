@@ -86,12 +86,14 @@ public class MatUtils {
   }
 
   /**
-   * @param grey a single channel {@code Mat}.
+   * Wrapper method that allows easy acces to pixel values using a {@link Point}.
+   *
+   * @param mat
    * @param point
-   * @return the intensity of the pixel in {@code grey} at {@code point}.
+   * @return the value of the pixel in {@code mat} at {@code point}.
    */
-  public static double getIntensity(Mat grey, Point point) {
-    return grey.get((int) point.x, (int) point.y)[0];
+  public static double[] get(Mat mat, Point point) {
+    return mat.get((int) point.y, (int) point.x);
   }
 
   /**
@@ -116,7 +118,7 @@ public class MatUtils {
    * @return a grey-scale {@link Mat} for the given slice.
    */
   public static Mat getSliceMat(CTSlice slice) {
-    // TODO remove all this hacky code when problem fully realaised
+    // TODO remove all this hacky code when problem fully realised
     int counter = 0;
     while (true) {
       try {
@@ -124,7 +126,7 @@ public class MatUtils {
         dicom.open(slice.getFilePath());
         return MatUtils.fromDICOM(dicom);
       } catch (Exception e) {
-        LOGGER.error("Trying again in one second wtih slice: " + slice.getId(), e);
+        LOGGER.error("Trying again in one second with slice: " + slice.getId(), e);
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e1) {

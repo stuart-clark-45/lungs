@@ -20,7 +20,7 @@ public class MeanIntensity implements Feature {
     double mean = 0;
     List<Point> points = roi.getRegion();
     for (Point point : points) {
-      mean += MatUtils.getIntensity(mat, point);
+      mean += MatUtils.get(mat, point)[0];
     }
     mean = mean / points.size();
     roi.setMeanIntensity(mean);
