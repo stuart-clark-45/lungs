@@ -32,4 +32,9 @@ public abstract class HistogramWriter extends CsvWriter {
     writer.println(joiner.toString());
   }
 
+  @Override
+  public void writeToFile() throws LungsException{
+    // Some subclasses of HistogramWriter will not use this method
+  }
+
 }
