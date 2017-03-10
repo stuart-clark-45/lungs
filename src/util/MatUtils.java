@@ -123,6 +123,25 @@ public class MatUtils {
   }
 
   /**
+   * @param mat a single channel {@link Mat}.
+   * @param points
+   * @return the max intensity for all of the {@code points} in {@link Mat}.
+   */
+  public static double max(Mat mat, List<Point> points) {
+    statArgCheck(mat, points);
+
+    double max = 0.0;
+    for (Point point : points) {
+      double val = MatUtils.get(mat, point)[0];
+      if (val > max) {
+        max = val;
+      }
+    }
+
+    return max;
+  }
+
+  /**
    * Check's that the parameters are valid for methods that are used to collect simple statistics.
    * 
    * @param mat
