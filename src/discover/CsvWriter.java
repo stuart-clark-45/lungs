@@ -42,6 +42,10 @@ public abstract class CsvWriter {
    */
   public void run() throws LungsException {
     writeToFile();
+    close();
+  }
+
+  public void close() {
     writer.flush();
     writer.close();
   }
