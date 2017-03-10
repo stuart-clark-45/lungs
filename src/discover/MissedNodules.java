@@ -58,7 +58,7 @@ public class MissedNodules {
   /**
    * The threshold used to distinguish between dark and light nodules.
    */
-  private static final double DARK_LIGHT_THRESH = 1;
+  private static final double DARK_LIGHT_THRESH = ConfigHelper.getInt(Misc.DARK_LIGHT_THRESH);
 
   private final ExecutorService es;
 
