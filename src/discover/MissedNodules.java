@@ -58,7 +58,7 @@ public class MissedNodules {
   /**
    * The threshold used to distinguish between dark and light nodules.
    */
-  private static final double DARK_LIGHT_THRESH = 65;
+  private static final double DARK_LIGHT_THRESH = 1;
 
   private final ExecutorService es;
 
@@ -80,11 +80,6 @@ public class MissedNodules {
    * are likely to be juxtapleural nodules that are missed).
    */
   private final HistogramWriter lightWriter;
-
-  /**
-   * Used to count the number of nodules that have 0 intensity for every pixel.
-   */
-  private AtomicInteger allBlackNodules;
 
   /**
    * Used to give each of the images a unique id so that images for CTSlices with the same
@@ -128,7 +123,6 @@ public class MissedNodules {
     }
 
     // Reset counters
-    allBlackNodules = new AtomicInteger(0);
     id = new AtomicInteger(0);
 
     // Create a future for each of the slices that needs annotating
@@ -147,15 +141,10 @@ public class MissedNodules {
           for (GroundTruth gt : uidToGt.get(sopUID)) {
 
             // Decide if the nodule is a dark or light nodule
-            List<Point> region = gt.getRegion();
-            double max = MatUtils.max(mat, region);
-            // Add to count if the nodule is completely black
-            if (max == 0) {
-              allBlackNodules.incrementAndGet();
-            }
             HistogramWriter writer;
             String dir;
-            if (max > DARK_LIGHT_THRESH) {
+            List<Point> region = gt.getRegion();
+            if (MatUtils.mean(mat, region) > DARK_LIGHT_THRESH) {
               writer = lightWriter;
               dir = LIGHT_DIR;
             } else {
@@ -197,8 +186,6 @@ public class MissedNodules {
 
     darkWriter.close();
     lightWriter.close();
-
-    LOGGER.info("There were " + allBlackNodules.get() + " nodules that were completely black!");
 
     LOGGER.info("MissedNodules finished running");
   }
