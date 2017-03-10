@@ -108,20 +108,33 @@ public class MatUtils {
   }
 
   /**
-   * @param mat
+   * @param mat a single channel {@link Mat}.
    * @param points
    * @return the mean intensity for all of the {@code points} in {@link Mat}.
    */
   public static double mean(Mat mat, List<Point> points) {
-    if (mat.channels() != 1) {
-      throw new IllegalStateException("mat must one channel only");
-    }
+    statArgCheck(mat, points);
 
     double total = 0;
     for (Point point : points) {
       total += MatUtils.get(mat, point)[0];
     }
     return total / points.size();
+  }
+
+  /**
+   * Check's that the parameters are valid for methods that are used to collect simple statistics.
+   * 
+   * @param mat
+   * @param points
+   */
+  private static void statArgCheck(Mat mat, List<Point> points) {
+    if (mat.channels() != 1) {
+      throw new IllegalArgumentException("mat must one channel only");
+    }
+    if (points.isEmpty()) {
+      throw new IllegalArgumentException("points cannot be an empty list");
+    }
   }
 
   /**
