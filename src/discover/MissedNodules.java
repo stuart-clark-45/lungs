@@ -7,6 +7,7 @@ import static util.MatUtils.grey2BGR;
 import static util.MatUtils.put;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -14,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
@@ -210,12 +212,17 @@ public class MissedNodules {
   /**
    * Delete the directories that images are stored in (if they exist), then create new ones.
    */
-  private void resetDirs() {
-    File dir = new File(IMAGE_DIR);
-    dir.delete();
-    dir.mkdir();
-    new File(DARK_DIR).mkdir();
-    new File(LIGHT_DIR).mkdir();
+  private void resetDirs() throws LungsException {
+    try {
+      File imageDir = new File(IMAGE_DIR);
+      FileUtils.deleteDirectory(imageDir);
+      imageDir.delete();
+      imageDir.mkdir();
+      new File(DARK_DIR).mkdir();
+      new File(LIGHT_DIR).mkdir();
+    } catch (IOException e) {
+      throw new LungsException("Failed to reset dirs", e);
+    }
   }
 
   public static void main(String[] args) throws LungsException {
