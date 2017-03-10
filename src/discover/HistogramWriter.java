@@ -13,7 +13,6 @@ import util.LungsException;
 public abstract class HistogramWriter extends CsvWriter {
 
   protected static final int LOG_INTERVAL = 100;
-  protected static final int BINS = 256;
 
   public HistogramWriter() throws LungsException {
     super();
@@ -33,7 +32,7 @@ public abstract class HistogramWriter extends CsvWriter {
   }
 
   @Override
-  public void writeToFile() throws LungsException{
+  public void writeToFile() throws LungsException {
     // Some subclasses of HistogramWriter will not use this method
   }
 
