@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -131,8 +132,8 @@ public class MissedNodules {
     int counter = 0;
     for (String sopUID : uidToGt.keySet()) {
 
-      // Submit runnable for slice
-      futures.add(es.submit(() -> {
+      // Submit runnable for slice (use Callable to avoid try catch blocks)
+      futures.add(es.submit((Callable<Void>) () -> {
         // Get Mats for the slice
           CTSlice slice = ds.createQuery(CTSlice.class).field(IMAGE_SOP_UID).equal(sopUID).get();
           Mat mat = getSliceMat(slice);
@@ -153,11 +154,7 @@ public class MissedNodules {
             }
 
             // Write line to histogram file
-            try {
-              writer.writeLine(Histogram.createHist(region, mat, BINS));
-            } catch (LungsException e) {
-              LOGGER.error("Failed to create histogram for GroundTruth with id: " + gt.getId());
-            }
+            writer.writeLine(Histogram.createHist(region, mat, BINS));
 
             // Create an annotated image and save it
             if (images) {
@@ -170,6 +167,7 @@ public class MissedNodules {
 
           }
 
+          return null;
         }));
 
       // Logging
