@@ -13,7 +13,8 @@ import util.LungsException;
 import util.MatUtils;
 
 /**
- * Used to create a csv file where every line is a histogram for a single nodule.
+ * Used to create a csv file with a single line representing a histogram for all the CTSlices that
+ * contain nodules.
  *
  * @author Stuart Clark
  */
@@ -31,32 +32,67 @@ public class NoduleHistograms extends HistogramWriter {
   }
 
   @Override
-  public void writeToFile() throws LungsException {
+  public void writeToFile() {
     LOGGER.info("NoduleHistograms is running...");
 
-    Query<CTSlice> query = filter.all(ds.createQuery(CTSlice.class));
+    // Get all the slices
+    Query<CTSlice> query = ds.createQuery(CTSlice.class);
     long numSlice = query.count();
-    int counter = 0;
 
+    // Create a histogram for all of the nodules
+    double[] combinedBins = new double[Histogram.NUM_POSSIBLE_VALS];
+
+    // Used to count the total number of nodules
+    int numNodules = 0;
+
+    // Process each slice
+    int sliceCounter = 0;
+    int failureCounter = 0;
     for (CTSlice slice : query) {
-      Mat mat = MatUtils.getSliceMat(slice);
 
-      // Create a histogram for each of the nodules
-      Query<GroundTruth> nodules =
-          filter.singleReading(ds.createQuery(GroundTruth.class).field("type")
-              .equal(GroundTruth.Type.BIG_NODULE));
-      for (GroundTruth groundTruth : filter.all(nodules)) {
-        writeLine(Histogram.createHist(groundTruth.getRegion(), mat, Histogram.NUM_POSSIBLE_VALS));
+      try {
+        Mat mat = MatUtils.getSliceMat(slice);
+
+        Query<GroundTruth> nodules =
+            filter.singleReading(ds.createQuery(GroundTruth.class).field("type")
+                .equal(GroundTruth.Type.BIG_NODULE));
+        for (GroundTruth groundTruth : nodules) {
+          numNodules++;
+
+          // Get the histogram for the nodule
+          Histogram noduleHist =
+              Histogram.createHist(groundTruth.getRegion(), mat, Histogram.NUM_POSSIBLE_VALS);
+          double[] noduleBins = noduleHist.getBins();
+
+          // Add it to the combined histogram
+          for (int i = 0; i < noduleBins.length; i++) {
+            combinedBins[i] += noduleBins[i];
+          }
+        }
+
+      } catch (LungsException e) {
+        // Some slices fail due to missing images in the data set
+        failureCounter++;
+        LOGGER.error("Failed to process slice with id: ", slice.getId(), e);
       }
 
       // Logging
-      if (++counter % LOG_INTERVAL == 0) {
-        LOGGER.info(counter + "/" + numSlice + " processed");
+      if (++sliceCounter % LOG_INTERVAL == 0) {
+        LOGGER.info(sliceCounter + "/" + numSlice + " processed");
       }
 
     }
 
-    LOGGER.info("NoduleHistograms has finished");
+    // Convert the values in the bins to frequencies
+    for (int i = 0; i < combinedBins.length; i++) {
+      combinedBins[i] /= numNodules;
+    }
+
+    // Write the combined histogram to a file
+    writeLine(new Histogram(combinedBins));
+
+    LOGGER.info("NoduleHistograms has finished " + (numSlice - failureCounter) + "/" + numSlice
+        + " successfully processed");
   }
 
   public static void main(String[] args) throws LungsException {
