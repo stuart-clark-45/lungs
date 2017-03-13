@@ -1,5 +1,7 @@
 package discover;
 
+import java.util.List;
+
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -50,30 +52,35 @@ public class NoduleHistograms extends HistogramWriter {
     int failureCounter = 0;
     for (CTSlice slice : query) {
 
-      try {
-        Mat mat = MatUtils.getSliceMat(slice);
+      // Get all the nodules
+      List<GroundTruth> nodules =
+          filter.singleReading(
+              ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE))
+              .asList();
 
-        Query<GroundTruth> nodules =
-            filter.singleReading(ds.createQuery(GroundTruth.class).field("type")
-                .equal(GroundTruth.Type.BIG_NODULE));
-        for (GroundTruth groundTruth : nodules) {
-          numNodules++;
+      // Skip this slice if there are no nodules in it
+      if (!nodules.isEmpty()) {
+        try {
+          Mat mat = MatUtils.getSliceMat(slice);
 
-          // Get the histogram for the nodule
-          Histogram noduleHist =
-              Histogram.createHist(groundTruth.getRegion(), mat, Histogram.NUM_POSSIBLE_VALS);
-          double[] noduleBins = noduleHist.getBins();
+          for (GroundTruth groundTruth : nodules) {
+            numNodules++;
 
-          // Add it to the combined histogram
-          for (int i = 0; i < noduleBins.length; i++) {
-            combinedBins[i] += noduleBins[i];
+            // Get the histogram for the nodule
+            Histogram noduleHist =
+                Histogram.createHist(groundTruth.getRegion(), mat, Histogram.NUM_POSSIBLE_VALS);
+            double[] noduleBins = noduleHist.getBins();
+
+            // Add it to the combined histogram
+            for (int i = 0; i < noduleBins.length; i++) {
+              combinedBins[i] += noduleBins[i];
+            }
           }
-        }
 
-      } catch (LungsException e) {
-        // Some slices fail due to missing images in the data set
-        failureCounter++;
-        LOGGER.error("Failed to process slice with id: ", slice.getId(), e);
+        } catch (LungsException e) {
+          // Some slices fail due to missing images in the data set
+          LOGGER.error("Failed to process slice with id: ", slice.getId(), e);
+        }
       }
 
       // Logging
@@ -94,6 +101,7 @@ public class NoduleHistograms extends HistogramWriter {
     LOGGER.info("NoduleHistograms has finished " + (numSlice - failureCounter) + "/" + numSlice
         + " successfully processed");
   }
+
 
   public static void main(String[] args) throws LungsException {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
