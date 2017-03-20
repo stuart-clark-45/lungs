@@ -18,7 +18,7 @@ import util.LungsException;
  */
 public class Histogram implements Iterator<Double> {
 
-  private static final int NUM_POSSIBLE_VALS = 256;
+  public static final int NUM_POSSIBLE_VALS = 256;
 
   /**
    * The values in each of the histogram bins. Could be frequencies or summations.
