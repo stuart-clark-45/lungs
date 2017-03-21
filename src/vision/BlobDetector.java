@@ -44,7 +44,7 @@ public class BlobDetector {
 
   /**
    * @param neighbourhood The dimensions of the neighbourhood used for checking if a point in sigma
-   *        space is a key point. Takes the form {width, height, sigmaSpace}
+   *        space is a key point. Takes the form {width, height, depth}
    */
   public BlobDetector(int[] neighbourhood, int dogThresh, int gradientThresh) {
     this.xPadding = neighbourhood[1] / 2;
