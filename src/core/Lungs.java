@@ -14,8 +14,10 @@ import static util.MatUtils.put;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.mongodb.morphia.Datastore;
@@ -194,6 +196,7 @@ public class Lungs {
    * @param original the {@link Mat}s to segment.
    * @return the segmented {@link Mat}s.
    */
+  @SuppressWarnings("ConstantConditions")
   public List<ROI> extractRois(Mat original) {
     // Filter the image
     Mat filtered = MatUtils.similarMat(original);
@@ -202,7 +205,7 @@ public class Lungs {
     // Extract ROIs
     List<ROI> rois = extractor.extractROIs(filtered);
 
-    // Get largest
+    // Get largest ROI
     ROI largest = null;
     int maxSize = -1;
     for (ROI roi : rois) {
@@ -213,7 +216,31 @@ public class Lungs {
       }
     }
 
-    rois.addAll(extractJuxtapleural(largest, original));
+    // Create a mat with just the largest ROI in
+    Mat largestMat = MatUtils.similarMat(original);
+    for (Point point : largest.getRegion()) {
+      put(largestMat, point, FOREGROUND);
+    }
+
+    // Create a set of all the points that lie withing the lungs cavities. Also includes some other
+    // small cavities in the CT slice (such as the spinal cord cavity) which we are not actually
+    // interested in but should make little difference to the final result.
+    List<MatOfPoint> cavities = internalContours(largestMat);
+    Mat cavityMat = MatUtils.similarMat(original);
+    Imgproc.fillPoly(cavityMat, cavities, new Scalar(FOREGROUND));
+    Mat labels = MatUtils.similarMat(original);
+    Imgproc.connectedComponents(cavityMat, labels);
+    Set<Point> validPoints = new HashSet<>();
+    ROIExtractor.labelsToROIs(labels).forEach(roi -> validPoints.addAll(roi.getRegion()));
+
+    // Filter out ROIs that do not occur inside the cavities. The remaining ROIs should be solitary
+    // nodules and false positives.
+    rois =
+        rois.parallelStream().filter(roi -> validPoints.containsAll(roi.getRegion()))
+            .collect(Collectors.toList());
+
+    // Extract the Juxtapleural ROIs
+    rois.addAll(extractJuxtapleural(largestMat, cavities, original));
 
     // Compute the contours for the ROIs
     rois.parallelStream()
@@ -238,19 +265,18 @@ public class Lungs {
 
   }
 
-  private List<ROI> extractJuxtapleural(ROI largest, Mat original) {
-    // Create a mat with just the largest in
-    Mat roiMat = MatUtils.similarMat(original);
-    for (Point point : largest.getRegion()) {
-      put(roiMat, point, FOREGROUND);
-    }
-
+  private List<MatOfPoint> internalContours(Mat largestRoi) {
     // Create list of internal contours for the ROI
     List<MatOfPoint> contours = new ArrayList<>();
-    Imgproc.findContours(roiMat, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+    Imgproc.findContours(largestRoi, contours, new Mat(), Imgproc.RETR_TREE,
+        Imgproc.CHAIN_APPROX_NONE);
     // Removed external contour
     contours.remove(0);
 
+    return contours;
+  }
+
+  private List<ROI> extractJuxtapleural(Mat largestRoi, List<MatOfPoint> contours, Mat original) {
     // Create a list of convex hulls for the contours
     List<MatOfPoint> hulls = new ArrayList<>();
     for (MatOfPoint contour : contours) {
@@ -286,7 +312,7 @@ public class Lungs {
 
     // Apply mask
     Mat masked = MatUtils.similarMat(mask);
-    Core.subtract(roiMat, mask, masked);
+    Core.subtract(largestRoi, mask, masked);
 
     // Extract ROIs and return
     Mat labels = MatUtils.similarMat(original);
@@ -491,9 +517,9 @@ public class Lungs {
     Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
-    // lungs.annotatedSegmented(stack);
+    lungs.annotatedSegmented(stack);
     // lungs.roiContours(stack);
-    lungs.blobs(stack);
+    // lungs.blobs(stack);
   }
 
 }
