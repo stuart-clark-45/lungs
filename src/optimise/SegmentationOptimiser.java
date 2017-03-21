@@ -48,7 +48,6 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int KERNEL_SIZE = 2;
   private static final int SURE_FG = 3;
   private static final int SURE_BG = 4;
-  private static final int EROSION_SIZE = 5;
 
   /**
    * The {@link Mat}s to segment.
@@ -121,7 +120,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     // Segment the Mats
     Lungs lungs =
         new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
-            getInt(gt, SURE_FG), getInt(gt, SURE_BG), getInt(gt, EROSION_SIZE));
+            getInt(gt, SURE_FG), getInt(gt, SURE_BG));
 
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
@@ -173,28 +172,13 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   @Override
   protected String gtToString(Genotype<IntegerGene> gt) {
     return "# Size of the kernel used by the bilateral filter\n"
-        + "segmentation.filter.kernelsize = "
-        + getInt(gt, KERNEL_SIZE)
-        + "\n"
-        + "# Sigma for colour used by the bilateral filter\n"
-        + "segmentation.filter.sigmacolor = "
-        + getInt(gt, SIGMA_COLOUR)
-        + "\n"
-        + "# Sigma for space used by the bilateral filter\n"
-        + "segmentation.filter.sigmaspace = "
-        + getInt(gt, SIGMA_SPACE)
-        + "\n"
-        + "# The threshold used to obtain the sure foreground\n"
-        + "segmentation.surefg = "
-        + getInt(gt, SURE_FG)
-        + "\n"
-        + "# The threshold used to obtain the sure background\n"
-        + "segmentation.surebg = "
-        + getInt(gt, SURE_BG)
-        + "\n"
-        + "# The size of the structure to use when eroding the mask used to obtain rois joined to the lung cavity\n"
-        + "segmentation.erosion = " + getInt(gt, EROSION_SIZE);
-
+        + "segmentation.filter.kernelsize = " + getInt(gt, KERNEL_SIZE) + "\n"
+        + "# Sigma for colour used by the bilateral filter\n" + "segmentation.filter.sigmacolor = "
+        + getInt(gt, SIGMA_COLOUR) + "\n" + "# Sigma for space used by the bilateral filter\n"
+        + "segmentation.filter.sigmaspace = " + getInt(gt, SIGMA_SPACE) + "\n"
+        + "# The threshold used to obtain the sure foreground\n" + "segmentation.surefg = "
+        + getInt(gt, SURE_FG) + "\n" + "# The threshold used to obtain the sure background\n"
+        + "segmentation.surebg = " + getInt(gt, SURE_BG);
   }
 
   /**
@@ -228,9 +212,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         // Sure Foreground
         IntegerChromosome.of(0, 255),
         // Sure Background
-        IntegerChromosome.of(0, 255),
-        // Erosion Size
-        IntegerChromosome.of(1, 9));
+        IntegerChromosome.of(0, 255));
   }
 
   /**
