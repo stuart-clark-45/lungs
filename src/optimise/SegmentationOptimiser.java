@@ -193,14 +193,49 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
 
   @Override
   protected String gtToString(Genotype<IntegerGene> gt) {
-    return "# Size of the kernel used by the bilateral filter\n"
-        + "segmentation.filter.kernelsize = " + getInt(gt, KERNEL_SIZE) + "\n"
-        + "# Sigma for colour used by the bilateral filter\n" + "segmentation.filter.sigmacolor = "
-        + getInt(gt, SIGMA_COLOUR) + "\n" + "# Sigma for space used by the bilateral filter\n"
-        + "segmentation.filter.sigmaspace = " + getInt(gt, SIGMA_SPACE) + "\n"
-        + "# The threshold used to obtain the sure foreground\n" + "segmentation.surefg = "
-        + getInt(gt, SURE_FG) + "\n" + "# The threshold used to obtain the sure background\n"
-        + "segmentation.surebg = " + getInt(gt, SURE_BG);
+    return "\n# Size of the kernel used by the bilateral filter\n"
+        + "segmentation.filter.kernelsize = "
+        + getInt(gt, KERNEL_SIZE)
+        + "\n"
+        + "# Sigma for colour used by the bilateral filter\n"
+        + "segmentation.filter.sigmacolor = "
+        + getInt(gt, SIGMA_COLOUR)
+        + "\n"
+        + "# Sigma for space used by the bilateral filter\n"
+        + "segmentation.filter.sigmaspace = "
+        + getInt(gt, SIGMA_SPACE)
+        + "\n"
+        + "# The threshold used to obtain the sure foreground\n"
+        + "segmentation.surefg = "
+        + getInt(gt, SURE_FG)
+        + "\n"
+        + "# The threshold used to obtain the sure background\n"
+        + "segmentation.surebg = "
+        + getInt(gt, SURE_BG)
+        + "\n"
+        + "# The width of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
+        + "segmentation.blob.neighbourhoodWidth = "
+        + getInt(gt, HOOD_WIDTH)
+        + "\n"
+        + "# The height of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
+        + "segmentation.blob.neighbourhoodHeight = "
+        + getInt(gt, HOOD_HEIGHT)
+        + "\n"
+        + "# The depth of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
+        + "segmentation.blob.neighbourhoodDepth = "
+        + getInt(gt, HOOD_DEPTH)
+        + "\n"
+        + "# The threshold used when deciding if a point in sigma space could be a key point (values higher\n"
+        + "# than this can be key points)\n"
+        + "segmentation.blob.dogThresh = "
+        + getInt(gt, DOG_THRESH)
+        + "\n"
+        + "# The threshold used when deciding if a key point is an edge (and hence should be filtered out)\n"
+        + "segmentation.blob.gradientThresh = "
+        + getInt(gt, GRADIENT_THRESH)
+        + "\n"
+        + "# The number of differnt sigma values to use when computing DOG\n"
+        + "segmentation.blob.numSigma = " + getInt(gt, NUM_SIGMA);
   }
 
   /**
@@ -242,9 +277,9 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         // Blob neighbourhood depth
         IntegerChromosome.of(1, 15),
         // DOG threshold
-        IntegerChromosome.of(1, 15),
+        IntegerChromosome.of(1, 255),
         // Gradient threshold
-        IntegerChromosome.of(1, 15),
+        IntegerChromosome.of(1, 255),
         // Num sigma values
         IntegerChromosome.of(2, 15));
   }
