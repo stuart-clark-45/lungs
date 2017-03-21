@@ -38,10 +38,6 @@ public class BlobDetector {
   private final int dogThresh;
   private final int gradientThresh;
 
-  public BlobDetector() {
-    this(new int[] {5, 5, 3}, 50, 5);
-  }
-
   /**
    * @param neighbourhood The dimensions of the neighbourhood used for checking if a point in sigma
    *        space is a key point. Takes the form {width, height, depth}
