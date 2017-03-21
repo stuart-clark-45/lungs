@@ -275,7 +275,7 @@ public class Lungs {
     // Create a mask
     Mat temp = MatUtils.similarMat(original);
     // Draw the convex hull
-    Imgproc.fillPoly(temp, hulls, new Scalar(255));
+    Imgproc.fillPoly(temp, hulls, new Scalar(FOREGROUND));
     Mat eroded = MatUtils.similarMat(temp);
     // Erode the convex hull so that very small protrusions into cavity of the lungs are ignored
     Imgproc.erode(temp, eroded,
