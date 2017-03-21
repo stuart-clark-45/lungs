@@ -19,10 +19,8 @@ import static util.MatUtils.getStackMats;
 import static util.MatUtils.put;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -121,17 +119,6 @@ public class Lungs {
       Mat bgr = bgrs.get(i);
       annotate(bgr, slice);
     }
-  }
-
-  /**
-   * @param rois the list of {@link ROI}s for which you would like to find the one with the largest
-   *        area (in pixels).
-   * @return an {@link Optional#of(Object)} the largest {@link ROI} or an {@link Optional#empty()}
-   *         if {@code rois} is an empty list.
-   * @throws LungsException TODO remove
-   */
-  public Optional<ROI> largest(List<ROI> rois) throws LungsException {
-    return rois.stream().max(Comparator.comparingInt(roi -> roi.getRegion().size()));
   }
 
   /**
