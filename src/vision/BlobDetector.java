@@ -35,6 +35,7 @@ public class BlobDetector {
   private final int numSigmaValues;
   private final int xPadding;
   private final int yPadding;
+  private final int sigmaDiff;
   private final int dogThresh;
   private final int gradientThresh;
 
@@ -43,8 +44,9 @@ public class BlobDetector {
    *        space is a key point. Takes the form {width, height, depth}
    */
   public BlobDetector(int[] neighbourhood, int dogThresh, int gradientThresh) {
-    this.xPadding = neighbourhood[1] / 2;
-    this.yPadding = neighbourhood[2] / 2;
+    this.xPadding = neighbourhood[0] / 2;
+    this.yPadding = neighbourhood[1] / 2;
+    this.sigmaDiff = neighbourhood[2] / 2;
     this.sigmaValues = Arrays.asList(1, 3, 9, 15, 21, 27);
     this.numSigmaValues = sigmaValues.size();
     this.dogThresh = dogThresh;
@@ -117,14 +119,17 @@ public class BlobDetector {
     }
 
     List<Mat> matsToCheck = new ArrayList<>();
-    if (dogIndex - 1 > 1) {
-      matsToCheck.add(dogs.get(dogIndex - 1));
+    for(int i = dogIndex - sigmaDiff; i < dogIndex; i++){
+      if (i >= 0) {
+        matsToCheck.add(dogs.get(i));
+      }
     }
-    matsToCheck.add(thisDog);
-    if (dogIndex + 1 < dogs.size()) {
-      matsToCheck.add(dogs.get(dogIndex + 1));
+    for(int i = dogIndex; i <= dogIndex + sigmaDiff; i++){
+      if (i < dogs.size()) {
+        matsToCheck.add(dogs.get(i));
+      }
     }
-
+    
     double min = Double.MAX_VALUE;
     double max = -1;
 
