@@ -29,7 +29,6 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,22 +99,21 @@ public class Lungs {
   private int sigmaColour;
   private int sigmaSpace;
   private int kernelSize;
-  private int erosionSize;
+
+  private BlobDetector blobDetector;
 
   public Lungs() {
     this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
-        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG),
-        getInt(Segmentation.EROSION_SIZE));
+        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
   }
 
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG,
-      int erosionSize) {
+  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG) {
     this.ds = MongoHelper.getDataStore();
     this.sigmaColour = sigmaColour;
     this.sigmaSpace = sigmaSpace;
     this.kernelSize = kernelSize;
-    this.erosionSize = erosionSize;
     this.extractor = new ROIExtractor(sureFG, sureBG);
+    this.blobDetector = new BlobDetector();
   }
 
   /**
@@ -228,10 +226,7 @@ public class Lungs {
     List<MatOfPoint> cavities = internalContours(largestMat);
     Mat cavityMat = MatUtils.similarMat(original);
     Imgproc.fillPoly(cavityMat, cavities, new Scalar(FOREGROUND));
-    Mat labels = MatUtils.similarMat(original);
-    Imgproc.connectedComponents(cavityMat, labels);
-    Set<Point> validPoints = new HashSet<>();
-    ROIExtractor.labelsToROIs(labels).forEach(roi -> validPoints.addAll(roi.getRegion()));
+    Set<Point> validPoints = maskPoints(cavityMat);
 
     // Filter out ROIs that do not occur inside the cavities. The remaining ROIs should be solitary
     // nodules and false positives.
@@ -276,6 +271,14 @@ public class Lungs {
     return contours;
   }
 
+  private Set<Point> maskPoints(Mat mask) {
+    Mat labels = MatUtils.similarMat(mask);
+    Imgproc.connectedComponents(mask, labels);
+    Set<Point> maskPoints = new HashSet<>();
+    ROIExtractor.labelsToROIs(labels).forEach(roi -> maskPoints.addAll(roi.getRegion()));
+    return maskPoints;
+  }
+
   private List<ROI> extractJuxtapleural(Mat largestRoi, List<MatOfPoint> contours, Mat original) {
     // Create a list of convex hulls for the contours
     List<MatOfPoint> hulls = new ArrayList<>();
@@ -298,25 +301,29 @@ public class Lungs {
       hulls.add(matOfPoint);
     }
 
-    // Create a mask
-    Mat temp = MatUtils.similarMat(original);
-    // Draw the convex hull
-    Imgproc.fillPoly(temp, hulls, new Scalar(FOREGROUND));
-    Mat eroded = MatUtils.similarMat(temp);
-    // Erode the convex hull so that very small protrusions into cavity of the lungs are ignored
-    Imgproc.erode(temp, eroded,
-        Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(erosionSize, erosionSize)));
-    // Invert the mat to create the mask
-    Mat mask = MatUtils.similarMat(eroded);
-    Core.bitwise_not(eroded, mask);
+    // Create a set of points that could possibly contain juxtapleural nodules
+    Mat hullsMat = MatUtils.similarMat(original);
+    // Draw the convex hulls
+    Imgproc.fillPoly(hullsMat, hulls, new Scalar(FOREGROUND));
+    // Invert the mat to create the invertedHulls
+    Mat invertedHulls = MatUtils.similarMat(hullsMat);
+    Core.bitwise_not(hullsMat, invertedHulls);
+    // Subtract the invertedHulls to largestROI to create the mask
+    Mat mask = MatUtils.similarMat(invertedHulls);
+    Core.subtract(largestRoi, invertedHulls, mask);
+    Set<Point> validPoints = maskPoints(mask);
 
-    // Apply mask
-    Mat masked = MatUtils.similarMat(mask);
-    Core.subtract(largestRoi, mask, masked);
+    List<KeyPoint> keyPoints = blobDetector.detect(original);
+    Mat blobMat = MatUtils.similarMat(original);
+    for (KeyPoint keyPoint : keyPoints) {
+      if(validPoints.contains(keyPoint.getPoint())){
+        Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(FOREGROUND), -1);
+      }
+    }
 
     // Extract ROIs and return
-    Mat labels = MatUtils.similarMat(original);
-    Imgproc.connectedComponents(masked, labels);
+    Mat labels = MatUtils.similarMat(blobMat);
+    Imgproc.connectedComponents(blobMat, labels);
     List<ROI> rois = ROIExtractor.labelsToROIs(labels);
     rois.forEach(roi -> roi.setJuxtapleural(true));
     return rois;
