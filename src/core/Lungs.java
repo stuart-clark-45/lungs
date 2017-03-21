@@ -492,19 +492,9 @@ public class Lungs {
     }
 
     new MatViewer(mats, annotated).display();
-
   }
 
-  /**
-   * Should be run with the following VM args
-   * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
-   *
-   * @param args
-   * @throws LungsException
-   */
-  public static void main(String[] args) throws Exception {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
+  public static Lungs getInstance() {
     // Create filter
     BilateralFilter filter =
         new BilateralFilter(getInt(KERNEL_SIZE), getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE));
@@ -521,12 +511,25 @@ public class Lungs {
         new BlobDetector(neighbourhood, getInt(DOG_THRESH), getInt(GRADIENT_THRESH));
 
     // Create lungs instance
-    Lungs lungs = new Lungs(filter, extractor, blobDetector);
+    return new Lungs(filter, extractor, blobDetector);
+  }
+
+  /**
+   * Should be run with the following VM args
+   * -Djava.library.path=/usr/local/opt/opencv3/share/OpenCV/java -Xss515m -Xmx6g
+   *
+   * @param args
+   * @throws LungsException
+   */
+  public static void main(String[] args) throws Exception {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Load the images
     LOGGER.info("Loading images");
     Datastore ds = MongoHelper.getDataStore();
     CTStack stack = DataFilter.get().test(ds.createQuery(CTStack.class)).get();
+
+    Lungs lungs = getInstance();
 
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
