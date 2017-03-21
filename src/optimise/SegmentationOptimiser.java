@@ -28,7 +28,10 @@ import util.ConfigHelper;
 import util.DataFilter;
 import util.MatUtils;
 import util.MongoHelper;
+import vision.BilateralFilter;
+import vision.BlobDetector;
 import vision.Matcher;
+import vision.ROIExtractor;
 
 /**
  * Used to optimise the parameters that are used to segment only focuses of maximising the
@@ -48,6 +51,11 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int KERNEL_SIZE = 2;
   private static final int SURE_FG = 3;
   private static final int SURE_BG = 4;
+  private static final int HOOD_WIDTH = 5;
+  private static final int HOOD_HEIGHT = 6;
+  private static final int HOOD_DEPTH = 7;
+  private static final int DOG_THRESH = 8;
+  private static final int GRADIENT_THRESH = 9;
 
   /**
    * The {@link Mat}s to segment.
@@ -117,10 +125,22 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    */
   @Override
   protected Double eval(Genotype<IntegerGene> gt) {
+    // Create the filter
+    BilateralFilter filter =
+        new BilateralFilter(getInt(gt, KERNEL_SIZE), getInt(gt, SIGMA_COLOUR), getInt(gt,
+            SIGMA_SPACE));
+
+    // Create the ROI extractor
+    ROIExtractor extractor = new ROIExtractor(getInt(gt, SURE_FG), getInt(gt, SURE_BG));
+
+    // Create the blob detector
+    int[] neighbourhood =
+        new int[] {getInt(gt, HOOD_WIDTH), getInt(gt, HOOD_HEIGHT), getInt(gt, HOOD_DEPTH)};
+    BlobDetector detector =
+        new BlobDetector(neighbourhood, getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH));
+
     // Segment the Mats
-    Lungs lungs =
-        new Lungs(getInt(gt, SIGMA_COLOUR), getInt(gt, SIGMA_SPACE), getInt(gt, KERNEL_SIZE),
-            getInt(gt, SURE_FG), getInt(gt, SURE_BG));
+    Lungs lungs = new Lungs(filter, extractor, detector);
 
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
@@ -212,7 +232,17 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         // Sure Foreground
         IntegerChromosome.of(0, 255),
         // Sure Background
-        IntegerChromosome.of(0, 255));
+        IntegerChromosome.of(0, 255),
+        // Blob neighbourhood width
+        IntegerChromosome.of(1, 15),
+        // Blob neighbourhood height
+        IntegerChromosome.of(1, 15),
+        // Blob neighbourhood depth
+        IntegerChromosome.of(1, 15),
+        // DOG threshold
+        IntegerChromosome.of(1, 15),
+        // Gradient threshold
+        IntegerChromosome.of(1, 15));
   }
 
   /**
