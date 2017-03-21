@@ -52,7 +52,7 @@ public class MinCircleTest {
     // Draw the roi and the min circle
     Mat rgb = Mat.zeros(20, 20, CvType.CV_8UC3);
     roi.setRegion(contour);
-    new Lungs().paintROI(rgb, roi, ColourBGR.RED);
+    Lungs.paintROI(rgb, roi, ColourBGR.RED);
     Imgproc.circle(rgb, center, (int) radius, new Scalar(ColourBGR.BLUE));
 
     // Uncomment to view roi and minimum bounding circle

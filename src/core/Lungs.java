@@ -319,7 +319,7 @@ public class Lungs {
     return rois;
   }
 
-  public void paintROI(Mat bgr, ROI roi, double[] colour) {
+  public static void paintROI(Mat bgr, ROI roi, double[] colour) {
     for (Point point : roi.getRegion()) {
       put(bgr, point, colour);
     }
