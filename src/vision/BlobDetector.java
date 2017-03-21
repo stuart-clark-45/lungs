@@ -3,7 +3,6 @@ package vision;
 import static org.opencv.core.Core.BORDER_DEFAULT;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,14 +39,23 @@ public class BlobDetector {
   private final int gradientThresh;
 
   /**
-   * @param neighbourhood The dimensions of the neighbourhood used for checking if a point in sigma
-   *        space is a key point. Takes the form {width, height, depth}
+   * @param neighbourhood the dimensions of the neighbourhood used for checking if a point in sigma
+   *        space is a key point. Takes the form {width, height, depth}.
+   * @param dogThresh the threshold used when deciding if a point in sigma space could be a key
+   *        point (values higher than this can be key points)
+   * @param gradientThresh the threshold used when deciding if a key point is an edge (and hence
+   *        should be filtered out)
+   * @param numSigma the number of different sigma values to use when computing DOG.
    */
-  public BlobDetector(int[] neighbourhood, int dogThresh, int gradientThresh) {
+  public BlobDetector(int[] neighbourhood, int dogThresh, int gradientThresh, int numSigma) {
     this.xPadding = neighbourhood[0] / 2;
     this.yPadding = neighbourhood[1] / 2;
     this.sigmaDiff = neighbourhood[2] / 2;
-    this.sigmaValues = Arrays.asList(1, 3, 9, 15, 21, 27);
+    this.sigmaValues = new ArrayList<>();
+    sigmaValues.add(1);
+    for (int i = 3; i < 3 + 6 * (numSigma - 1); i += 6) {
+      sigmaValues.add(i);
+    }
     this.numSigmaValues = sigmaValues.size();
     this.dogThresh = dogThresh;
     this.gradientThresh = gradientThresh;
@@ -119,17 +127,17 @@ public class BlobDetector {
     }
 
     List<Mat> matsToCheck = new ArrayList<>();
-    for(int i = dogIndex - sigmaDiff; i < dogIndex; i++){
+    for (int i = dogIndex - sigmaDiff; i < dogIndex; i++) {
       if (i >= 0) {
         matsToCheck.add(dogs.get(i));
       }
     }
-    for(int i = dogIndex; i <= dogIndex + sigmaDiff; i++){
+    for (int i = dogIndex; i <= dogIndex + sigmaDiff; i++) {
       if (i < dogs.size()) {
         matsToCheck.add(dogs.get(i));
       }
     }
-    
+
     double min = Double.MAX_VALUE;
     double max = -1;
 
