@@ -1,5 +1,10 @@
 package core;
 
+import static config.Segmentation.Blob.DOG_THRESH;
+import static config.Segmentation.Blob.GRADIENT_THRESH;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_DEPTH;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_HEIGHT;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_WIDTH;
 import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
@@ -52,6 +57,7 @@ import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
 import util.PointUtils;
+import vision.BilateralFilter;
 import vision.BlobDetector;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
@@ -92,28 +98,14 @@ public class Lungs {
 
   private Datastore ds;
   private final ROIExtractor extractor;
-
-  /*
-   * Parameters used during segmentation
-   */
-  private int sigmaColour;
-  private int sigmaSpace;
-  private int kernelSize;
-
+  private final BilateralFilter filter;
   private BlobDetector blobDetector;
 
-  public Lungs() {
-    this(getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE), getInt(KERNEL_SIZE),
-        getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
-  }
-
-  public Lungs(int sigmaColour, int sigmaSpace, int kernelSize, int sureFG, int sureBG) {
+  public Lungs(BilateralFilter filter, ROIExtractor extractor, BlobDetector blobDetector) {
     this.ds = MongoHelper.getDataStore();
-    this.sigmaColour = sigmaColour;
-    this.sigmaSpace = sigmaSpace;
-    this.kernelSize = kernelSize;
-    this.extractor = new ROIExtractor(sureFG, sureBG);
-    this.blobDetector = new BlobDetector();
+    this.filter = filter;
+    this.extractor = extractor;
+    this.blobDetector = blobDetector;
   }
 
   /**
@@ -135,7 +127,7 @@ public class Lungs {
    *        area (in pixels).
    * @return an {@link Optional#of(Object)} the largest {@link ROI} or an {@link Optional#empty()}
    *         if {@code rois} is an empty list.
-   * @throws LungsException
+   * @throws LungsException TODO remove
    */
   public Optional<ROI> largest(List<ROI> rois) throws LungsException {
     return rois.stream().max(Comparator.comparingInt(roi -> roi.getRegion().size()));
@@ -196,14 +188,11 @@ public class Lungs {
    */
   @SuppressWarnings("ConstantConditions")
   public List<ROI> extractRois(Mat original) {
-    // Filter the image
-    Mat filtered = MatUtils.similarMat(original);
-    Imgproc.bilateralFilter(original, filtered, kernelSize, sigmaColour, sigmaSpace);
-
-    // Extract ROIs
-    List<ROI> rois = extractor.extractROIs(filtered);
+    // Filter and extract ROIs
+    List<ROI> rois = extractor.extractROIs(filter.filter(original));
 
     // Get largest ROI
+    // TODO use largest(..)
     ROI largest = null;
     int maxSize = -1;
     for (ROI roi : rois) {
@@ -316,8 +305,9 @@ public class Lungs {
     List<KeyPoint> keyPoints = blobDetector.detect(original);
     Mat blobMat = MatUtils.similarMat(original);
     for (KeyPoint keyPoint : keyPoints) {
-      if(validPoints.contains(keyPoint.getPoint())){
-        Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(FOREGROUND), -1);
+      if (validPoints.contains(keyPoint.getPoint())) {
+        Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+            FOREGROUND), -1);
       }
     }
 
@@ -483,7 +473,6 @@ public class Lungs {
   public void blobs(CTStack ctStack) {
     List<Mat> mats = MatUtils.getStackMats(ctStack);
     List<Mat> annotated = mats.stream().map(MatUtils::grey2BGR).collect(Collectors.toList());
-    BlobDetector detector = new BlobDetector();
 
     int numMats = mats.size();
 
@@ -493,7 +482,7 @@ public class Lungs {
       Mat mat = mats.get(i);
       Mat anno = annotated.get(i);
 
-      List<KeyPoint> keyPoints = detector.detect(mat);
+      List<KeyPoint> keyPoints = blobDetector.detect(mat);
       LOGGER.info(keyPoints.size() + " key points");
       for (KeyPoint keyPoint : keyPoints) {
         Imgproc.circle(anno, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
@@ -516,12 +505,29 @@ public class Lungs {
   public static void main(String[] args) throws Exception {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
+    // Create filter
+    BilateralFilter filter =
+        new BilateralFilter(getInt(KERNEL_SIZE), getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE));
+
+    // Create ROI extractor
+    ROIExtractor extractor =
+        new ROIExtractor(getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
+
+    // Create blob detector
+    int[] neighbourhood =
+        new int[] {getInt(NEIGHBOURHOOD_WIDTH), getInt(NEIGHBOURHOOD_HEIGHT),
+            getInt(NEIGHBOURHOOD_DEPTH)};
+    BlobDetector blobDetector =
+        new BlobDetector(neighbourhood, getInt(DOG_THRESH), getInt(GRADIENT_THRESH));
+
+    // Create lungs instance
+    Lungs lungs = new Lungs(filter, extractor, blobDetector);
+
     // Load the images
     LOGGER.info("Loading images");
     Datastore ds = MongoHelper.getDataStore();
     CTStack stack = DataFilter.get().test(ds.createQuery(CTStack.class)).get();
 
-    Lungs lungs = new Lungs();
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
     lungs.annotatedSegmented(stack);
