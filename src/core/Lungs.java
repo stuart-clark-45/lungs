@@ -41,6 +41,7 @@ import ml.feature.MinCircle;
 import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
+import model.KeyPoint;
 import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
@@ -50,6 +51,7 @@ import util.MatUtils;
 import util.MatViewer;
 import util.MongoHelper;
 import util.PointUtils;
+import vision.BlobDetector;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -445,6 +447,31 @@ public class Lungs {
     new MatViewer(annotated).display();
   }
 
+  public void blobs(CTStack ctStack) {
+    List<Mat> mats = MatUtils.getStackMats(ctStack);
+    List<Mat> annotated = mats.stream().map(MatUtils::grey2BGR).collect(Collectors.toList());
+    BlobDetector detector = new BlobDetector();
+
+    int numMats = mats.size();
+
+    for (int i = 0; i < numMats; i++) {
+      LOGGER.info(i + "/" + numMats + " processed");
+
+      Mat mat = mats.get(i);
+      Mat anno = annotated.get(i);
+
+      List<KeyPoint> keyPoints = detector.detect(mat);
+      LOGGER.info(keyPoints.size() + " key points");
+      for (KeyPoint keyPoint : keyPoints) {
+        Imgproc.circle(anno, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+            ColourBGR.RED), 1);
+      }
+
+    }
+
+    new MatViewer(mats, annotated).display();
+
+  }
 
   /**
    * Should be run with the following VM args
@@ -465,7 +492,8 @@ public class Lungs {
     // lungs.gtVsNoduleRoi(stack);
     // lungs.assistance(stack);
     // lungs.annotatedSegmented(stack);
-    lungs.roiContours(stack);
+    // lungs.roiContours(stack);
+    lungs.blobs(stack);
   }
 
 }
