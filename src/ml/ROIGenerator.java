@@ -46,7 +46,7 @@ public class ROIGenerator extends Importer<ROI> {
   public ROIGenerator(ExecutorService es) {
     super(ROI.class);
     this.es = es;
-    this.lungs = new Lungs();
+    this.lungs = Lungs.getInstance();
     this.filter = DataFilter.get();
     this.classifier = new ROIClassifier(MATCH_THRESHOLD);
   }
