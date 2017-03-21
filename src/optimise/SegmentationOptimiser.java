@@ -56,6 +56,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int HOOD_DEPTH = 7;
   private static final int DOG_THRESH = 8;
   private static final int GRADIENT_THRESH = 9;
+  private static final int NUM_SIGMA = 10;
 
   /**
    * The {@link Mat}s to segment.
@@ -137,7 +138,8 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
     int[] neighbourhood =
         new int[] {getInt(gt, HOOD_WIDTH), getInt(gt, HOOD_HEIGHT), getInt(gt, HOOD_DEPTH)};
     BlobDetector detector =
-        new BlobDetector(neighbourhood, getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH));
+        new BlobDetector(neighbourhood, getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH),
+            getInt(gt, NUM_SIGMA));
 
     // Segment the Mats
     Lungs lungs = new Lungs(filter, extractor, detector);
@@ -242,7 +244,9 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         // DOG threshold
         IntegerChromosome.of(1, 15),
         // Gradient threshold
-        IntegerChromosome.of(1, 15));
+        IntegerChromosome.of(1, 15),
+        // Num sigma values
+        IntegerChromosome.of(2, 15));
   }
 
   /**
