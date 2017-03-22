@@ -28,9 +28,7 @@ import java.util.stream.Collectors;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -60,6 +58,7 @@ import util.MongoHelper;
 import util.PointUtils;
 import vision.BilateralFilter;
 import vision.BlobDetector;
+import vision.ConvexHull;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -261,24 +260,7 @@ public class Lungs {
   private List<ROI> extractJuxtapleural(Mat largestRoi, List<MatOfPoint> contours, Mat original) {
     // Create a list of convex hulls for the contours
     List<MatOfPoint> hulls = new ArrayList<>();
-    for (MatOfPoint contour : contours) {
-
-      // Find the convex hull for the contour
-      MatOfInt hull = new MatOfInt();
-      Imgproc.convexHull(contour, hull);
-
-      // Convert MatOfInt to MatOfPoint
-      MatOfPoint matOfPoint = new MatOfPoint();
-      matOfPoint.create((int) hull.size().height, 1, CvType.CV_32SC2);
-      for (int i = 0; i < hull.size().height; i++) {
-        int index = (int) hull.get(i, 0)[0];
-        double[] point = new double[] {contour.get(index, 0)[0], contour.get(index, 0)[1]};
-        matOfPoint.put(i, 0, point);
-      }
-
-      // Add to list
-      hulls.add(matOfPoint);
-    }
+    contours.forEach(contour -> hulls.add(ConvexHull.findHull(contour)));
 
     // Create a set of points that could possibly contain juxtapleural nodules
     Mat hullsMat = MatUtils.similarMat(original, true);
