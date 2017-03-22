@@ -16,6 +16,8 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
+import com.sun.istack.internal.Nullable;
+
 import model.MinMaxXY;
 import vision.ROIExtractor;
 
@@ -67,12 +69,13 @@ public class PointUtils {
 
   /**
    * @param regionPoints as single region given as a list of all of it's {@link Point}s.
-   * @return a list of all the points that form the inclusive contour of the region. i.e. the
-   *         points of the countor are also part of the region. List is not guaranteed to be in raster order.
+   * @return a list of all the points that form the inclusive contour of the region. i.e. the points
+   *         of the countor are also part of the region. List is not guaranteed to be in raster
+   *         order.
    */
   public static List<Point> region2Contour(List<Point> regionPoints) {
     MinMaxXY<Double> mmXY = xyMaxMin(regionPoints);
-    Mat region = points2MinMat(regionPoints, mmXY);
+    Mat region = points2MinMat(regionPoints, mmXY, null);
     List<MatOfPoint> contours = new ArrayList<>();
 
     // Find external contour
@@ -129,24 +132,30 @@ public class PointUtils {
   /**
    * @param points
    * @param mmXY the {@link MinMaxXY<Double>} obtained using {@link PointUtils#xyMaxMin(List)}.
+   * @param original the {@link Mat} to take the pixel values from for the min {@link Mat} being
+   *        created. If null then {@code FORE_GROUND} will be used for all points.
    * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
    *         The point are offset so that the size of the Mat is reduced to the minimum size
    *         required.
    */
-  public static Mat points2MinMat(List<Point> points, MinMaxXY<Double> mmXY) {
+  public static Mat points2MinMat(List<Point> points, MinMaxXY<Double> mmXY, @Nullable Mat original) {
     // Get mins maxes and ranges
     double rangeX = mmXY.maxX - mmXY.minX;
     double rangeY = mmXY.maxY - mmXY.minY;
 
     // Crete mat with regionPoints
-    Mat ma = Mat.zeros((int) rangeY + 1, (int) rangeX + 1, CvType.CV_8UC1);
+    Mat mat = Mat.zeros((int) rangeY + 1, (int) rangeX + 1, CvType.CV_8UC1);
     for (Point point : points) {
       int row = (int) (point.y - mmXY.minY);
       int col = (int) (point.x - mmXY.minX);
-      ma.put(row, col, FORE_GROUND);
+      if (original != null) {
+        mat.put(row, col, MatUtils.get(original, point));
+      } else {
+        mat.put(row, col, FORE_GROUND);
+      }
     }
 
-    return ma;
+    return mat;
   }
 
   /**
