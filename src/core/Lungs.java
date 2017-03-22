@@ -194,7 +194,7 @@ public class Lungs {
     }
 
     // Create a mat with just the largest ROI in
-    Mat largestMat = MatUtils.similarMat(original);
+    Mat largestMat = MatUtils.similarMat(original, true);
     for (Point point : largest.getRegion()) {
       put(largestMat, point, FOREGROUND);
     }
@@ -203,7 +203,7 @@ public class Lungs {
     // small cavities in the CT slice (such as the spinal cord cavity) which we are not actually
     // interested in but should make little difference to the final result.
     List<MatOfPoint> cavities = internalContours(largestMat);
-    Mat cavityMat = MatUtils.similarMat(original);
+    Mat cavityMat = MatUtils.similarMat(original, true);
     Imgproc.fillPoly(cavityMat, cavities, new Scalar(FOREGROUND));
     Set<Point> validPoints = maskPoints(cavityMat);
 
@@ -251,7 +251,7 @@ public class Lungs {
   }
 
   private Set<Point> maskPoints(Mat mask) {
-    Mat labels = MatUtils.similarMat(mask);
+    Mat labels = MatUtils.similarMat(mask, false);
     Imgproc.connectedComponents(mask, labels);
     Set<Point> maskPoints = new HashSet<>();
     ROIExtractor.labelsToROIs(labels).forEach(roi -> maskPoints.addAll(roi.getRegion()));
@@ -281,20 +281,20 @@ public class Lungs {
     }
 
     // Create a set of points that could possibly contain juxtapleural nodules
-    Mat hullsMat = MatUtils.similarMat(original);
+    Mat hullsMat = MatUtils.similarMat(original, true);
     // Draw the convex hulls
     Imgproc.fillPoly(hullsMat, hulls, new Scalar(FOREGROUND));
     // Invert the mat to create the invertedHulls
-    Mat invertedHulls = MatUtils.similarMat(hullsMat);
+    Mat invertedHulls = MatUtils.similarMat(hullsMat, false);
     Core.bitwise_not(hullsMat, invertedHulls);
     // Subtract the invertedHulls to largestROI to create the mask
-    Mat mask = MatUtils.similarMat(invertedHulls);
+    Mat mask = MatUtils.similarMat(invertedHulls, false);
     Core.subtract(largestRoi, invertedHulls, mask);
     Set<Point> validPoints = maskPoints(mask);
 
     // Get the key points using the blob detector
     List<KeyPoint> keyPoints = blobDetector.detect(original);
-    Mat blobMat = MatUtils.similarMat(original);
+    Mat blobMat = MatUtils.similarMat(original, true);
     for (KeyPoint keyPoint : keyPoints) {
       if (validPoints.contains(keyPoint.getPoint())) {
         Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
@@ -303,7 +303,7 @@ public class Lungs {
     }
 
     // Extract all of the circles into rois
-    Mat labels = MatUtils.similarMat(blobMat);
+    Mat labels = MatUtils.similarMat(blobMat, false);
     Imgproc.connectedComponents(blobMat, labels);
     List<ROI> blobs = ROIExtractor.labelsToROIs(labels);
 
@@ -329,11 +329,11 @@ public class Lungs {
     Mat minMat = PointUtils.points2MinMat(region, mmXY, original);
 
     // Threshold the blob
-    Mat thresholded = MatUtils.similarMat(minMat);
+    Mat thresholded = MatUtils.similarMat(minMat, false);
     Imgproc.threshold(minMat, thresholded, -1, FOREGROUND, THRESH_OTSU);
 
     // Extract the ROIs
-    Mat labels = MatUtils.similarMat(thresholded);
+    Mat labels = MatUtils.similarMat(thresholded, false);
     Imgproc.connectedComponents(thresholded, labels);
     List<ROI> rois = ROIExtractor.labelsToROIs(labels);
 

@@ -71,19 +71,19 @@ public class ROIExtractor {
 
   public List<ROI> extractROIs(Mat original) {
     // Apply threshold to find the sure foreground
-    Mat foregroundMat = MatUtils.similarMat(original);
+    Mat foregroundMat = MatUtils.similarMat(original, false);
     Imgproc.threshold(original, foregroundMat, sureFG, FOREGROUND, THRESH_BINARY);
 
     // Apply threshold to find the sure background
-    Mat backgroundMat = MatUtils.similarMat(original);
+    Mat backgroundMat = MatUtils.similarMat(original, false);
     Imgproc.threshold(original, backgroundMat, sureBG, FOREGROUND, THRESH_BINARY);
 
     // Subtract the sure foreground from the sure background to find the unknown region
-    Mat unknownMat = MatUtils.similarMat(original);
+    Mat unknownMat = MatUtils.similarMat(original, false);
     Core.subtract(backgroundMat, foregroundMat, unknownMat);
 
     // Label the connected components found in the sure foreground
-    Mat labels = MatUtils.similarMat(original);
+    Mat labels = MatUtils.similarMat(original, false);
     Imgproc.connectedComponents(foregroundMat, labels);
 
     // Add one to each of the labels so that we can mark the unknown region with 0's

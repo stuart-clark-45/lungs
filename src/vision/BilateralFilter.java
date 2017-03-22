@@ -51,7 +51,7 @@ public class BilateralFilter {
    *         constructor.
    */
   public Mat filter(Mat original) {
-    Mat filtered = MatUtils.similarMat(original);
+    Mat filtered = MatUtils.similarMat(original, false);
     Imgproc.bilateralFilter(original, filtered, kernelSize, sigmaColour, sigmaSpace);
     return filtered;
   }

@@ -64,7 +64,7 @@ public class BlobDetector {
   public List<KeyPoint> detect(Mat mat) {
     List<Mat> blurred = new ArrayList<>(numSigmaValues);
     for (Integer sigma : sigmaValues) {
-      Mat temp = MatUtils.similarMat(mat);
+      Mat temp = MatUtils.similarMat(mat, false);
       Imgproc.GaussianBlur(mat, temp, new Size(0, 0), sigma, sigma);
       blurred.add(temp);
     }
@@ -72,7 +72,7 @@ public class BlobDetector {
     // Difference of gaussians
     List<Mat> dogs = new ArrayList<>(numSigmaValues - 1);
     for (int j = 0; j < blurred.size() - 1; j++) {
-      Mat diff = MatUtils.similarMat(mat);
+      Mat diff = MatUtils.similarMat(mat, false);
       Core.subtract(blurred.get(j), blurred.get(j + 1), diff);
       Mat padded = new Mat();
       Core.copyMakeBorder(diff, padded, yPadding, yPadding, xPadding, xPadding,

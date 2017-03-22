@@ -158,10 +158,16 @@ public class MatUtils {
 
   /**
    * @param mat
-   * @return a new {@link Mat} with the same dimentions and type as {@code mat}.
+   * @param zeroed true if the {@link Mat} returned should have all zero values. Should be false
+   *        where possible to improve efficiency.
+   * @return a new {@link Mat} with the same dimensions and type as {@code mat}.
    */
-  public static Mat similarMat(Mat mat) {
-    return Mat.zeros(mat.rows(), mat.cols(), mat.type());
+  public static Mat similarMat(Mat mat, boolean zeroed) {
+    if (zeroed) {
+      return Mat.zeros(mat.rows(), mat.cols(), mat.type());
+    } else {
+      return new Mat(mat.rows(), mat.cols(), mat.type());
+    }
   }
 
   /**
