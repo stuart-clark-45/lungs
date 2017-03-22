@@ -73,6 +73,10 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Circularity"));
     this.functions.add(ROI::getCircularity);
 
+    // Add Hu Circularity
+    this.attributes.add(new Attribute("Hu Circularity"));
+    this.functions.add(ROI::getHuCircularity);
+
     // Add Convexity
     this.attributes.add(new Attribute("Convexity"));
     this.functions.add(ROI::getConvexity);
