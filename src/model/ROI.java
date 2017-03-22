@@ -113,7 +113,7 @@ public class ROI {
   private Circle minCircle;
 
   /**
-   * The circularity of the {@link ROI} computed using {@link ml.feature.MinCircle}.
+   * The circularity of the {@link ROI} computed using {@link ml.feature.Circularity}.
    */
   private Double circularity;
 
