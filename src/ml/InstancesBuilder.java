@@ -73,6 +73,10 @@ public class InstancesBuilder {
     this.attributes.add(new Attribute("Circularity"));
     this.functions.add(ROI::getCircularity);
 
+    // Add Convexity
+    this.attributes.add(new Attribute("Convexity"));
+    this.functions.add(ROI::getConvexity);
+
     // Add Fitted Ellipse (Avoiding NPEs with ternary expression)
     this.attributes.add(new Attribute("Fitted Ellipse Angle"));
     this.functions.add(roi -> roi.getFitEllipse() != null ? roi.getFitEllipse().angle
