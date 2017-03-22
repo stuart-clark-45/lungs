@@ -14,6 +14,7 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
+import static org.opencv.imgproc.Imgproc.THRESH_OTSU;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 import static util.MatUtils.put;
@@ -47,6 +48,7 @@ import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.KeyPoint;
+import model.MinMaxXY;
 import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
@@ -300,11 +302,56 @@ public class Lungs {
       }
     }
 
-    // Extract ROIs and return
+    // Extract all of the circles into rois
     Mat labels = MatUtils.similarMat(blobMat);
     Imgproc.connectedComponents(blobMat, labels);
-    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
+    List<ROI> blobs = ROIExtractor.labelsToROIs(labels);
+
+    // Threshold each of the blobs to create ROIs
+    List<ROI> rois = new ArrayList<>(blobs.size());
+    for (ROI blob : blobs) {
+      rois.addAll(thresholdBlob(blob, original));
+    }
+
+    // Set the juxtapleural field to true for each of the ROIs
     rois.forEach(roi -> roi.setJuxtapleural(true));
+
+    return rois;
+  }
+
+  private List<ROI> thresholdBlob(ROI blob, Mat original) {
+    List<Point> region = blob.getRegion();
+
+    // Get mins maxes and ranges
+    MinMaxXY<Double> mmXY = PointUtils.xyMaxMin(region);
+
+    // Create Mat containing just blob
+    Mat minMat = PointUtils.points2MinMat(region, mmXY, original);
+
+    // Threshold the blob
+    Mat thresholded = MatUtils.similarMat(minMat);
+    Imgproc.threshold(minMat, thresholded, -1, FOREGROUND, THRESH_OTSU);
+
+    // Extract the ROIs
+    Mat labels = MatUtils.similarMat(thresholded);
+    Imgproc.connectedComponents(thresholded, labels);
+    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
+
+    // Add offsets back to ROI co-ordinates so that the are for the original mat not the min mat
+    for (ROI roi : rois) {
+      for (Point point : roi.getRegion()) {
+        point.x += mmXY.minX;
+        point.y += mmXY.minY;
+      }
+    }
+
+    // Log a warning if more than one ROI is found (this probably means that thresholding has gone
+    // wrong)
+    int numROIs = rois.size();
+    if (numROIs != 1) {
+      LOGGER.warn(numROIs + " ROIs found expected 1");
+    }
+
     return rois;
   }
 
@@ -423,7 +470,7 @@ public class Lungs {
     LOGGER.info("Creating BGR Mats for ground truth...");
     List<Mat> groundTruth =
         original.parallelStream().map(MatUtils::grey2BGR).collect(Collectors.toList());
-    LOGGER.info("Paining Mats with ground truth...");
+    LOGGER.info("Painting Mats with ground truth...");
     groundTruth(stack.getSlices(), groundTruth);
 
     // Display annotated and original Mats
