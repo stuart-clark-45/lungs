@@ -290,6 +290,7 @@ public class Lungs {
     Core.subtract(largestRoi, invertedHulls, mask);
     Set<Point> validPoints = maskPoints(mask);
 
+    // Get the key points using the blob detector
     List<KeyPoint> keyPoints = blobDetector.detect(original);
     Mat blobMat = MatUtils.similarMat(original);
     for (KeyPoint keyPoint : keyPoints) {
