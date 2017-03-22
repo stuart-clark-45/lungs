@@ -118,6 +118,11 @@ public class ROI {
   private Double circularity;
 
   /**
+   * The circularity of the {@link ROI} computed using {@link ml.feature.HuCircularity}.
+   */
+  private Double huCircularity;
+
+  /**
    * The rotated rect that contains the a fitted ellipse computed using
    * {@link ml.feature.FitEllipse}.
    */
@@ -333,5 +338,13 @@ public class ROI {
 
   public void setConvexity(Double convexity) {
     this.convexity = convexity;
+  }
+
+  public Double getHuCircularity() {
+    return huCircularity;
+  }
+
+  public void setHuCircularity(Double huCircularity) {
+    this.huCircularity = huCircularity;
   }
 }
