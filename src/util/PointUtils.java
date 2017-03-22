@@ -128,17 +128,6 @@ public class PointUtils {
 
   /**
    * @param points
-   * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
-   *         The point are offset so that the size of the Mat is reduced to the minimum size
-   *         required.
-   */
-  public static Mat points2MinMat(List<Point> points) {
-    MinMaxXY<Double> mmXY = xyMaxMin(points);
-    return points2MinMat(points, mmXY);
-  }
-
-  /**
-   * @param points
    * @param mmXY the {@link MinMaxXY<Double>} obtained using {@link PointUtils#xyMaxMin(List)}.
    * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
    *         The point are offset so that the size of the Mat is reduced to the minimum size
