@@ -136,6 +136,12 @@ public class ROI {
    */
   private Double elongation;
 
+  /**
+   * A value between 1 and 0 describing how how convex the {@link ROI} is. 1 being the most convex
+   * and 0 being the least.
+   */
+  private Double convexity;
+
   public ROI() {
     region = new ArrayList<>();
   }
@@ -321,4 +327,11 @@ public class ROI {
     this.circularity = circularity;
   }
 
+  public Double getConvexity() {
+    return convexity;
+  }
+
+  public void setConvexity(Double convexity) {
+    this.convexity = convexity;
+  }
 }
