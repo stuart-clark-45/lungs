@@ -1,7 +1,5 @@
 package ml.feature;
 
-import static org.apache.commons.lang3.ArrayUtils.toObject;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
