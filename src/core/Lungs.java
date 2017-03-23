@@ -14,7 +14,6 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
-import static org.opencv.imgproc.Imgproc.THRESH_OTSU;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 import static util.MatUtils.put;
@@ -97,15 +96,18 @@ public class Lungs {
   private static final double MIN_NODULE_RADIUS = 1.0;
 
   private Datastore ds;
-  private final ROIExtractor extractor;
+  private final ROIExtractor primaryExtractor;
   private final BilateralFilter filter;
   private BlobDetector blobDetector;
+  private final ROIExtractor blobExtractor;
 
-  public Lungs(BilateralFilter filter, ROIExtractor extractor, BlobDetector blobDetector) {
+  public Lungs(BilateralFilter filter, ROIExtractor primaryExtractor, BlobDetector blobDetector,
+      ROIExtractor blobExtractor) {
     this.ds = MongoHelper.getDataStore();
     this.filter = filter;
-    this.extractor = extractor;
+    this.primaryExtractor = primaryExtractor;
     this.blobDetector = blobDetector;
+    this.blobExtractor = blobExtractor;
   }
 
   /**
@@ -178,7 +180,7 @@ public class Lungs {
   @SuppressWarnings("ConstantConditions")
   public List<ROI> extractRois(Mat original) {
     // Filter and extract ROIs
-    List<ROI> rois = extractor.extractROIs(filter.filter(original));
+    List<ROI> rois = primaryExtractor.extractROIs(filter.filter(original));
 
     // Get largest ROI
     // TODO use largest(..)
@@ -292,7 +294,7 @@ public class Lungs {
     // Threshold each of the blobs to create ROIs
     List<ROI> rois = new ArrayList<>(blobs.size());
     for (ROI blob : blobs) {
-      rois.addAll(thresholdBlob(blob, original));
+      rois.addAll(blobROIs(blob, original));
     }
 
     // Set the juxtapleural field to true for each of the ROIs
@@ -301,7 +303,7 @@ public class Lungs {
     return rois;
   }
 
-  private List<ROI> thresholdBlob(ROI blob, Mat original) {
+  private List<ROI> blobROIs(ROI blob, Mat original) {
     List<Point> region = blob.getRegion();
 
     // Get mins maxes and ranges
@@ -310,14 +312,8 @@ public class Lungs {
     // Create Mat containing just blob
     Mat minMat = PointUtils.points2MinMat(region, mmXY, original);
 
-    // Threshold the blob
-    Mat thresholded = MatUtils.similarMat(minMat, false);
-    Imgproc.threshold(minMat, thresholded, -1, FOREGROUND, THRESH_OTSU);
-
-    // Extract the ROIs
-    Mat labels = MatUtils.similarMat(thresholded, false);
-    Imgproc.connectedComponents(thresholded, labels);
-    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
+    // Extract the rois
+    List<ROI> rois = blobExtractor.extractROIs(minMat);
 
     // Add offsets back to ROI co-ordinates so that the are for the original mat not the min mat
     for (ROI roi : rois) {
@@ -517,8 +513,8 @@ public class Lungs {
     BilateralFilter filter =
         new BilateralFilter(getInt(KERNEL_SIZE), getInt(SIGMA_COLOUR), getInt(SIGMA_SPACE));
 
-    // Create ROI extractor
-    ROIExtractor extractor =
+    // Create ROI primary extractor
+    ROIExtractor primaryExtractor =
         new ROIExtractor(getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
 
     // Create blob detector
@@ -529,8 +525,12 @@ public class Lungs {
         new BlobDetector(neighbourhood, getInt(DOG_THRESH), getInt(GRADIENT_THRESH),
             getInt(NUM_SIGMA));
 
+    // Create ROI blob extractor
+    ROIExtractor blobExtractor =
+        new ROIExtractor(getInt(Segmentation.Blob.SURE_FG), getInt(Segmentation.Blob.SURE_BG));
+
     // Create lungs instance
-    return new Lungs(filter, extractor, blobDetector);
+    return new Lungs(filter, primaryExtractor, blobDetector, blobExtractor);
   }
 
   /**
@@ -554,7 +554,7 @@ public class Lungs {
     // lungs.assistance(stack);
     lungs.annotatedSegmented(stack);
     // lungs.roiContours(stack);
-    // lungs.blobs(stack);
+//     lungs.blobs(stack);
   }
 
 }

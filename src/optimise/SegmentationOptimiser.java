@@ -57,6 +57,8 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int DOG_THRESH = 8;
   private static final int GRADIENT_THRESH = 9;
   private static final int NUM_SIGMA = 10;
+  private static final int BLOB_SURE_FG = 11;
+  private static final int BLOB_SURE_BG = 12;
 
   /**
    * The {@link Mat}s to segment.
@@ -141,8 +143,12 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         new BlobDetector(neighbourhood, getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH),
             getInt(gt, NUM_SIGMA));
 
+    // Create ROI blob extractor
+    ROIExtractor blobExtractor =
+        new ROIExtractor(getInt(gt, BLOB_SURE_FG), getInt(gt, BLOB_SURE_BG));
+
     // Segment the Mats
-    Lungs lungs = new Lungs(filter, extractor, detector);
+    Lungs lungs = new Lungs(filter, extractor, detector, blobExtractor);
 
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
@@ -281,7 +287,11 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
         // Gradient threshold
         IntegerChromosome.of(1, 255),
         // Num sigma values
-        IntegerChromosome.of(2, 15));
+        IntegerChromosome.of(2, 15),
+        // Blob Sure Foreground
+        IntegerChromosome.of(0, 255),
+        // Blob Sure Background
+        IntegerChromosome.of(0, 255));
   }
 
   /**
