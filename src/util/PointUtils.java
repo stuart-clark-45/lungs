@@ -133,7 +133,8 @@ public class PointUtils {
    * @param points
    * @param mmXY the {@link MinMaxXY<Double>} obtained using {@link PointUtils#xyMaxMin(List)}.
    * @param original the {@link Mat} to take the pixel values from for the min {@link Mat} being
-   *        created. If null then {@code FORE_GROUND} will be used for all points.
+   *        created. If null then {@code FORE_GROUND} will be used for all points. Must be a
+   *        {@code CvType.CV_8UC1}.
    * @return a binary {Mat} with pixels values of {code FORE_GROUND} at each of the {@code points}.
    *         The point are offset so that the size of the Mat is reduced to the minimum size
    *         required.
@@ -149,7 +150,7 @@ public class PointUtils {
       int row = (int) (point.y - mmXY.minY);
       int col = (int) (point.x - mmXY.minX);
       if (original != null) {
-        mat.put(row, col, MatUtils.get(original, point));
+        mat.put(row, col, MatUtils.get(original, point)[0]);
       } else {
         mat.put(row, col, FORE_GROUND);
       }
