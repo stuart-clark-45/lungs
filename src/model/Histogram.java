@@ -110,11 +110,11 @@ public class Histogram implements Iterator<Double> {
    *
    * @param valCount bins that hold counts for the number of pixels with intensity values that
    *        correspond to the bin index.
-   * @param nubPixels the total number of pixels that have been added to {@code valCount}
+   * @param numPixels the total number of pixels that have been added to {@code valCount}
    * @param numBins the number of bins used in the {@link Histogram} that will be created.
    * @return A histogram which has frequencies as it's bin values as appose to counts.
    */
-  private static Histogram createHist(double[] valCount, int nubPixels, int numBins) {
+  private static Histogram createHist(double[] valCount, int numPixels, int numBins) {
     // Create a histogram with the correct number of bins
     double[] hist = new double[numBins];
     int binIndex = 0;
@@ -134,7 +134,7 @@ public class Histogram implements Iterator<Double> {
 
     // Covert to frequencies
     for (int i = 0; i < hist.length; i++) {
-      hist[i] /= nubPixels;
+      hist[i] /= numPixels;
     }
 
     return new Histogram(hist);
