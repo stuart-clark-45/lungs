@@ -41,9 +41,6 @@ public class NoduleHistograms extends HistogramWriter {
     Query<CTSlice> query = ds.createQuery(CTSlice.class);
     long numSlice = query.count();
 
-    // Create a histogram for all of the nodules
-    double[] combinedBins = new double[Histogram.NUM_POSSIBLE_VALS];
-
     // Used to count the total number of nodules
     int numNodules = 0;
 
@@ -66,15 +63,10 @@ public class NoduleHistograms extends HistogramWriter {
           for (GroundTruth groundTruth : nodules) {
             numNodules++;
 
-            // Get the histogram for the nodule
-            Histogram noduleHist =
-                Histogram.createHist(groundTruth.getRegion(), mat, Histogram.NUM_POSSIBLE_VALS);
-            double[] noduleBins = noduleHist.getBins();
+            // Write the histogram to the file
+            writeLine(Histogram.createHist(groundTruth.getRegion(), mat,
+                Histogram.NUM_POSSIBLE_VALS));
 
-            // Add it to the combined histogram
-            for (int i = 0; i < noduleBins.length; i++) {
-              combinedBins[i] += noduleBins[i];
-            }
           }
 
         } catch (LungsException e) {
@@ -89,14 +81,6 @@ public class NoduleHistograms extends HistogramWriter {
       }
 
     }
-
-    // Convert the values in the bins to frequencies
-    for (int i = 0; i < combinedBins.length; i++) {
-      combinedBins[i] /= numNodules;
-    }
-
-    // Write the combined histogram to a file
-    writeLine(new Histogram(combinedBins));
 
     LOGGER.info("NoduleHistograms has finished " + (numSlice - failureCounter) + "/" + numSlice
         + " successfully processed");
