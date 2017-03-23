@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import ml.feature.HuCircularity;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
@@ -22,6 +21,8 @@ import ml.feature.Convexity;
 import ml.feature.Feature;
 import ml.feature.FineHist;
 import ml.feature.FitEllipse;
+import ml.feature.HuCircularity;
+import ml.feature.LQP;
 import ml.feature.MeanIntensity;
 import ml.feature.MedHist;
 import ml.feature.MinCircle;
@@ -140,6 +141,7 @@ public class FeatureEngine {
     features.add(new Circularity());
     features.add(new Convexity());
     features.add(new HuCircularity());
+    features.add(new LQP());
     return features;
   }
 
