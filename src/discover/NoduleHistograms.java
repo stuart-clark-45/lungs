@@ -40,11 +40,8 @@ public class NoduleHistograms extends HistogramWriter {
     LOGGER.info("NoduleHistograms is running...");
 
     // Get all the slices
-    Query<CTSlice> query = ds.createQuery(CTSlice.class);
+    Query<CTSlice> query = filter.train(ds.createQuery(CTSlice.class));
     long numSlice = query.count();
-
-    // Used to count the total number of nodules
-    int numNodules = 0;
 
     // Process each slice
     int sliceCounter = 0;
@@ -63,8 +60,6 @@ public class NoduleHistograms extends HistogramWriter {
           Mat mat = MatUtils.getSliceMat(slice);
 
           for (GroundTruth groundTruth : nodules) {
-            numNodules++;
-
             // Create the histogram and write to the file
             Histogram histogram = new Histogram(POS_VALS_8BIT);
             histogram.createHist(groundTruth.getRegion(), mat, POS_VALS_8BIT);
