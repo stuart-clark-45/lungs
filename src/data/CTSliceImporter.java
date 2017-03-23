@@ -68,11 +68,11 @@ public class CTSliceImporter extends Importer<CTSlice> {
 
   }
 
-  private void parseAndSave(Path path, Datastore ds) {
-    String sPath = path.toString();
+  private void parseAndSave(Path filePath, Datastore ds) {
+    String sFilePath = filePath.toString();
 
     DICOM dicom = new DICOM();
-    String info = dicom.getInfo(sPath);
+    String info = dicom.getInfo(sFilePath);
 
     String modality = stringForKey("0008,0060  Modality: ", info);
     if (!modality.equals("CT")) {
@@ -80,7 +80,8 @@ public class CTSliceImporter extends Importer<CTSlice> {
     }
 
     CTSlice slice = new CTSlice();
-    slice.setFilePath(sPath);
+    // Make relative path
+    slice.setFilePath(sFilePath.substring(path.length()));
     slice.setModel(modality);
     slice.setImageNumber(intForKey("0020,0013  Image Number: ", info));
     slice.setManufacturer(stringForKey("0008,0070  Manufacturer: ", info));

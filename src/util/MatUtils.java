@@ -5,6 +5,7 @@ import java.awt.image.DataBufferByte;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import config.Misc;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -23,6 +24,7 @@ import model.CTStack;
 public class MatUtils {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MatUtils.class);
+  private static final String IMAGE_DIR = ConfigHelper.getString(Misc.LIDC) + "/DOI";
 
   private MatUtils() {
     // Hide constructor
@@ -189,7 +191,7 @@ public class MatUtils {
     while (true) {
       try {
         DICOM dicom = new DICOM();
-        dicom.open(slice.getFilePath());
+        dicom.open(IMAGE_DIR + slice.getFilePath());
         return MatUtils.fromDICOM(dicom);
       } catch (Exception e) {
         LOGGER.error("Trying again in one second with slice: " + slice.getId(), e);
