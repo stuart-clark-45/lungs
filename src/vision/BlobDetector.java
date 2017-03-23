@@ -1,8 +1,5 @@
 package vision;
 
-import static org.opencv.core.CvType.CV_16S;
-import static org.opencv.core.CvType.CV_32FC1;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -80,7 +77,7 @@ public class BlobDetector {
     }
 
     // Get gradient magnitude for mat
-    Mat gradientMag = gradientMagnitude(mat);
+    Mat gradientMag = new Sobel(mat).magnitude();
 
     // Create key points
     List<KeyPoint> keyPoints = new ArrayList<>();
@@ -96,44 +93,12 @@ public class BlobDetector {
   }
 
   /**
-   * @param mat
-   * @return a {@link Mat} containing the gradient magnitude for each pixel in {@code mat}.
-   */
-  private Mat gradientMagnitude(Mat mat) {
-    // Gradient X
-    Mat gradX = new Mat(mat.rows(), mat.cols(), CV_16S);
-    Imgproc.Sobel(mat, gradX, CV_16S, 1, 0);
-
-    // Gradient Y
-    Mat gradY = new Mat(mat.rows(), mat.cols(), CV_16S);
-    Imgproc.Sobel(mat, gradY, CV_16S, 0, 1);
-
-    // Gradient X squared
-    Mat gradXPow2 = new Mat(mat.rows(), mat.cols(), CV_16S);
-    Core.pow(gradX, 2, gradXPow2);
-
-    // Gradient Y squared
-    Mat gradYPow2 = new Mat(mat.rows(), mat.cols(), CV_16S);
-    Core.pow(gradY, 2, gradYPow2);
-
-    // Calculate gradient magnitude
-    Mat sum = new Mat(mat.rows(), mat.cols(), CV_32FC1);
-    Core.add(gradXPow2, gradYPow2, sum);
-    Mat sumFloat = new Mat(mat.rows(), mat.cols(), CV_32FC1);
-    sum.convertTo(sumFloat, sumFloat.type());
-    Mat gradientMag = new Mat(mat.rows(), mat.cols(), CV_32FC1);
-    Core.sqrt(sumFloat, gradientMag);
-
-    return gradientMag;
-  }
-
-  /**
    * @param row the row for the pixel being examined.
    * @param col the column for the pixel being examined.
    * @param dogIndex the index of {@code dogs} for the DOG that the pixel belongs to.
    * @param dogs a list of DOGs
    * @param gradientMag the gradient magnitudes of the pixels in the original image. Computed using
-   *        {@link BlobDetector#gradientMagnitude(Mat)}
+   *        {@link Sobel#magnitude()}.
    * @return an {@code Optional.of()} the the {@link KeyPoint} if the pixel at {@code row},
    *         {@code col} is a key point in the DOG at {@code dogIndex}. {@link Optional#empty()}
    *         otherwise.
