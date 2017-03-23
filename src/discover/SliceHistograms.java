@@ -1,5 +1,7 @@
 package discover;
 
+import static model.Histogram.POS_VALS_8BIT;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -60,7 +62,11 @@ public class SliceHistograms extends HistogramWriter {
     // For each slice create the histogram and write it as a line in the csv file
     for (CTSlice slice : query) {
       Mat mat = MatUtils.getSliceMat(slice);
-      writeLine(Histogram.createHist(mat, Histogram.POS_VALS_8BIT));
+
+      // Create the histogram and write to the file
+      Histogram histogram = new Histogram(POS_VALS_8BIT);
+      histogram.createHist(mat, POS_VALS_8BIT);
+      writeLine(histogram);
 
       // Logging
       if (++counter % LOG_INTERVAL == 0) {

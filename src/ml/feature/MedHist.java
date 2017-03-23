@@ -1,5 +1,7 @@
 package ml.feature;
 
+import static model.Histogram.POS_VALS_8BIT;
+
 import org.opencv.core.Mat;
 
 import model.Histogram;
@@ -18,7 +20,9 @@ public class MedHist implements Feature {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    roi.setMedHist(Histogram.createHist(roi.getRegion(), mat, BINS));
+    Histogram histogram = new Histogram(POS_VALS_8BIT);
+    histogram.createHist(roi.getRegion(), mat, BINS);
+    roi.setMedHist(histogram);
   }
 
 }

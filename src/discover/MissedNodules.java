@@ -1,6 +1,7 @@
 package discover;
 
 import static model.GroundTruth.Type.BIG_NODULE;
+import static model.Histogram.POS_VALS_8BIT;
 import static util.MatUtils.getSliceMat;
 import static util.MatUtils.grey2BGR;
 import static util.MatUtils.put;
@@ -152,8 +153,10 @@ public class MissedNodules {
               dir = DARK_DIR;
             }
 
-            // Write line to histogram file
-            writer.writeLine(Histogram.createHist(region, mat, Histogram.POS_VALS_8BIT));
+            // Create the histogram and write to the file
+            Histogram histogram = new Histogram(POS_VALS_8BIT);
+            histogram.createHist(region, mat, POS_VALS_8BIT);
+            writer.writeLine(histogram);
 
             // Create an annotated image and save it
             if (images) {

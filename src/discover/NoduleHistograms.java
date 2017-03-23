@@ -1,5 +1,7 @@
 package discover;
 
+import static model.Histogram.POS_VALS_8BIT;
+
 import java.util.List;
 
 import org.mongodb.morphia.query.Query;
@@ -63,10 +65,10 @@ public class NoduleHistograms extends HistogramWriter {
           for (GroundTruth groundTruth : nodules) {
             numNodules++;
 
-            // Write the histogram to the file
-            writeLine(Histogram.createHist(groundTruth.getRegion(), mat,
-                Histogram.POS_VALS_8BIT));
-
+            // Create the histogram and write to the file
+            Histogram histogram = new Histogram(POS_VALS_8BIT);
+            histogram.createHist(groundTruth.getRegion(), mat, POS_VALS_8BIT);
+            writeLine(histogram);
           }
 
         } catch (LungsException e) {

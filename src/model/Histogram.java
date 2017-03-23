@@ -31,11 +31,20 @@ public class Histogram implements Iterator<Double> {
   @Transient
   private int index;
 
+  /**
+   * The number of possible values
+   */
+  private int numPosVal;
+
   private Histogram() {
     // For morphia
   }
 
-  public Histogram(double[] bins) {
+  public Histogram(int numPosVal) {
+    this.numPosVal = numPosVal;
+  }
+
+  public void setBins(double[] bins) {
     this.bins = bins;
   }
 
@@ -69,14 +78,13 @@ public class Histogram implements Iterator<Double> {
    * @param mat the single channel {@link Mat} to create the histogram for.
    * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
    *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
-   * @return
    * @throws LungsException if parameters given are invalid.
    */
-  public static Histogram createHist(Mat mat, int numBins) throws LungsException {
+  public void createHist(Mat mat, int numBins) throws LungsException {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[POS_VALS_8BIT];
+    double[] valCount = new double[numPosVal];
     for (int row = 0; row < mat.rows(); row++) {
       for (int col = 0; col < mat.cols(); col++) {
         int val = (int) mat.get(row, col)[0];
@@ -84,7 +92,7 @@ public class Histogram implements Iterator<Double> {
       }
     }
 
-    return createHist(valCount, mat.rows() * mat.cols(), numBins);
+    createHist(valCount, mat.rows() * mat.cols(), numBins);
   }
 
   /**
@@ -93,40 +101,36 @@ public class Histogram implements Iterator<Double> {
    * @param mat the single channel {@link Mat} to create the histogram for.
    * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
    *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
-   * @return
    * @throws LungsException if parameters given are invalid.
    */
-  public static Histogram createHist(List<Point> region, Mat mat, int numBins)
-      throws LungsException {
+  public void createHist(List<Point> region, Mat mat, int numBins) throws LungsException {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[POS_VALS_8BIT];
+    double[] valCount = new double[numPosVal];
     for (Point point : region) {
       int val = (int) get(mat, point)[0];
       valCount[val]++;
     }
 
-    return createHist(valCount, region.size(), numBins);
+    createHist(valCount, region.size(), numBins);
   }
 
   /**
-   *
    * @param valCount bins that hold counts for the number of pixels with intensity values that
    *        correspond to the bin index.
    * @param numPixels the total number of pixels that have been added to {@code valCount}
    * @param numBins the number of bins used in the {@link Histogram} that will be created.
-   * @return A histogram which has frequencies as it's bin values as appose to counts.
    */
-  private static Histogram createHist(double[] valCount, int numPixels, int numBins) {
+  private void createHist(double[] valCount, int numPixels, int numBins) {
     // Create a histogram with the correct number of bins
-    double[] hist = new double[numBins];
+    bins = new double[numBins];
     int binIndex = 0;
-    int valPerBin = (int) Math.ceil(POS_VALS_8BIT / numBins);
+    int valPerBin = (int) Math.ceil(numPosVal / numBins);
     int counter = 0;
     for (double val : valCount) {
       // Add val to the current value in the bin
-      hist[binIndex] += val;
+      bins[binIndex] += val;
 
       // Move onto the next bin if required
       if (counter != 0 && counter % valPerBin == 0) {
@@ -137,11 +141,11 @@ public class Histogram implements Iterator<Double> {
     }
 
     // Covert to frequencies
-    for (int i = 0; i < hist.length; i++) {
-      hist[i] /= numPixels;
+    for (int i = 0; i < bins.length; i++) {
+      bins[i] /= numPixels;
     }
 
-    return new Histogram(hist);
+    reset();
   }
 
   /**
