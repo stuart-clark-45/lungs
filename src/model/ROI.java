@@ -35,6 +35,10 @@ public class ROI {
 
   private List<Point> region;
 
+  /**
+   * The inclusive contour for the region. i.e. the points in the contour are included in the
+   * region.
+   */
   private List<Point> contour;
 
   @Indexed
