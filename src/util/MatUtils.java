@@ -5,13 +5,14 @@ import java.awt.image.DataBufferByte;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import config.Misc;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.Misc;
+import config.Mode;
 import ij.plugin.DICOM;
 import model.CTSlice;
 import model.CTStack;
@@ -24,7 +25,15 @@ import model.CTStack;
 public class MatUtils {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MatUtils.class);
-  private static final String IMAGE_DIR = ConfigHelper.getString(Misc.LIDC) + "/DOI";
+  private static final String IMAGE_DIR;
+
+  static {
+    if (ConfigHelper.getMode() == Mode.Value.TEST) {
+      IMAGE_DIR = "./";
+    } else {
+      IMAGE_DIR = ConfigHelper.getString(Misc.LIDC) + "/DOI";
+    }
+  }
 
   private MatUtils() {
     // Hide constructor
