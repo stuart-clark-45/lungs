@@ -57,7 +57,7 @@ public class ConvexityTest {
     ROI square = new ROI();
     square.setRegion(PointUtils.perim2Region(squareRegion, true));
 
-    // Create a square
+    // Create a cross
     List<Point> crossRegion = new ArrayList<>();
     crossRegion.add(new Point(4, 7));
 
