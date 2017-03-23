@@ -1,34 +1,27 @@
 package vision;
 
-import static org.opencv.core.Core.BORDER_DEFAULT;
+import static org.opencv.core.CvType.CV_16S;
+import static org.opencv.core.CvType.CV_32FC1;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import model.KeyPoint;
 import util.MatUtils;
 
 /**
- * Created by stuart on 20/03/2017.
+ * Uses a SIFT-like algorithm to detect blobs in a {@link Mat}.
+ *
+ * @author Stuart Clark
  */
 public class BlobDetector {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(BlobDetector.class);
-
-  private final static int SCALE = 1;
-  private final static int DELTA = 0;
-  private final static int DDEPTH = CvType.CV_16S;
 
   private final List<Integer> sigmaValues;
   private final int numSigmaValues;
@@ -61,7 +54,13 @@ public class BlobDetector {
     this.gradientThresh = gradientThresh;
   }
 
+  /**
+   * @param mat
+   * @return a list of {@link KeyPoint}s that identify the location and size of blobs detected in
+   *         {@code mat}.
+   */
   public List<KeyPoint> detect(Mat mat) {
+    // Apply gaussian blurs with different sigma values
     List<Mat> blurred = new ArrayList<>(numSigmaValues);
     for (Integer sigma : sigmaValues) {
       Mat temp = MatUtils.similarMat(mat, false);
@@ -80,52 +79,77 @@ public class BlobDetector {
       dogs.add(padded);
     }
 
+    // Get gradient magnitude for mat
+    Mat gradientMag = gradientMagnitude(mat);
+
+    // Create key points
     List<KeyPoint> keyPoints = new ArrayList<>();
     for (int dogIndex = 0; dogIndex < dogs.size(); dogIndex++) {
       for (int row = 0; row < mat.rows(); row++) {
         for (int col = 0; col < mat.cols(); col++) {
-          createKeyPoint(row, col, dogIndex, dogs).ifPresent(keyPoints::add);
+          createKeyPoint(row, col, dogIndex, dogs, gradientMag).ifPresent(keyPoints::add);
         }
       }
     }
 
+    return keyPoints;
+  }
+
+  /**
+   * @param mat
+   * @return a {@link Mat} containing the gradient magnitude for each pixel in {@code mat}.
+   */
+  private Mat gradientMagnitude(Mat mat) {
     // Gradient X
-    Mat gradX = new Mat(mat.rows(), mat.cols(), DDEPTH);
-    Imgproc.Sobel(mat, gradX, DDEPTH, 1, 1, 3, SCALE, DELTA, BORDER_DEFAULT);
+    Mat gradX = new Mat(mat.rows(), mat.cols(), CV_16S);
+    Imgproc.Sobel(mat, gradX, CV_16S, 1, 0);
 
     // Gradient Y
-    Mat gradY = new Mat(mat.rows(), mat.cols(), DDEPTH);
-    Imgproc.Sobel(mat, gradY, DDEPTH, 0, 1, 3, SCALE, DELTA, BORDER_DEFAULT);
+    Mat gradY = new Mat(mat.rows(), mat.cols(), CV_16S);
+    Imgproc.Sobel(mat, gradY, CV_16S, 0, 1);
 
     // Gradient X squared
-    Mat gradXPow2 = new Mat(mat.rows(), mat.cols(), DDEPTH);
+    Mat gradXPow2 = new Mat(mat.rows(), mat.cols(), CV_16S);
     Core.pow(gradX, 2, gradXPow2);
 
     // Gradient Y squared
-    Mat gradYPow2 = new Mat(mat.rows(), mat.cols(), DDEPTH);
+    Mat gradYPow2 = new Mat(mat.rows(), mat.cols(), CV_16S);
     Core.pow(gradY, 2, gradYPow2);
 
     // Calculate gradient magnitude
-    Mat sum = new Mat(mat.rows(), mat.cols(), CvType.CV_32FC1);
+    Mat sum = new Mat(mat.rows(), mat.cols(), CV_32FC1);
     Core.add(gradXPow2, gradYPow2, sum);
-    Mat sumFloat = new Mat(mat.rows(), mat.cols(), CvType.CV_32FC1);
+    Mat sumFloat = new Mat(mat.rows(), mat.cols(), CV_32FC1);
     sum.convertTo(sumFloat, sumFloat.type());
-    Mat gradientMag = new Mat(mat.rows(), mat.cols(), CvType.CV_32FC1);
+    Mat gradientMag = new Mat(mat.rows(), mat.cols(), CV_32FC1);
     Core.sqrt(sumFloat, gradientMag);
 
-    // Filter out key points that are edges and return
-    return keyPoints.stream()
-        .filter(kp -> MatUtils.get(gradientMag, kp.getPoint())[0] < gradientThresh)
-        .collect(Collectors.toList());
+    return gradientMag;
   }
 
-  private Optional<KeyPoint> createKeyPoint(int row, int col, int dogIndex, List<Mat> dogs) {
+  /**
+   * @param row the row for the pixel being examined.
+   * @param col the column for the pixel being examined.
+   * @param dogIndex the index of {@code dogs} for the DOG that the pixel belongs to.
+   * @param dogs a list of DOGs
+   * @param gradientMag the gradient magnitudes of the pixels in the original image. Computed using
+   *        {@link BlobDetector#gradientMagnitude(Mat)}
+   * @return an {@code Optional.of()} the the {@link KeyPoint} if the pixel at {@code row},
+   *         {@code col} is a key point in the DOG at {@code dogIndex}. {@link Optional#empty()}
+   *         otherwise.
+   */
+  private Optional<KeyPoint> createKeyPoint(int row, int col, int dogIndex, List<Mat> dogs,
+      Mat gradientMag) {
+
     Mat thisDog = dogs.get(dogIndex);
     double thisVal = thisDog.get(row + yPadding, col + xPadding)[0];
-    if (thisVal < dogThresh) {
+
+    // Check if point could potentially be valid key points
+    if (thisVal < dogThresh || gradientMag.get(row, col)[0] < gradientThresh) {
       return Optional.empty();
     }
 
+    // Create a list of the DOGs that should be in the neighbourhood
     List<Mat> matsToCheck = new ArrayList<>();
     for (int i = dogIndex - sigmaDiff; i < dogIndex; i++) {
       if (i >= 0) {
@@ -138,10 +162,10 @@ public class BlobDetector {
       }
     }
 
+    // Iterate over the the neighbourhood
+    // TODO might be worth breaking out of this loop if know not min or max
     double min = Double.MAX_VALUE;
     double max = -1;
-
-    // TODO might be worth breaking out of this loop if know not min or max
     for (int r = row; r <= row + yPadding * 2; r++) {
       for (int c = col; c <= col + xPadding * 2; c++) {
         for (Mat mat : matsToCheck) {
@@ -156,6 +180,7 @@ public class BlobDetector {
       }
     }
 
+    // Check if the point is an extrema and create a KeyPoint if it is
     if (thisVal == min || thisVal == max) {
       return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex), thisVal));
     } else {
