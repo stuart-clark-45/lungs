@@ -36,6 +36,7 @@ public class Histogram implements Iterator<Double> {
   /**
    * Array used to count values.
    */
+  @Transient
   private double[] valCounter;
 
   /**
