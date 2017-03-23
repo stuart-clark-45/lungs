@@ -151,6 +151,11 @@ public class ROI {
    */
   private Double convexity;
 
+  /**
+   * The histogram for the Local Quaternary Pattern for the {@link ROI}.
+   */
+  private Histogram lqp;
+
   public ROI() {
     region = new ArrayList<>();
   }
@@ -350,5 +355,13 @@ public class ROI {
 
   public void setHuCircularity(Double huCircularity) {
     this.huCircularity = huCircularity;
+  }
+
+  public Histogram getLqp() {
+    return lqp;
+  }
+
+  public void setLqp(Histogram lqp) {
+    this.lqp = lqp;
   }
 }
