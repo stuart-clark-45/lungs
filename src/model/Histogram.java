@@ -24,6 +24,7 @@ public class Histogram implements Iterator<Double> {
    * The values in each of the histogram bins. Could be frequencies or summations.
    */
   private double[] bins;
+
   @Transient
   private int index;
 
