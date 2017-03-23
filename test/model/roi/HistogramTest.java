@@ -48,14 +48,14 @@ public class HistogramTest {
 
   @Test(expected = LungsException.class)
   public void testBadMat() throws Exception {
-    Histogram histogram = new Histogram(POS_VALS_8BIT);
-    histogram.createHist(Mat.zeros(1, 1, CvType.CV_8UC3), 2);
+    Histogram histogram = new Histogram(2, POS_VALS_8BIT);
+    histogram.add(Mat.zeros(1, 1, CvType.CV_8UC3));
   }
 
   @Test(expected = LungsException.class)
   public void testBadBins() throws Exception {
-    Histogram histogram = new Histogram(POS_VALS_8BIT);
-    histogram.createHist(Mat.zeros(1, 1, CvType.CV_16UC1), 13);
+    Histogram histogram = new Histogram(13, POS_VALS_8BIT);
+    histogram.add(Mat.zeros(1, 1, CvType.CV_16UC1));
   }
 
   @Test
@@ -84,8 +84,10 @@ public class HistogramTest {
     ROI roi = new ROI();
     roi.setRegion(region);
 
-    Histogram histogram = new Histogram(POS_VALS_8BIT);
-    histogram.createHist(roi.getRegion(), mat, 4);
+    Histogram histogram = new Histogram(4, POS_VALS_8BIT);
+    histogram.add(roi.getRegion(), mat);
+    histogram.computeBins();
+    histogram.toFrequencies();
 
     double[] expected = {0.25, 0.375, 0.125, 0.25};
     assertArrayEquals(toObject(expected), toObject(histogram.getBins()));
@@ -93,8 +95,11 @@ public class HistogramTest {
 
   @Test
   public void testWithOutROI() throws Exception {
-    Histogram histogram = new Histogram(POS_VALS_8BIT);
-    histogram.createHist(mat, 4);
+    Histogram histogram = new Histogram(4, POS_VALS_8BIT);
+    histogram.add(mat);
+    histogram.computeBins();
+    histogram.toFrequencies();
+
     double[] expected = {0.88, 0.06, 0.02, 0.04};
     assertArrayEquals(toObject(expected), toObject(histogram.getBins()));
   }

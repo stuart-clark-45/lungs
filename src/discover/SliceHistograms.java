@@ -64,8 +64,10 @@ public class SliceHistograms extends HistogramWriter {
       Mat mat = MatUtils.getSliceMat(slice);
 
       // Create the histogram and write to the file
-      Histogram histogram = new Histogram(POS_VALS_8BIT);
-      histogram.createHist(mat, POS_VALS_8BIT);
+      Histogram histogram = new Histogram(POS_VALS_8BIT, POS_VALS_8BIT);
+      histogram.add(mat);
+      histogram.computeBins();
+      histogram.toFrequencies();
       writeLine(histogram);
 
       // Logging

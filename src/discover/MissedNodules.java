@@ -154,8 +154,10 @@ public class MissedNodules {
             }
 
             // Create the histogram and write to the file
-            Histogram histogram = new Histogram(POS_VALS_8BIT);
-            histogram.createHist(region, mat, POS_VALS_8BIT);
+            Histogram histogram = new Histogram(POS_VALS_8BIT, POS_VALS_8BIT);
+            histogram.add(region, mat);
+            histogram.computeBins();
+            histogram.toFrequencies();
             writer.writeLine(histogram);
 
             // Create an annotated image and save it

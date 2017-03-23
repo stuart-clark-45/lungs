@@ -20,8 +20,10 @@ public class MedHist implements Feature {
 
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    Histogram histogram = new Histogram(POS_VALS_8BIT);
-    histogram.createHist(roi.getRegion(), mat, BINS);
+    Histogram histogram = new Histogram(BINS, POS_VALS_8BIT);
+    histogram.add(roi.getRegion(), mat);
+    histogram.computeBins();
+    histogram.toFrequencies();
     roi.setMedHist(histogram);
   }
 

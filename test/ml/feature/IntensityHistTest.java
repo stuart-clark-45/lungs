@@ -52,7 +52,7 @@ public class IntensityHistTest {
     new CoarseHist().compute(roi, MAT);
     Histogram hist = roi.getCoarseHist();
     assertNotNull(hist);
-    assertEquals(Integer.valueOf(CoarseHist.BINS), Integer.valueOf(hist.numBins()));
+    assertEquals(Integer.valueOf(CoarseHist.BINS), Integer.valueOf(hist.getNumBins()));
   }
 
   @Test
@@ -60,7 +60,7 @@ public class IntensityHistTest {
     new MedHist().compute(roi, MAT);
     Histogram hist = roi.getMedHist();
     assertNotNull(hist);
-    assertEquals(Integer.valueOf(MedHist.BINS), Integer.valueOf(hist.numBins()));
+    assertEquals(Integer.valueOf(MedHist.BINS), Integer.valueOf(hist.getNumBins()));
   }
 
   @Test
@@ -68,7 +68,7 @@ public class IntensityHistTest {
     new FineHist().compute(roi, MAT);
     Histogram hist = roi.getFineHist();
     assertNotNull(hist);
-    assertEquals(Integer.valueOf(FineHist.BINS), Integer.valueOf(hist.numBins()));
+    assertEquals(Integer.valueOf(FineHist.BINS), Integer.valueOf(hist.getNumBins()));
   }
 
 }

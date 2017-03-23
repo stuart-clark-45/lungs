@@ -28,6 +28,21 @@ public class Histogram implements Iterator<Double> {
    */
   private double[] bins;
 
+  /**
+   * The number of bins in the histogram.
+   */
+  private int numBins;
+
+  /**
+   * Array used to count values.
+   */
+  private double[] valCounter;
+
+  /**
+   * Used to count the total number of values
+   */
+  private double totalCounter;
+
   @Transient
   private int index;
 
@@ -40,20 +55,15 @@ public class Histogram implements Iterator<Double> {
     // For morphia
   }
 
-  public Histogram(int numPosVal) {
+  /**
+   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
+   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   * @param numPosVal the number of possible values that can be stored in the histogram.
+   */
+  public Histogram(int numBins, int numPosVal) {
+    this.numBins = numBins;
     this.numPosVal = numPosVal;
-  }
-
-  public void setBins(double[] bins) {
-    this.bins = bins;
-  }
-
-  public double[] getBins() {
-    return bins;
-  }
-
-  public int numBins() {
-    return bins.length;
+    this.valCounter = new double[numPosVal];
   }
 
   /**
@@ -74,61 +84,72 @@ public class Histogram implements Iterator<Double> {
     return bins[index++];
   }
 
+  public void setBins(double[] bins) {
+    this.bins = bins;
+  }
+
+  public double[] getBins() {
+    return bins;
+  }
+
+  public int getNumBins() {
+    return numBins;
+  }
+
+  public void add(int val) {
+    valCounter[val]++;
+    totalCounter++;
+  }
+
   /**
    * @param mat the single channel {@link Mat} to create the histogram for.
-   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
-   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
    * @throws LungsException if parameters given are invalid.
    */
-  public void createHist(Mat mat, int numBins) throws LungsException {
+  public void add(Mat mat) throws LungsException {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[numPosVal];
+    valCounter = new double[numPosVal];
     for (int row = 0; row < mat.rows(); row++) {
       for (int col = 0; col < mat.cols(); col++) {
         int val = (int) mat.get(row, col)[0];
-        valCount[val]++;
+        valCounter[val]++;
       }
     }
 
-    createHist(valCount, mat.rows() * mat.cols(), numBins);
+    totalCounter += mat.rows() * mat.cols();
   }
 
   /**
    * @param region the region of interest that the histogram should be calculated for. i.e. should
    *        be a list of all the points that belong to the region of interest.
    * @param mat the single channel {@link Mat} to create the histogram for.
-   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
-   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   * 
    * @throws LungsException if parameters given are invalid.
    */
-  public void createHist(List<Point> region, Mat mat, int numBins) throws LungsException {
+  public void add(List<Point> region, Mat mat) throws LungsException {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[numPosVal];
+    valCounter = new double[numPosVal];
     for (Point point : region) {
       int val = (int) get(mat, point)[0];
-      valCount[val]++;
+      valCounter[val]++;
     }
 
-    createHist(valCount, region.size(), numBins);
+    totalCounter += region.size();
   }
 
   /**
-   * @param valCount bins that hold counts for the number of pixels with intensity values that
-   *        correspond to the bin index.
-   * @param numPixels the total number of pixels that have been added to {@code valCount}
-   * @param numBins the number of bins used in the {@link Histogram} that will be created.
+   * Take the values added to the Histogram and place them into bins.
    */
-  private void createHist(double[] valCount, int numPixels, int numBins) {
+  public void computeBins() {
     // Create a histogram with the correct number of bins
     bins = new double[numBins];
     int binIndex = 0;
     int valPerBin = (int) Math.ceil(numPosVal / numBins);
     int counter = 0;
-    for (double val : valCount) {
+    for (double val : valCounter) {
       // Add val to the current value in the bin
       bins[binIndex] += val;
 
@@ -140,12 +161,15 @@ public class Histogram implements Iterator<Double> {
       counter++;
     }
 
-    // Covert to frequencies
-    for (int i = 0; i < bins.length; i++) {
-      bins[i] /= numPixels;
-    }
+  }
 
-    reset();
+  /**
+   * Convert the value in the bins to frequencies rather than counts
+   */
+  public void toFrequencies() {
+    for (int i = 0; i < bins.length; i++) {
+      bins[i] /= totalCounter;
+    }
   }
 
   /**
