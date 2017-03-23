@@ -21,7 +21,7 @@ import util.LungsException;
  */
 public class LQP implements Feature {
 
-  static final int NUM_BINS = 64;
+  public static final int BINS = 64;
   static final int NUM_POS_VAL = 65536;
 
   /**
@@ -49,7 +49,7 @@ public class LQP implements Feature {
     List<Point> region = roi.getRegion();
     Set<Point> regionSet = new HashSet<>(region);
 
-    Histogram histogram = new Histogram(NUM_BINS, NUM_POS_VAL);
+    Histogram histogram = new Histogram(BINS, NUM_POS_VAL);
 
     for (Point point : region) {
       int value = 0;

@@ -3,7 +3,7 @@ package ml.feature;
 import static ml.feature.LQP.EQ;
 import static ml.feature.LQP.GT;
 import static ml.feature.LQP.LT;
-import static ml.feature.LQP.NUM_BINS;
+import static ml.feature.LQP.BINS;
 import static ml.feature.LQP.NUM_POS_VAL;
 import static ml.feature.LQP.VOID;
 import static org.apache.commons.lang.ArrayUtils.toObject;
@@ -83,7 +83,7 @@ public class LQPTest {
       values.add(value);
     }
 
-    Histogram histogram = new Histogram(NUM_BINS, NUM_POS_VAL);
+    Histogram histogram = new Histogram(BINS, NUM_POS_VAL);
     values.forEach(histogram::add);
     histogram.computeBins();
     histogram.toFrequencies();
