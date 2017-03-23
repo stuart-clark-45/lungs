@@ -65,7 +65,7 @@ public class NoduleHistograms extends HistogramWriter {
 
             // Write the histogram to the file
             writeLine(Histogram.createHist(groundTruth.getRegion(), mat,
-                Histogram.NUM_POSSIBLE_VALS));
+                Histogram.POS_VALS_8BIT));
 
           }
 

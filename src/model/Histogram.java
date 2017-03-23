@@ -18,7 +18,10 @@ import util.LungsException;
  */
 public class Histogram implements Iterator<Double> {
 
-  public static final int NUM_POSSIBLE_VALS = 256;
+  /**
+   * The number of possible values in an 8 Bit image
+   */
+  public static final int POS_VALS_8BIT = 256;
 
   /**
    * The values in each of the histogram bins. Could be frequencies or summations.
@@ -73,7 +76,7 @@ public class Histogram implements Iterator<Double> {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[NUM_POSSIBLE_VALS];
+    double[] valCount = new double[POS_VALS_8BIT];
     for (int row = 0; row < mat.rows(); row++) {
       for (int col = 0; col < mat.cols(); col++) {
         int val = (int) mat.get(row, col)[0];
@@ -98,7 +101,7 @@ public class Histogram implements Iterator<Double> {
     validateParams(mat, numBins);
 
     // Count up the number of occurrences for each value
-    double[] valCount = new double[NUM_POSSIBLE_VALS];
+    double[] valCount = new double[POS_VALS_8BIT];
     for (Point point : region) {
       int val = (int) get(mat, point)[0];
       valCount[val]++;
@@ -119,7 +122,7 @@ public class Histogram implements Iterator<Double> {
     // Create a histogram with the correct number of bins
     double[] hist = new double[numBins];
     int binIndex = 0;
-    int valPerBin = (int) Math.ceil(NUM_POSSIBLE_VALS / numBins);
+    int valPerBin = (int) Math.ceil(POS_VALS_8BIT / numBins);
     int counter = 0;
     for (double val : valCount) {
       // Add val to the current value in the bin

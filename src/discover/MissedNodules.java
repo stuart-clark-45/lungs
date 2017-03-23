@@ -153,7 +153,7 @@ public class MissedNodules {
             }
 
             // Write line to histogram file
-            writer.writeLine(Histogram.createHist(region, mat, Histogram.NUM_POSSIBLE_VALS));
+            writer.writeLine(Histogram.createHist(region, mat, Histogram.POS_VALS_8BIT));
 
             // Create an annotated image and save it
             if (images) {
