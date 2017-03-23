@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
+import ml.feature.LQP;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,6 +118,12 @@ public class InstancesBuilder {
     for (int i = 0; i < FineHist.BINS; i++) {
       this.attributes.add(new Attribute("Fine Hist " + i));
       this.functions.add(roi -> roi.getFineHist().next());
+    }
+
+    // Add LQB
+    for (int i = 0; i < LQP.BINS; i++) {
+      this.attributes.add(new Attribute("LQP " + i));
+      this.functions.add(roi -> roi.getLqp().next());
     }
 
     // Add class
