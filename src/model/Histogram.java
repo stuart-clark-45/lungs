@@ -68,6 +68,20 @@ public class Histogram implements Iterator<Double> {
   }
 
   /**
+   * Creates a copy of {@code that} with {@code numBins} bins. {@link Histogram#computeBins()} and
+   * {@link Histogram#toFrequencies()} still need to called if desired.
+   * 
+   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
+   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   * @param that the histogram to copy.
+   */
+  public Histogram(int numBins, Histogram that) {
+    this.numBins = numBins;
+    this.numPosVal = that.numPosVal;
+    this.valCounter = that.valCounter.clone();
+  }
+
+  /**
    * Reset the index counter so when {@link Histogram#next()} is next called the first element value
    * from the histogram will be returned.
    */
