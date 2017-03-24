@@ -10,14 +10,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-import ml.feature.LQP;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ml.feature.CoarseHist;
-import ml.feature.FineHist;
-import ml.feature.MedHist;
+import ml.feature.AllHists;
+import ml.feature.LQP;
 import model.ROI;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -103,19 +101,19 @@ public class InstancesBuilder {
     this.functions.add(roi -> roi.getElongation() != null ? roi.getElongation() : missingValue());
 
     // Add Coarse Histogram
-    for (int i = 0; i < CoarseHist.BINS; i++) {
+    for (int i = 0; i < AllHists.COARSE; i++) {
       this.attributes.add(new Attribute("Coarse Hist " + i));
       this.functions.add(roi -> roi.getCoarseHist().next());
     }
 
     // Add Medium Histogram
-    for (int i = 0; i < MedHist.BINS; i++) {
+    for (int i = 0; i < AllHists.MID; i++) {
       this.attributes.add(new Attribute("Medium Hist " + i));
       this.functions.add(roi -> roi.getMedHist().next());
     }
 
     // Add Fine Histogram
-    for (int i = 0; i < FineHist.BINS; i++) {
+    for (int i = 0; i < AllHists.FINE; i++) {
       this.attributes.add(new Attribute("Fine Hist " + i));
       this.functions.add(roi -> roi.getFineHist().next());
     }
