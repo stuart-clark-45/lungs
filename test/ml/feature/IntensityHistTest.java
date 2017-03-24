@@ -46,27 +46,19 @@ public class IntensityHistTest {
   }
 
   @Test
-  public void testCoarse() throws Exception {
-    new CoarseHist().compute(roi, MAT);
-    Histogram hist = roi.getCoarseHist();
-    assertNotNull(hist);
-    assertEquals(Integer.valueOf(CoarseHist.BINS), Integer.valueOf(hist.getNumBins()));
-  }
+  public void test() throws Exception {
+    new AllHists().compute(roi, MAT);
+    Histogram coarse = roi.getCoarseHist();
+    assertNotNull(coarse);
+    assertEquals(Integer.valueOf(AllHists.COARSE), Integer.valueOf(coarse.getNumBins()));
 
-  @Test
-  public void testMid() throws Exception {
-    new MedHist().compute(roi, MAT);
-    Histogram hist = roi.getMedHist();
-    assertNotNull(hist);
-    assertEquals(Integer.valueOf(MedHist.BINS), Integer.valueOf(hist.getNumBins()));
-  }
+    Histogram mid = roi.getMedHist();
+    assertNotNull(mid);
+    assertEquals(Integer.valueOf(AllHists.MID), Integer.valueOf(mid.getNumBins()));
 
-  @Test
-  public void testFine() throws Exception {
-    new FineHist().compute(roi, MAT);
-    Histogram hist = roi.getFineHist();
-    assertNotNull(hist);
-    assertEquals(Integer.valueOf(FineHist.BINS), Integer.valueOf(hist.getNumBins()));
+    Histogram fine = roi.getFineHist();
+    assertNotNull(fine);
+    assertEquals(Integer.valueOf(AllHists.FINE), Integer.valueOf(fine.getNumBins()));
   }
 
 }
