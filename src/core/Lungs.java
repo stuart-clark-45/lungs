@@ -275,13 +275,11 @@ public class Lungs {
     Set<Point> validPoints = maskPoints(mask);
 
     // Get the key points using the blob detector
-    List<KeyPoint> keyPoints = blobDetector.detect(original);
+    List<KeyPoint> keyPoints = blobDetector.detect(original, validPoints);
     Mat blobMat = MatUtils.similarMat(original, true);
     for (KeyPoint keyPoint : keyPoints) {
-      if (validPoints.contains(keyPoint.getPoint())) {
-        Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
-            FOREGROUND), -1);
-      }
+      Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+          FOREGROUND), -1);
     }
 
     // Extract all of the circles into rois
@@ -500,7 +498,7 @@ public class Lungs {
       Mat mat = mats.get(i);
       Mat anno = annotated.get(i);
 
-      List<KeyPoint> keyPoints = blobDetector.detect(mat);
+      List<KeyPoint> keyPoints = blobDetector.detect(mat, null);
       LOGGER.info(keyPoints.size() + " key points");
       for (KeyPoint keyPoint : keyPoints) {
         Imgproc.circle(anno, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(

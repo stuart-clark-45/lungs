@@ -3,12 +3,15 @@ package vision;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+
+import com.sun.istack.internal.Nullable;
 
 import model.KeyPoint;
 import util.MatUtils;
@@ -53,10 +56,11 @@ public class BlobDetector {
 
   /**
    * @param mat
+   * @param validPoints a set of {@link Point}s that could potentially be {@link KeyPoint}s.
    * @return a list of {@link KeyPoint}s that identify the location and size of blobs detected in
    *         {@code mat}.
    */
-  public List<KeyPoint> detect(Mat mat) {
+  public List<KeyPoint> detect(Mat mat, @Nullable Set<Point> validPoints) {
     // Apply gaussian blurs with different sigma values
     List<Mat> blurred = new ArrayList<>(numSigmaValues);
     for (Integer sigma : sigmaValues) {
@@ -82,9 +86,18 @@ public class BlobDetector {
     // Create key points
     List<KeyPoint> keyPoints = new ArrayList<>();
     for (int dogIndex = 0; dogIndex < dogs.size(); dogIndex++) {
-      for (int row = 0; row < mat.rows(); row++) {
-        for (int col = 0; col < mat.cols(); col++) {
-          createKeyPoint(row, col, dogIndex, dogs, gradientMag).ifPresent(keyPoints::add);
+      // If a set of valid points has been provided
+      if (validPoints != null) {
+        for (Point point : validPoints) {
+          createKeyPoint((int) point.y, (int) point.x, dogIndex, dogs, gradientMag).ifPresent(
+              keyPoints::add);
+        }
+        // If no set of valid points has been provided
+      } else {
+        for (int row = 0; row < mat.rows(); row++) {
+          for (int col = 0; col < mat.cols(); col++) {
+            createKeyPoint(row, col, dogIndex, dogs, gradientMag).ifPresent(keyPoints::add);
+          }
         }
       }
     }
