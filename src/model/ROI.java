@@ -85,17 +85,17 @@ public class ROI {
   private Double meanIntensity;
 
   /**
-   * A intensity histogram with few bins. Computed using {@link ml.feature.CoarseHist}.
+   * A intensity histogram with few bins. Computed using {@link ml.feature.AllHists}.
    */
   private Histogram coarseHist;
 
   /**
-   * A intensity histogram with a medium amount of bins. Computed using {@link ml.feature.MedHist}.
+   * A intensity histogram with a medium amount of bins. Computed using {@link ml.feature.AllHists}.
    */
   private Histogram medHist;
 
   /**
-   * A intensity histogram with lots of bins. Computed using {@link ml.feature.FineHist}.
+   * A intensity histogram with lots of bins. Computed using {@link ml.feature.AllHists}.
    */
   private Histogram fineHist;
 
