@@ -120,10 +120,10 @@ public class BlobDetector {
       Mat gradientMag) {
 
     Mat thisDog = dogs.get(dogIndex);
-    double thisVal = thisDog.get(row + yPadding, col + xPadding)[0];
+    double val = thisDog.get(row + yPadding, col + xPadding)[0];
 
     // Check if point could potentially be valid key points
-    if (thisVal < dogThresh || gradientMag.get(row, col)[0] < gradientThresh) {
+    if (val < dogThresh || gradientMag.get(row, col)[0] < gradientThresh) {
       return Optional.empty();
     }
 
@@ -140,30 +140,20 @@ public class BlobDetector {
       }
     }
 
-    // Iterate over the the neighbourhood
-    // TODO might be worth breaking out of this loop if know not min or max
-    double min = Double.MAX_VALUE;
-    double max = -1;
+    // Iterate over the the neighbourhood to see if points is a maxima, return Optional.empty() if
+    // it is not.
     for (int r = row; r <= row + yPadding * 2; r++) {
       for (int c = col; c <= col + xPadding * 2; c++) {
         for (Mat mat : matsToCheck) {
-          double thatVal = mat.get(r, c)[0];
-          if (thatVal < min) {
-            min = thatVal;
-          }
-          if (thatVal > max) {
-            max = thatVal;
+          if (mat.get(r, c)[0] > val) {
+            return Optional.empty();
           }
         }
       }
     }
 
-    // Check if the point is an extrema and create a KeyPoint if it is
-    if (thisVal == min || thisVal == max) {
-      return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex), thisVal));
-    } else {
-      return Optional.empty();
-    }
+    // Create a KeyPoint for the point and return it
+    return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex), val));
 
   }
 
