@@ -69,6 +69,19 @@ public class ROIExtractor {
     this.sureBG = sureBG;
   }
 
+  /**
+   * @param sureFG The threshold value that when used returns a thresholded image where the
+   *        foreground is the pixels of the original image that are known to be in the foreground of
+   *        the original image
+   * @param sureBGFrac The fraction of {@code sureFG} that should be used as the threshold value
+   *        that when used returns a thresholded image where the background is the pixels of the
+   *        original image that are known to be in the background of the original image
+   */
+  public ROIExtractor(int sureFG, double sureBGFrac) {
+    this.sureFG = sureFG;
+    this.sureBG = (int) Math.round(sureFG * sureBGFrac);
+  }
+
   public List<ROI> extractROIs(Mat original) {
     // Apply threshold to find the sure foreground
     Mat foregroundMat = MatUtils.similarMat(original, false);

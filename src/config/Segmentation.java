@@ -33,6 +33,6 @@ public class Segmentation {
   }
 
   public static final String SURE_FG = "segmentation.surefg";
-  public static final String SURE_BG = "segmentation.surebg";
+  public static final String SURE_BG_FRAC = "segmentation.surebgFraction";
 
 }

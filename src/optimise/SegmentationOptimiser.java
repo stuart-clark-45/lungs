@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jenetics.DoubleChromosome;
+import org.jenetics.DoubleGene;
 import org.jenetics.Genotype;
-import org.jenetics.IntegerChromosome;
-import org.jenetics.IntegerGene;
 import org.jenetics.util.Factory;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.FindOptions;
@@ -39,7 +39,7 @@ import vision.ROIExtractor;
  *
  * @author Stuart Clark
  */
-public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
+public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SegmentationOptimiser.class);
 
@@ -50,7 +50,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   private static final int SIGMA_SPACE = 1;
   private static final int KERNEL_SIZE = 2;
   private static final int SURE_FG = 3;
-  private static final int SURE_BG = 4;
+  private static final int SURE_BG_FRAC = 4;
   private static final int HOOD_WIDTH = 5;
   private static final int HOOD_HEIGHT = 6;
   private static final int HOOD_DEPTH = 7;
@@ -125,14 +125,14 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    * @return the fitness of {@code gt}.
    */
   @Override
-  protected Double eval(Genotype<IntegerGene> gt) {
+  protected Double eval(Genotype<DoubleGene> gt) {
     // Create the filter
     BilateralFilter filter =
         new BilateralFilter(getInt(gt, KERNEL_SIZE), getInt(gt, SIGMA_COLOUR), getInt(gt,
             SIGMA_SPACE));
 
     // Create the ROI extractor
-    ROIExtractor extractor = new ROIExtractor(getInt(gt, SURE_FG), getInt(gt, SURE_BG));
+    ROIExtractor extractor = new ROIExtractor(getInt(gt, SURE_FG), getDouble(gt, SURE_BG_FRAC));
 
     // Create the blob detector
     int[] neighbourhood =
@@ -192,50 +192,59 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   }
 
   @Override
-  protected String gtToString(Genotype<IntegerGene> gt) {
+  protected String gtToString(Genotype<DoubleGene> gt) {
     return "\n# Size of the kernel used by the bilateral filter\n"
         + "segmentation.filter.kernelsize = "
-        + getInt(gt, KERNEL_SIZE)
+        + getDouble(gt, KERNEL_SIZE)
         + "\n"
         + "# Sigma for colour used by the bilateral filter\n"
         + "segmentation.filter.sigmacolor = "
-        + getInt(gt, SIGMA_COLOUR)
+        + getDouble(gt, SIGMA_COLOUR)
         + "\n"
         + "# Sigma for space used by the bilateral filter\n"
         + "segmentation.filter.sigmaspace = "
-        + getInt(gt, SIGMA_SPACE)
+        + getDouble(gt, SIGMA_SPACE)
         + "\n"
         + "# The threshold used to obtain the sure foreground\n"
         + "segmentation.surefg = "
-        + getInt(gt, SURE_FG)
+        + getDouble(gt, SURE_FG)
         + "\n"
         + "# The threshold used to obtain the sure background\n"
         + "segmentation.surebg = "
-        + getInt(gt, SURE_BG)
+        + getDouble(gt, SURE_BG_FRAC)
         + "\n"
         + "# The width of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
         + "segmentation.blob.neighbourhoodWidth = "
-        + getInt(gt, HOOD_WIDTH)
+        + getDouble(gt, HOOD_WIDTH)
         + "\n"
         + "# The height of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
         + "segmentation.blob.neighbourhoodHeight = "
-        + getInt(gt, HOOD_HEIGHT)
+        + getDouble(gt, HOOD_HEIGHT)
         + "\n"
         + "# The depth of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
         + "segmentation.blob.neighbourhoodDepth = "
-        + getInt(gt, HOOD_DEPTH)
+        + getDouble(gt, HOOD_DEPTH)
         + "\n"
         + "# The threshold used when deciding if a point in sigma space could be a key point (values higher\n"
         + "# than this can be key points)\n"
         + "segmentation.blob.dogThresh = "
-        + getInt(gt, DOG_THRESH)
+        + getDouble(gt, DOG_THRESH)
         + "\n"
         + "# The threshold used when deciding if a key point is an edge (and hence should be filtered out)\n"
         + "segmentation.blob.gradientThresh = "
-        + getInt(gt, GRADIENT_THRESH)
+        + getDouble(gt, GRADIENT_THRESH)
         + "\n"
         + "# The number of differnt sigma values to use when computing DOG\n"
-        + "segmentation.blob.numSigma = " + getInt(gt, NUM_SIGMA);
+        + "segmentation.blob.numSigma = " + getDouble(gt, NUM_SIGMA);
+  }
+
+  /**
+   * @param gt
+   * @param index
+   * @return the double value for the chromosome at {@code index}.
+   */
+  private double getDouble(Genotype<DoubleGene> gt, int index) {
+    return gt.getChromosome(index).getGene().doubleValue();
   }
 
   /**
@@ -243,7 +252,7 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
    * @param index
    * @return the integer value for the chromosome at {@code index}.
    */
-  private int getInt(Genotype<IntegerGene> gt, int index) {
+  private int getInt(Genotype<DoubleGene> gt, int index) {
     return gt.getChromosome(index).getGene().intValue();
   }
 
@@ -258,30 +267,30 @@ public class SegmentationOptimiser extends Optimiser<IntegerGene, Double> {
   }
 
   @Override
-  protected Factory<Genotype<IntegerGene>> factory() {
+  protected Factory<Genotype<DoubleGene>> factory() {
     return Genotype.of(
     // Sigma Colour
-        IntegerChromosome.of(1, 10),
+        DoubleChromosome.of(1, 10),
         // Sigma Space
-        IntegerChromosome.of(1, 10),
+        DoubleChromosome.of(1, 10),
         // Kernel Size
-        IntegerChromosome.of(3, 5),
+        DoubleChromosome.of(3, 5),
         // Sure Foreground
-        IntegerChromosome.of(0, 255),
-        // Sure Background
-        IntegerChromosome.of(0, 255),
+        DoubleChromosome.of(0, 255),
+        // Sure Background Fraction
+        DoubleChromosome.of(0, 0.9),
         // Blob neighbourhood width
-        IntegerChromosome.of(1, 15),
+        DoubleChromosome.of(1, 15),
         // Blob neighbourhood height
-        IntegerChromosome.of(1, 15),
+        DoubleChromosome.of(1, 15),
         // Blob neighbourhood depth
-        IntegerChromosome.of(1, 15),
+        DoubleChromosome.of(1, 15),
         // DOG threshold
-        IntegerChromosome.of(1, 255),
+        DoubleChromosome.of(1, 255),
         // Gradient threshold
-        IntegerChromosome.of(1, 255),
+        DoubleChromosome.of(1, 255),
         // Num sigma values
-        IntegerChromosome.of(2, 15));
+        DoubleChromosome.of(2, 15));
   }
 
   /**

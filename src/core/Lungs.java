@@ -15,6 +15,7 @@ import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
 import static org.opencv.imgproc.Imgproc.THRESH_OTSU;
+import static util.ConfigHelper.getDouble;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
 import static util.MatUtils.put;
@@ -517,7 +518,7 @@ public class Lungs {
 
     // Create ROI extractor
     ROIExtractor extractor =
-        new ROIExtractor(getInt(Segmentation.SURE_FG), getInt(Segmentation.SURE_BG));
+        new ROIExtractor(getInt(Segmentation.SURE_FG), getDouble(Segmentation.SURE_BG_FRAC));
 
     // Create blob detector
     int[] neighbourhood =
