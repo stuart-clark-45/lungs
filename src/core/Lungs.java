@@ -176,7 +176,6 @@ public class Lungs {
     List<ROI> rois = extractor.extractROIs(filter.filter(original));
 
     // Get largest ROI
-    // TODO use largest(..)
     ROI largest = null;
     int maxSize = -1;
     for (ROI roi : rois) {
