@@ -203,15 +203,14 @@ public class Lungs {
     // Filter out ROIs that do not occur inside the cavities. The remaining ROIs should be solitary
     // nodules and false positives.
     rois =
-        rois.parallelStream().filter(roi -> validPoints.containsAll(roi.getRegion()))
+        rois.stream().filter(roi -> validPoints.containsAll(roi.getRegion()))
             .collect(Collectors.toList());
 
     // Extract the Juxtapleural ROIs
     rois.addAll(extractJuxtapleural(largestMat, cavities, original));
 
     // Compute the contours for the ROIs
-    rois.parallelStream()
-        .forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
+    rois.forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
 
     /*
      * Remove any ROIs that are too big or too small to be a nodule. By using the MAX_NODULE_RADIUS
@@ -219,7 +218,7 @@ public class Lungs {
      * likely to be visible over many slices where they will have a cross section with a reduced
      * radius. As such they should still be detectable by the system.
      */
-    return rois.parallelStream().filter(roi -> {
+    return rois.stream().filter(roi -> {
       try {
         new MinCircle().compute(roi, original);
         double radius = roi.getMinCircle().getRadius();
