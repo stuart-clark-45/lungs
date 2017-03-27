@@ -1,5 +1,13 @@
 package vision;
 
+import static config.Segmentation.Blob.DOG_THRESH;
+import static config.Segmentation.Blob.GRADIENT_THRESH;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_DEPTH;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_HEIGHT;
+import static config.Segmentation.Blob.NEIGHBOURHOOD_WIDTH;
+import static config.Segmentation.Blob.NUM_SIGMA;
+import static util.ConfigHelper.getInt;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -155,6 +163,18 @@ public class BlobDetector {
     // Create a KeyPoint for the point and return it
     return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex), val));
 
+  }
+
+  /**
+   * @return an instance of {@link BlobDetector} using the parameters taken from
+   *         {@code application.conf}.
+   */
+  public static BlobDetector getInstance() {
+    int[] neighbourhood =
+        new int[] {getInt(NEIGHBOURHOOD_WIDTH), getInt(NEIGHBOURHOOD_HEIGHT),
+            getInt(NEIGHBOURHOOD_DEPTH)};
+    return new BlobDetector(neighbourhood, getInt(DOG_THRESH), getInt(GRADIENT_THRESH),
+        getInt(NUM_SIGMA));
   }
 
 }

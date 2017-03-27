@@ -1,11 +1,5 @@
 package core;
 
-import static config.Segmentation.Blob.DOG_THRESH;
-import static config.Segmentation.Blob.GRADIENT_THRESH;
-import static config.Segmentation.Blob.NEIGHBOURHOOD_DEPTH;
-import static config.Segmentation.Blob.NEIGHBOURHOOD_HEIGHT;
-import static config.Segmentation.Blob.NEIGHBOURHOOD_WIDTH;
-import static config.Segmentation.Blob.NUM_SIGMA;
 import static config.Segmentation.Filter.KERNEL_SIZE;
 import static config.Segmentation.Filter.SIGMA_COLOUR;
 import static config.Segmentation.Filter.SIGMA_SPACE;
@@ -521,12 +515,7 @@ public class Lungs {
         new ROIExtractor(getInt(Segmentation.SURE_FG), getDouble(Segmentation.SURE_BG_FRAC));
 
     // Create blob detector
-    int[] neighbourhood =
-        new int[] {getInt(NEIGHBOURHOOD_WIDTH), getInt(NEIGHBOURHOOD_HEIGHT),
-            getInt(NEIGHBOURHOOD_DEPTH)};
-    BlobDetector blobDetector =
-        new BlobDetector(neighbourhood, getInt(DOG_THRESH), getInt(GRADIENT_THRESH),
-            getInt(NUM_SIGMA));
+    BlobDetector blobDetector = BlobDetector.getInstance();
 
     // Create lungs instance
     return new Lungs(filter, extractor, blobDetector);
