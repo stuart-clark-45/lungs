@@ -253,7 +253,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
    * @return the integer value for the chromosome at {@code index}.
    */
   private int getInt(Genotype<DoubleGene> gt, int index) {
-    return gt.getChromosome(index).getGene().intValue();
+    return (int) Math.round(gt.getChromosome(index).getGene().doubleValue());
   }
 
   @Override
