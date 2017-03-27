@@ -21,7 +21,7 @@ import ml.feature.Convexity;
 import ml.feature.Feature;
 import ml.feature.FitEllipse;
 import ml.feature.HuCircularity;
-import ml.feature.LQP;
+import ml.feature.LTP;
 import ml.feature.MeanIntensity;
 import ml.feature.MinCircle;
 import ml.feature.Perimeter;
@@ -137,7 +137,7 @@ public class FeatureEngine {
     features.add(new Circularity());
     features.add(new Convexity());
     features.add(new HuCircularity());
-    features.add(new LQP());
+    features.add(new LTP());
     return features;
   }
 

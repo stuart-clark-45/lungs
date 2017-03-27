@@ -1,11 +1,10 @@
 package ml.feature;
 
-import static ml.feature.LQP.EQ;
-import static ml.feature.LQP.GT;
-import static ml.feature.LQP.LT;
-import static ml.feature.LQP.BINS;
-import static ml.feature.LQP.NUM_POS_VAL;
-import static ml.feature.LQP.VOID;
+import static ml.feature.LTP.BINS;
+import static ml.feature.LTP.GTE;
+import static ml.feature.LTP.LT;
+import static ml.feature.LTP.NUM_POS_VAL;
+import static ml.feature.LTP.VOID;
 import static org.apache.commons.lang.ArrayUtils.toObject;
 import static org.junit.Assert.assertArrayEquals;
 import static util.MatUtils.put;
@@ -27,7 +26,7 @@ import util.Testing;
  * @author Stuart Clark
  */
 @RunWith(Testing.class)
-public class LQPTest {
+public class LTPTest {
 
   @Test
   public void test() throws Exception {
@@ -63,22 +62,22 @@ public class LQPTest {
     ROI roi = new ROI();
     roi.setRegion(points);
 
-    new LQP().compute(roi, mat);
+    new LTP().compute(roi, mat);
 
     // Order is: Up Left, Up, Up Right, Right, Down Right, Down, Down Left, Left
     List<int[]> lqps = new ArrayList<>();
     lqps.add(new int[] {VOID, VOID, VOID, VOID, VOID, LT, VOID, VOID});
-    lqps.add(new int[] {VOID, GT, VOID, VOID, GT, EQ, GT, VOID});
-    lqps.add(new int[] {VOID, VOID, LT, LT, GT, VOID, VOID, VOID});
-    lqps.add(new int[] {VOID, EQ, VOID, GT, VOID, GT, VOID, GT});
-    lqps.add(new int[] {LT, VOID, VOID, VOID, VOID, VOID, GT, LT});
+    lqps.add(new int[] {VOID, GTE, VOID, VOID, GTE, GTE, GTE, VOID});
+    lqps.add(new int[] {VOID, VOID, LT, LT, GTE, VOID, VOID, VOID});
+    lqps.add(new int[] {VOID, GTE, VOID, GTE, VOID, GTE, VOID, GTE});
+    lqps.add(new int[] {LT, VOID, VOID, VOID, VOID, VOID, GTE, LT});
     lqps.add(new int[] {LT, LT, LT, VOID, VOID, VOID, VOID, VOID});
 
     List<Integer> values = new ArrayList<>(lqps.size());
     for (int[] lqp : lqps) {
       int value = 0;
       for (int i = 0; i < lqp.length; i++) {
-        value += Math.pow(4, i) * lqp[i];
+        value += Math.pow(LTP.BASE, i) * lqp[i];
       }
       values.add(value);
     }
@@ -88,7 +87,7 @@ public class LQPTest {
     histogram.computeBins();
     histogram.toFrequencies();
 
-    assertArrayEquals(toObject(histogram.getBins()), toObject(roi.getLqp().getBins()));
+    assertArrayEquals(toObject(histogram.getBins()), toObject(roi.getLtp().getBins()));
   }
 
 }

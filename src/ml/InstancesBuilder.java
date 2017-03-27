@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ml.feature.AllHists;
-import ml.feature.LQP;
+import ml.feature.LTP;
 import model.ROI;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -118,10 +118,10 @@ public class InstancesBuilder {
       this.functions.add(roi -> roi.getFineHist().next());
     }
 
-    // Add LQB
-    for (int i = 0; i < LQP.BINS; i++) {
-      this.attributes.add(new Attribute("LQP " + i));
-      this.functions.add(roi -> roi.getLqp().next());
+    // Add LTB
+    for (int i = 0; i < LTP.BINS; i++) {
+      this.attributes.add(new Attribute("LTP " + i));
+      this.functions.add(roi -> roi.getLtp().next());
     }
 
     // Add class
