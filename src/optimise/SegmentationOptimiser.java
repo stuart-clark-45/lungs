@@ -210,7 +210,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
         + getDouble(gt, SURE_FG)
         + "\n"
         + "# The threshold used to obtain the sure background\n"
-        + "segmentation.surebg = "
+        + "segmentation.surebgFraction = "
         + getDouble(gt, SURE_BG_FRAC)
         + "\n"
         + "# The width of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
