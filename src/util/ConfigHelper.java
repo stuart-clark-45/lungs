@@ -60,14 +60,14 @@ public class ConfigHelper {
   }
 
   /**
-   * @param key a key with a int value.
+   * @param key a key with a numerical value.
    * @return the value for the key.
    * @throws IllegalStateException if key not present
    */
   public static int getInt(String key) {
     // Check the key
     assertKeySet(key);
-    return Integer.parseInt((String) getProps().get(key));
+    return (int) Math.round(Double.parseDouble((String) getProps().get(key)));
   }
 
   /**
