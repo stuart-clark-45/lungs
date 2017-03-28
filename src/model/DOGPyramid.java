@@ -37,7 +37,7 @@ public class DOGPyramid {
 
   private final int numOctave;
 
-  private final List<List<Mat>> octaves;
+  private final List<List<SigmaMat>> octaves;
 
   public DOGPyramid(Mat mat) {
     /*
@@ -52,24 +52,25 @@ public class DOGPyramid {
      * Providing assumptions above are true base has a blur of at least σ = 1.6 as specified in
      * (Lowe 2004).
      */
-    Mat base = smooth(doubleSize, 1, BASE_SIGMA);
+    SigmaMat base = smooth(doubleSize, 1.0, BASE_SIGMA);
 
     // Calculate the number of octaves in the pyramid top level should be ~2x2 pixels
-    numOctave = (int) (log(min(base.rows(), base.cols())) / log(2) - 2);
+    Mat baseMat = base.getMat();
+    numOctave = (int) (log(min(baseMat.rows(), baseMat.cols())) / log(2) - 2);
 
     octaves = new ArrayList<>(numOctave);
     computeGaussians(base);
     gaussianToDog();
   }
 
-  private void computeGaussians(Mat base) {
+  private void computeGaussians(SigmaMat base) {
     double k = pow(2, 1 / S);
     double sigma = BASE_SIGMA;
 
     for (int i = 0; i < numOctave; i++) {
 
       // Create a list for the octave
-      List<Mat> octave = new ArrayList<>(GAUSSIAN_OCTAVE_SIZE);
+      List<SigmaMat> octave = new ArrayList<>(GAUSSIAN_OCTAVE_SIZE);
 
       // Add the first image to the octave
       if (i == 0) {
@@ -81,7 +82,7 @@ public class DOGPyramid {
       // Add the other images to the octave
       for (int j = 0; j < GAUSSIAN_OCTAVE_SIZE - 1; j++) {
         double nextSigma = sigma + k;
-        octave.add(smooth(octave.get(j), BASE_SIGMA, nextSigma));
+        octave.add(smooth(octave.get(j), nextSigma));
         sigma = nextSigma;
       }
 
@@ -96,39 +97,44 @@ public class DOGPyramid {
    */
   private void gaussianToDog() {
     for (int i = 0; i < octaves.size(); i++) {
-      List<Mat> gaussian = octaves.get(i);
-      List<Mat> dogs = new ArrayList<>(DOG_OCTAVE_SIZE);
-      Mat first = gaussian.get(0);
+      List<SigmaMat> gaussian = octaves.get(i);
+      List<SigmaMat> dogs = new ArrayList<>(DOG_OCTAVE_SIZE);
+      SigmaMat first = gaussian.get(0);
 
       for (int j = 0; j < GAUSSIAN_OCTAVE_SIZE - 1; j++) {
-        Mat diff = MatUtils.similarMat(first, false);
-        // Due to bug in library following line actually means gaussian.get(j + 1)
-        // - gaussian.get(j).
-        Core.absdiff(gaussian.get(j), gaussian.get(j + 1), diff);
-        dogs.add(diff);
+        Mat diff = MatUtils.similarMat(first.getMat(), false);
+        SigmaMat a = gaussian.get(j);
+        SigmaMat b = gaussian.get(j + 1);
+        Core.absdiff(a.getMat(), b.getMat(), diff);
+        dogs.add(new SigmaMat(diff, a.getSigma()));
       }
 
       octaves.set(i, dogs);
     }
   }
 
-  /**
-   * @param mat the source {@link Mat} for the gaussian blur.
-   * @param current the sigma value for {@code mat}.
-   * @param desired the desired sigma value for the return {@code Mat}.
-   * @return a new {@link Mat} with a sigma value of {@code desired}.
-   */
-  private Mat smooth(Mat mat, double current, double desired) {
-    double sigma = sqrt(pow(desired, 2) - pow(current, 2));
-    Mat smoothed = MatUtils.similarMat(mat, false);
-    Imgproc.GaussianBlur(mat, smoothed, new Size(SMOOTHING_SIZE, SMOOTHING_SIZE), sigma);
-    return smoothed;
+  private SigmaMat smooth(SigmaMat source, double desired) {
+    return smooth(source.getMat(), source.getSigma(), desired);
   }
 
-  private Mat subSample(Mat mat) {
-    Mat subSampled = new Mat(mat.rows() / 2, mat.cols() / 2, mat.type());
-    Imgproc.resize(mat, subSampled, subSampled.size(), 0, 0, INTER_NEAREST);
-    return subSampled;
+  /**
+   * @param source the source {@link SigmaMat} for the gaussian blur.
+   * @param current the sigma value for {@code mat}.
+   * @param desired the desired sigma value for the return {@code Mat}.
+   * @return a new {@link SigmaMat} with a sigma value of {@code desired}.
+   */
+  private SigmaMat smooth(Mat source, double current, double desired) {
+    double sigma = sqrt(pow(desired, 2) - pow(current, 2));
+    Mat smoothed = MatUtils.similarMat(source, false);
+    Imgproc.GaussianBlur(source, smoothed, new Size(SMOOTHING_SIZE, SMOOTHING_SIZE), sigma);
+    return new SigmaMat(smoothed, sigma);
+  }
+
+  private SigmaMat subSample(SigmaMat sigmaMat) {
+    Mat mat = sigmaMat.getMat();
+    Mat sampled = new Mat(mat.rows() / 2, mat.cols() / 2, mat.type());
+    Imgproc.resize(mat, sampled, sampled.size(), 0, 0, INTER_NEAREST);
+    return new SigmaMat(sampled, sigmaMat.getSigma());
   }
 
   public void display() {
@@ -139,10 +145,12 @@ public class DOGPyramid {
     int octaveSize = octaves.get(0).size();
 
     for (int i = 0; i < octaves.size(); i++) {
-      List<Mat> octave = octaves.get(i);
+      List<SigmaMat> octave = octaves.get(i);
       for (int j = 0; j < octaveSize; j++) {
-        mats.add(octave.get(j));
-        titles.add("Octave " + (i + 1) + "/" + numOctaves + " - Mat " + (j + 1) + "/" + octaveSize);
+        SigmaMat sigmaMat = octave.get(j);
+        mats.add(sigmaMat.getMat());
+        titles.add("Octave " + (i + 1) + "/" + numOctaves + " - Mat " + (j + 1) + "/" + octaveSize
+            + " simga=" + sigmaMat.getSigma());
       }
     }
 
