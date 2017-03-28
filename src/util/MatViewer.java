@@ -55,7 +55,7 @@ public class MatViewer {
   }
 
   public void setMatTitles(List<String> matTitles) {
-    this.matTitles = matTitles;
+    this.matTitles = new CircularList<>(matTitles);
   }
 
   /**
