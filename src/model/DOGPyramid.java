@@ -159,4 +159,8 @@ public class DOGPyramid {
     viewer.display();
   }
 
+  public List<List<SigmaMat>> getOctaves() {
+    return octaves;
+  }
+
 }
