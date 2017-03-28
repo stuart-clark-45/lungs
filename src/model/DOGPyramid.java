@@ -76,7 +76,7 @@ public class DOGPyramid {
       if (i == 0) {
         octave.add(base);
       } else {
-        octave.add(subSample(octaves.get(i - 1).get(GAUSSIAN_OCTAVE_SIZE - 1)));
+        octave.add(subSample(octaves.get(i - 1).get(GAUSSIAN_OCTAVE_SIZE - 3)));
       }
 
       // Add the other images to the octave
