@@ -2,7 +2,6 @@ package vision;
 
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opencv.core.Mat;
@@ -23,13 +22,12 @@ import util.Testing;
 public class BlobDetectorTest {
 
   @Test
-  @Ignore
+  // @Ignore
   public void test() throws Exception {
-    BlobDetector detector = BlobDetector.getInstance();
+    BlobDetector detector = new BlobDetector(new int[] {100, 100, 6}, 50, 40, 20);
 
     Mat mat = Imgcodecs.imread(getClass().getResource("/blobs.bmp").getPath());
     Mat annotated = MatUtils.grey2BGR(mat);
-
 
     List<KeyPoint> keyPoints = detector.detect(mat, null);
 

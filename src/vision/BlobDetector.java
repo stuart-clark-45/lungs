@@ -31,7 +31,10 @@ import util.MatUtils;
  */
 public class BlobDetector {
 
-  private final List<Integer> sigmaValues;
+  private static final double SIGMA_RATIO = 1.6;
+
+  // TODO java doc
+  private final List<Double> sigmaValues;
   private final int numSigmaValues;
   private final int xPadding;
   private final int yPadding;
@@ -53,9 +56,12 @@ public class BlobDetector {
     this.yPadding = neighbourhood[1] / 2;
     this.sigmaDiff = neighbourhood[2] / 2;
     this.sigmaValues = new ArrayList<>();
-    sigmaValues.add(1);
-    for (int i = 3; i < 3 + 6 * (numSigma - 1); i += 6) {
+    // sigmaValues.add(1);
+    // for (int i = 3; i < 3 + 6 * (numSigma - 1); i ++) {
+    for (double i = 1; i <= numSigma; i++) {
+//      double sigma = Math.pow(2, i);
       sigmaValues.add(i);
+      // sigmaValues.add(1.6 * sigma);
     }
     this.numSigmaValues = sigmaValues.size();
     this.dogThresh = dogThresh;
@@ -71,17 +77,23 @@ public class BlobDetector {
   public List<KeyPoint> detect(Mat mat, @Nullable Set<Point> validPoints) {
     // Apply gaussian blurs with different sigma values
     List<Mat> blurred = new ArrayList<>(numSigmaValues);
-    for (Integer sigma : sigmaValues) {
+    for (double sigma : sigmaValues) {
       Mat temp = MatUtils.similarMat(mat, false);
+      // Sigma used to calculate kernel size
       Imgproc.GaussianBlur(mat, temp, new Size(0, 0), sigma, sigma);
+      blurred.add(temp);
+
+      temp = MatUtils.similarMat(mat, false);
+      // Sigma used to calculate kernel size
+      Imgproc.GaussianBlur(mat, temp, new Size(0, 0), SIGMA_RATIO * sigma, SIGMA_RATIO * sigma);
       blurred.add(temp);
     }
 
     // Difference of gaussians
     List<Mat> dogs = new ArrayList<>(numSigmaValues - 1);
-    for (int j = 0; j < blurred.size() - 1; j++) {
+    for (int i = 0; i < blurred.size() - 1; i += 2) {
       Mat diff = MatUtils.similarMat(mat, false);
-      Core.subtract(blurred.get(j), blurred.get(j + 1), diff);
+      Core.subtract(blurred.get(i), blurred.get(i + 1), diff);
       Mat padded = new Mat();
       Core.copyMakeBorder(diff, padded, yPadding, yPadding, xPadding, xPadding,
           Core.BORDER_REPLICATE);
@@ -129,9 +141,10 @@ public class BlobDetector {
 
     Mat thisDog = dogs.get(dogIndex);
     double val = thisDog.get(row + yPadding, col + xPadding)[0];
+    double gradientVal = gradientMag.get(row, col)[0];
 
     // Check if point could potentially be valid key points
-    if (val < dogThresh || gradientMag.get(row, col)[0] < gradientThresh) {
+    if (val < dogThresh || gradientVal > gradientThresh) {
       return Optional.empty();
     }
 
@@ -161,7 +174,7 @@ public class BlobDetector {
     }
 
     // Create a KeyPoint for the point and return it
-    return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex) * 2, val));
+    return Optional.of(new KeyPoint(new Point(col, row), Math.round(sigmaValues.get(dogIndex) * SIGMA_RATIO), val));
 
   }
 
