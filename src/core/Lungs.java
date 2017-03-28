@@ -271,7 +271,7 @@ public class Lungs {
     List<KeyPoint> keyPoints = blobDetector.detect(original, validPoints);
     Mat blobMat = MatUtils.similarMat(original, true);
     for (KeyPoint keyPoint : keyPoints) {
-      Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+      Imgproc.circle(blobMat, keyPoint.getPoint(), (int) keyPoint.getRadius(), new Scalar(
           FOREGROUND), -1);
     }
 
@@ -494,7 +494,7 @@ public class Lungs {
       List<KeyPoint> keyPoints = blobDetector.detect(mat, null);
       LOGGER.info(keyPoints.size() + " key points");
       for (KeyPoint keyPoint : keyPoints) {
-        Imgproc.circle(anno, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+        Imgproc.circle(anno, keyPoint.getPoint(), (int) keyPoint.getRadius(), new Scalar(
             ColourBGR.RED), 1);
       }
 

@@ -161,7 +161,7 @@ public class BlobDetector {
     }
 
     // Create a KeyPoint for the point and return it
-    return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex), val));
+    return Optional.of(new KeyPoint(new Point(col, row), sigmaValues.get(dogIndex) * 2, val));
 
   }
 

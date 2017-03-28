@@ -9,13 +9,13 @@ public class KeyPoint {
 
   private final Point point;
 
-  private final double sigma;
+  private final double radius;
 
   private final double intensity;
 
-  public KeyPoint(Point point, double sigma, double intensity) {
+  public KeyPoint(Point point, double radius, double intensity) {
     this.point = point;
-    this.sigma = sigma;
+    this.radius = radius;
     this.intensity = intensity;
   }
 
@@ -23,8 +23,8 @@ public class KeyPoint {
     return point;
   }
 
-  public double getSigma() {
-    return sigma;
+  public double getRadius() {
+    return radius;
   }
 
   public double getIntensity() {

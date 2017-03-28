@@ -34,7 +34,7 @@ public class BlobDetectorTest {
     List<KeyPoint> keyPoints = detector.detect(mat, null);
 
     for (KeyPoint keyPoint : keyPoints) {
-      Imgproc.circle(annotated, keyPoint.getPoint(), (int) keyPoint.getSigma() * 2, new Scalar(
+      Imgproc.circle(annotated, keyPoint.getPoint(), (int) keyPoint.getRadius(), new Scalar(
           ColourBGR.RED), 1);
     }
     new MatViewer(mat, annotated).display();
