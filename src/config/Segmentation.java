@@ -24,12 +24,8 @@ public class Segmentation {
   public static class Blob {
     private Blob() {}
 
-    public static final String NEIGHBOURHOOD_WIDTH = "segmentation.blob.neighbourhoodWidth";
-    public static final String NEIGHBOURHOOD_HEIGHT = "segmentation.blob.neighbourhoodHeight";
-    public static final String NEIGHBOURHOOD_DEPTH = "segmentation.blob.neighbourhoodDepth";
     public static final String DOG_THRESH = "segmentation.blob.dogThresh";
     public static final String GRADIENT_THRESH = "segmentation.blob.gradientThresh";
-    public static final String NUM_SIGMA = "segmentation.blob.numSigma";
   }
 
   public static final String SURE_FG = "segmentation.surefg";

@@ -46,17 +46,14 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
   /*
    * Indexes in genotype for parameters to be optimised
    */
-  private static final int SIGMA_COLOUR = 0;
-  private static final int SIGMA_SPACE = 1;
-  private static final int KERNEL_SIZE = 2;
-  private static final int SURE_FG = 3;
-  private static final int SURE_BG_FRAC = 4;
-  private static final int HOOD_WIDTH = 5;
-  private static final int HOOD_HEIGHT = 6;
-  private static final int HOOD_DEPTH = 7;
-  private static final int DOG_THRESH = 8;
-  private static final int GRADIENT_THRESH = 9;
-  private static final int NUM_SIGMA = 10;
+  private static int I = 0;
+  private static final int SIGMA_COLOUR = I++;
+  private static final int SIGMA_SPACE = I++;
+  private static final int KERNEL_SIZE = I++;
+  private static final int SURE_FG = I++;
+  private static final int SURE_BG_FRAC = I++;
+  private static final int DOG_THRESH = I++;
+  private static final int GRADIENT_THRESH = I++;
 
   /**
    * The {@link Mat}s to segment.
@@ -135,11 +132,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
     ROIExtractor extractor = new ROIExtractor(getInt(gt, SURE_FG), getDouble(gt, SURE_BG_FRAC));
 
     // Create the blob detector
-    int[] neighbourhood =
-        new int[] {getInt(gt, HOOD_WIDTH), getInt(gt, HOOD_HEIGHT), getInt(gt, HOOD_DEPTH)};
-    BlobDetector detector =
-        new BlobDetector(neighbourhood, getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH),
-            getInt(gt, NUM_SIGMA));
+    BlobDetector detector = new BlobDetector(getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH));
 
     // Segment the Mats
     Lungs lungs = new Lungs(filter, extractor, detector);
@@ -213,29 +206,13 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
         + "segmentation.surebgFraction = "
         + getDouble(gt, SURE_BG_FRAC)
         + "\n"
-        + "# The width of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
-        + "segmentation.blob.neighbourhoodWidth = "
-        + getDouble(gt, HOOD_WIDTH)
-        + "\n"
-        + "# The height of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
-        + "segmentation.blob.neighbourhoodHeight = "
-        + getDouble(gt, HOOD_HEIGHT)
-        + "\n"
-        + "# The depth of the neighbourhood used when checking if a point in sigma space is a local extrema.\n"
-        + "segmentation.blob.neighbourhoodDepth = "
-        + getDouble(gt, HOOD_DEPTH)
-        + "\n"
         + "# The threshold used when deciding if a point in sigma space could be a key point (values higher\n"
         + "# than this can be key points)\n"
         + "segmentation.blob.dogThresh = "
         + getDouble(gt, DOG_THRESH)
         + "\n"
         + "# The threshold used when deciding if a key point is an edge (and hence should be filtered out)\n"
-        + "segmentation.blob.gradientThresh = "
-        + getDouble(gt, GRADIENT_THRESH)
-        + "\n"
-        + "# The number of differnt sigma values to use when computing DOG\n"
-        + "segmentation.blob.numSigma = " + getDouble(gt, NUM_SIGMA);
+        + "segmentation.blob.gradientThresh = " + getDouble(gt, GRADIENT_THRESH) + "\n";
   }
 
   /**
@@ -279,18 +256,10 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
         DoubleChromosome.of(0, 255),
         // Sure Background Fraction
         DoubleChromosome.of(0, 0.9),
-        // Blob neighbourhood width
-        DoubleChromosome.of(1, 15),
-        // Blob neighbourhood height
-        DoubleChromosome.of(1, 15),
-        // Blob neighbourhood depth
-        DoubleChromosome.of(1, 15),
         // DOG threshold
         DoubleChromosome.of(1, 255),
         // Gradient threshold
-        DoubleChromosome.of(1, 255),
-        // Num sigma values
-        DoubleChromosome.of(2, 15));
+        DoubleChromosome.of(1, 255));
   }
 
   /**
