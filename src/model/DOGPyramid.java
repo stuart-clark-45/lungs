@@ -19,26 +19,52 @@ import util.MatUtils;
 import util.MatViewer;
 
 /**
- * TODO
+ * A Difference of Gaussian Pyramid constructed in the manner described by David G. Lowe's 2004
+ * paper "Distinctive Image Features from Scale-Invariant Keypoints".
  *
  * @author Stuart Clark
  */
 public class DOGPyramid {
 
+  /**
+   * The size of the kernel used for smoothing.
+   */
   private static final double SMOOTHING_SIZE = 7;
 
   /**
-   * The number of DOGs TODO finishs this
+   * The number of DOGs per octave that can be examined when using a neighbourhood with a depth of
+   * 3.
    */
   private static final int S = 3;
+
+  /**
+   * The number of gaussian images in each gaussian octave.
+   */
   private static final int GAUSSIAN_OCTAVE_SIZE = S + 3;
+
+  /**
+   * The number of DOGs per octave.
+   */
   private static final int DOG_OCTAVE_SIZE = S + 2;
+
+
+  /**
+   * The minimum sigma value for the gaussian base.
+   */
   private static final double BASE_SIGMA = 1.6;
 
+  /**
+   * The number of octaves in the pyramid.
+   */
   private final int numOctave;
 
   private final List<List<SigmaMat>> octaves;
 
+
+
+  /**
+   * @param mat a non-blurred {@link Mat}.
+   */
   public DOGPyramid(Mat mat) {
     /*
      * We assume that the original image has a blur of at least σ = 0.5 (the minimum needed to
@@ -63,36 +89,51 @@ public class DOGPyramid {
     gaussianToDog();
   }
 
+  /**
+   * Computes the gaussian pyramid using {@code base}.
+   *
+   * @param base
+   */
   private void computeGaussians(SigmaMat base) {
-    double k = pow(2, 1 / S);
-    double sigma = BASE_SIGMA;
+    double k = pow(2, 1 / (double) S);
+    double scalar = 0.5;
 
     for (int i = 0; i < numOctave; i++) {
-
       // Create a list for the octave
       List<SigmaMat> octave = new ArrayList<>(GAUSSIAN_OCTAVE_SIZE);
 
       // Add the first image to the octave
+      SigmaMat first;
+      double sigma;
       if (i == 0) {
-        octave.add(base);
+        first = base;
+        sigma = BASE_SIGMA;
       } else {
-        octave.add(subSample(octaves.get(i - 1).get(GAUSSIAN_OCTAVE_SIZE - 3)));
+        first = subSample(octaves.get(i - 1).get(GAUSSIAN_OCTAVE_SIZE - 3));
+        sigma = first.getSigma();
       }
+      first.setScalar(scalar);
+      octave.add(first);
 
       // Add the other images to the octave
       for (int j = 0; j < GAUSSIAN_OCTAVE_SIZE - 1; j++) {
-        double nextSigma = sigma + k;
-        octave.add(smooth(octave.get(j), nextSigma));
+        double nextSigma = sigma * k;
+        SigmaMat smoothed = smooth(octave.get(j), nextSigma);
+        smoothed.setScalar(scalar);
+        octave.add(smoothed);
         sigma = nextSigma;
       }
 
       // Add the octave to the octaves
       octaves.add(octave);
+
+      // Multiply scalar by 2
+      scalar *= 2;
     }
   }
 
   /**
-   * Replaces the gaussian octaves with difference of gaussian octaves. Replaced rather than stored
+   * Replaces the gaussian octaves with Difference of Gaussian octaves. Replaced rather than stored
    * separately to conserve memory.
    */
   private void gaussianToDog() {
@@ -105,8 +146,10 @@ public class DOGPyramid {
         Mat diff = MatUtils.similarMat(first.getMat(), false);
         SigmaMat a = gaussian.get(j);
         SigmaMat b = gaussian.get(j + 1);
-        Core.absdiff(a.getMat(), b.getMat(), diff);
-        dogs.add(new SigmaMat(diff, a.getSigma()));
+        Core.subtract(a.getMat(), b.getMat(), diff);
+        SigmaMat dog = new SigmaMat(diff, a.getSigma());
+        dog.setScalar(a.getScalar());
+        dogs.add(dog);
       }
 
       octaves.set(i, dogs);
@@ -127,9 +170,14 @@ public class DOGPyramid {
     double sigma = sqrt(pow(desired, 2) - pow(current, 2));
     Mat smoothed = MatUtils.similarMat(source, false);
     Imgproc.GaussianBlur(source, smoothed, new Size(SMOOTHING_SIZE, SMOOTHING_SIZE), sigma);
-    return new SigmaMat(smoothed, sigma);
+    return new SigmaMat(smoothed, desired);
   }
 
+  /**
+   * @param sigmaMat
+   * @return a sub-sampled version of {@code sigmaMat} that is 1/4 the size of the original i.e. 1/2
+   *         width and 1/2 height.
+   */
   private SigmaMat subSample(SigmaMat sigmaMat) {
     Mat mat = sigmaMat.getMat();
     Mat sampled = new Mat(mat.rows() / 2, mat.cols() / 2, mat.type());
@@ -137,6 +185,9 @@ public class DOGPyramid {
     return new SigmaMat(sampled, sigmaMat.getSigma());
   }
 
+  /**
+   * Uses {@link MatViewer} to display all the {@link Mat}s in the pyramid. Used for debugging.
+   */
   public void display() {
     List<Mat> mats = new ArrayList<>();
     List<String> titles = new ArrayList<>();
