@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -11,7 +12,6 @@ import org.opencv.imgproc.Imgproc;
 
 import model.KeyPoint;
 import util.ColourBGR;
-import util.MatUtils;
 import util.MatViewer;
 import util.Testing;
 
@@ -22,20 +22,22 @@ import util.Testing;
 public class BlobDetectorTest {
 
   @Test
-  // @Ignore
   public void test() throws Exception {
-    BlobDetector detector = new BlobDetector(new int[] {100, 100, 6}, 50, 40, 20);
+    BlobDetector detector = new BlobDetector(40, 20);
 
     Mat mat = Imgcodecs.imread(getClass().getResource("/blobs.bmp").getPath());
-    Mat annotated = MatUtils.grey2BGR(mat);
+    Mat grey = new Mat(mat.rows(), mat.cols(), CvType.CV_8UC1);
+    Imgproc.cvtColor(mat, grey, Imgproc.COLOR_BGR2GRAY);
 
-    List<KeyPoint> keyPoints = detector.detect(mat, null);
+    List<KeyPoint> keyPoints = detector.detect(grey, null);
 
     for (KeyPoint keyPoint : keyPoints) {
-      Imgproc.circle(annotated, keyPoint.getPoint(), (int) keyPoint.getRadius(), new Scalar(
-          ColourBGR.RED), 1);
+      Imgproc.circle(mat, keyPoint.getPoint(), (int) keyPoint.getRadius(),
+          new Scalar(ColourBGR.RED), 1);
     }
-    new MatViewer(mat, annotated).display();
+
+    // Uncomment to view result
+//    new MatViewer(grey, mat).display();
   }
 
 }
