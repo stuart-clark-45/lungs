@@ -1,5 +1,7 @@
 package util;
 
+import static java.lang.Math.round;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.List;
@@ -104,7 +106,7 @@ public class MatUtils {
    * @return the value of the pixel in {@code mat} at {@code point}.
    */
   public static double[] get(Mat mat, Point point) {
-    return mat.get((int) point.y, (int) point.x);
+    return mat.get((int) round(point.y), (int) round(point.x));
   }
 
   /**
@@ -115,7 +117,7 @@ public class MatUtils {
    * @param val the value that the pixel in {@code mat} at {@code point} should have.
    */
   public static void put(Mat mat, Point point, double... val) {
-    mat.put((int) point.y, (int) point.x, val);
+    mat.put((int) round(point.y), (int) round(point.x), val);
   }
 
   /**
