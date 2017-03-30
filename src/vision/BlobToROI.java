@@ -22,30 +22,33 @@ import util.MatUtils;
 import util.PointUtils;
 
 /**
- * Used to threshold a blob obtained using {@link Lungs#extractJuxtapleural(Mat, List, Mat)}.
+ * Used to covert a blob obtained using {@link Lungs#extractJuxtapleural(Mat, List, Mat)} to an
+ * {@link ROI}.
  *
  * @author Stuart Clark
  */
-public class BlobThresholder {
+public class BlobToROI {
 
   /**
-   * The number of times that {@link this#thresholdBlob(ROI, Mat)} has been called successfully.
+   * The number of times that {@link this#blobToROI(ROI, Mat)} has been called successfully.
    */
   private double success;
 
   /**
-   * The number of times that {@link this#thresholdBlob(ROI, Mat)} has been called and failed.
+   * The number of times that {@link this#blobToROI(ROI, Mat)} has been called and failed.
    */
   private double failure;
 
   /**
+   * Used to covert a blob obtained using {@link Lungs#extractJuxtapleural(Mat, List, Mat)} to an
+   * {@link ROI}.
    *
-   * @param blob
-   * @param original
-   * @return
-   * @throws LungsException
+   * @param blob the blob to threshold.
+   * @param mat the {@link Mat} the blob belongs to.
+   * @return the ROI for the blob.
+   * @throws LungsException if the blog could not be converted to an {@link ROI}.
    */
-  public ROI thresholdBlob(ROI blob, Mat original) throws LungsException {
+  public ROI blobToROI(ROI blob, Mat mat) throws LungsException {
     List<Point> blobRegion = blob.getRegion();
 
     // Get min and max x and y co-ordinates
@@ -64,10 +67,10 @@ public class BlobThresholder {
     rounded.maxY += diff;
     rounded.minX -= diff;
     rounded.maxX += diff;
-    clip(rounded, original);
+    clip(rounded, mat);
 
     // Create a sub mat using the bounding box
-    Mat submat = original.submat(rounded.minY, rounded.maxY, rounded.minX, rounded.maxX);
+    Mat submat = mat.submat(rounded.minY, rounded.maxY, rounded.minX, rounded.maxX);
 
     // Threshold the submat
     Mat thresholded = MatUtils.similarMat(submat, false);

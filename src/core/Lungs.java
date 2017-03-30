@@ -51,7 +51,7 @@ import util.MongoHelper;
 import util.PointUtils;
 import vision.BilateralFilter;
 import vision.BlobDetector;
-import vision.BlobThresholder;
+import vision.BlobToROI;
 import vision.ConvexHull;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
@@ -94,14 +94,14 @@ public class Lungs {
   private final ROIExtractor extractor;
   private final BilateralFilter filter;
   private BlobDetector blobDetector;
-  private BlobThresholder blobThresholder;
+  private BlobToROI blobToROI;
 
   public Lungs(BilateralFilter filter, ROIExtractor extractor, BlobDetector blobDetector) {
     this.ds = MongoHelper.getDataStore();
     this.filter = filter;
     this.extractor = extractor;
     this.blobDetector = blobDetector;
-    this.blobThresholder = new BlobThresholder();
+    this.blobToROI = new BlobToROI();
   }
 
   /**
@@ -276,16 +276,16 @@ public class Lungs {
           FOREGROUND), -1);
     }
 
-    // Extract all of the blobs into rois
+    // Extract all of the blobs
     Mat labels = MatUtils.similarMat(blobMat, false);
     Imgproc.connectedComponents(blobMat, labels);
     List<ROI> blobs = ROIExtractor.labelsToROIs(labels);
 
-    // Threshold each of the blobs to create ROIs
+    // Convert each of the blobs into to a more precise roi
     List<ROI> rois = new ArrayList<>(blobs.size());
     for (ROI blob : blobs) {
       try {
-        rois.add(blobThresholder.thresholdBlob(blob, original));
+        rois.add(blobToROI.blobToROI(blob, original));
       } catch (LungsException e) {
         LOGGER.error("Failed to threshold blob", e);
       }
@@ -473,7 +473,7 @@ public class Lungs {
   }
 
   public void logStats() {
-    LOGGER.info("blobThresholder success rate was " + blobThresholder.successRate() * 100 + "%");
+    LOGGER.info("blobThresholder success rate was " + blobToROI.successRate() * 100 + "%");
   }
 
   public static Lungs getInstance() {
