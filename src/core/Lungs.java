@@ -8,7 +8,6 @@ import static model.GroundTruth.Type.NON_NODULE;
 import static model.GroundTruth.Type.SMALL_NODULE;
 import static org.opencv.imgproc.Imgproc.LINE_4;
 import static org.opencv.imgproc.Imgproc.MARKER_TILTED_CROSS;
-import static org.opencv.imgproc.Imgproc.THRESH_OTSU;
 import static util.ConfigHelper.getDouble;
 import static util.ConfigHelper.getInt;
 import static util.MatUtils.getStackMats;
@@ -41,7 +40,6 @@ import model.CTSlice;
 import model.CTStack;
 import model.GroundTruth;
 import model.KeyPoint;
-import model.MinMaxXY;
 import model.ROI;
 import util.ColourBGR;
 import util.ConfigHelper;
@@ -53,6 +51,7 @@ import util.MongoHelper;
 import util.PointUtils;
 import vision.BilateralFilter;
 import vision.BlobDetector;
+import vision.BlobThresholder;
 import vision.ConvexHull;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
@@ -95,12 +94,14 @@ public class Lungs {
   private final ROIExtractor extractor;
   private final BilateralFilter filter;
   private BlobDetector blobDetector;
+  private BlobThresholder blobThresholder;
 
   public Lungs(BilateralFilter filter, ROIExtractor extractor, BlobDetector blobDetector) {
     this.ds = MongoHelper.getDataStore();
     this.filter = filter;
     this.extractor = extractor;
     this.blobDetector = blobDetector;
+    this.blobThresholder = new BlobThresholder();
   }
 
   /**
@@ -262,7 +263,7 @@ public class Lungs {
     // Invert the mat to create the invertedHulls
     Mat invertedHulls = MatUtils.similarMat(hullsMat, false);
     Core.bitwise_not(hullsMat, invertedHulls);
-    // Subtract the invertedHulls to largestROI to create the mask
+    // Subtract the invertedHulls from the largestROI to create the mask
     Mat mask = MatUtils.similarMat(invertedHulls, false);
     Core.subtract(largestRoi, invertedHulls, mask);
     Set<Point> validPoints = maskPoints(mask);
@@ -275,7 +276,7 @@ public class Lungs {
           FOREGROUND), -1);
     }
 
-    // Extract all of the circles into rois
+    // Extract all of the blobs into rois
     Mat labels = MatUtils.similarMat(blobMat, false);
     Imgproc.connectedComponents(blobMat, labels);
     List<ROI> blobs = ROIExtractor.labelsToROIs(labels);
@@ -283,47 +284,15 @@ public class Lungs {
     // Threshold each of the blobs to create ROIs
     List<ROI> rois = new ArrayList<>(blobs.size());
     for (ROI blob : blobs) {
-      rois.addAll(thresholdBlob(blob, original));
+      try {
+        rois.add(blobThresholder.thresholdBlob(blob, original));
+      } catch (LungsException e) {
+        LOGGER.error("Failed to threshold blob", e);
+      }
     }
 
     // Set the juxtapleural field to true for each of the ROIs
     rois.forEach(roi -> roi.setJuxtapleural(true));
-
-    return rois;
-  }
-
-  private List<ROI> thresholdBlob(ROI blob, Mat original) {
-    List<Point> region = blob.getRegion();
-
-    // Get mins maxes and ranges
-    MinMaxXY<Double> mmXY = PointUtils.xyMaxMin(region);
-
-    // Create Mat containing just blob
-    Mat minMat = PointUtils.points2MinMat(region, mmXY, original);
-
-    // Threshold the blob
-    Mat thresholded = MatUtils.similarMat(minMat, false);
-    Imgproc.threshold(minMat, thresholded, -1, FOREGROUND, THRESH_OTSU);
-
-    // Extract the ROIs
-    Mat labels = MatUtils.similarMat(thresholded, false);
-    Imgproc.connectedComponents(thresholded, labels);
-    List<ROI> rois = ROIExtractor.labelsToROIs(labels);
-
-    // Add offsets back to ROI co-ordinates so that the are for the original mat not the min mat
-    for (ROI roi : rois) {
-      for (Point point : roi.getRegion()) {
-        point.x += mmXY.minX;
-        point.y += mmXY.minY;
-      }
-    }
-
-    // Log a warning if more than one ROI is found (this probably means that thresholding has gone
-    // wrong)
-    int numROIs = rois.size();
-    if (numROIs != 1) {
-      LOGGER.warn(numROIs + " ROIs found expected 1");
-    }
 
     return rois;
   }
