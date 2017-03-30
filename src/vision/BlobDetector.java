@@ -38,6 +38,8 @@ public class BlobDetector {
    */
   private final int gradientThresh;
 
+  private int blobsDetected;
+
   /**
    * @param dogThresh the threshold used when deciding if a point in sigma space could be a key
    *        point (values higher than this can be key points)
@@ -75,6 +77,8 @@ public class BlobDetector {
         }
       }
     }
+
+    blobsDetected += keyPoints.size();
 
     return keyPoints;
   }
@@ -128,6 +132,10 @@ public class BlobDetector {
 
     // Create a KeyPoint for the point and return it
     return Optional.of(new KeyPoint(scaledPoint, sigmaMat.getSigma(), dogVal));
+  }
+
+  public int getBlobsDetected() {
+    return blobsDetected;
   }
 
   /**
