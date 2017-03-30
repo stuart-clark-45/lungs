@@ -95,6 +95,7 @@ public class Lungs {
   private final BilateralFilter filter;
   private BlobDetector blobDetector;
   private BlobToROI blobToROI;
+  private boolean juxtapleural;
 
   public Lungs(BilateralFilter filter, ROIExtractor extractor, BlobDetector blobDetector) {
     this.ds = MongoHelper.getDataStore();
@@ -102,6 +103,11 @@ public class Lungs {
     this.extractor = extractor;
     this.blobDetector = blobDetector;
     this.blobToROI = new BlobToROI();
+    this.juxtapleural = true;
+  }
+
+  public void setJuxtapleural(boolean juxtapleural) {
+    this.juxtapleural = juxtapleural;
   }
 
   /**
@@ -208,7 +214,9 @@ public class Lungs {
             .collect(Collectors.toList());
 
     // Extract the Juxtapleural ROIs
-    rois.addAll(extractJuxtapleural(largestMat, cavities, original));
+    if (juxtapleural) {
+      rois.addAll(extractJuxtapleural(largestMat, cavities, original));
+    }
 
     // Compute the contours for the ROIs
     rois.forEach(roi -> roi.setContour(PointUtils.region2Contour(roi.getRegion())));
