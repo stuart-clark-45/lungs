@@ -112,6 +112,8 @@ public class ROIGenerator extends Importer<ROI> {
     monitor.setLogString("slices have had ROIs extracted");
     monitor.monitor();
 
+    lungs.logStats();
+
     LOGGER.info("Finished generating ROIs");
   }
 
