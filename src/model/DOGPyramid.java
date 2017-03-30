@@ -60,8 +60,6 @@ public class DOGPyramid {
 
   private final List<List<SigmaMat>> octaves;
 
-
-
   /**
    * @param mat a non-blurred {@link Mat}.
    */
