@@ -52,8 +52,6 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
   private static final int KERNEL_SIZE = I++;
   private static final int SURE_FG = I++;
   private static final int SURE_BG_FRAC = I++;
-  private static final int DOG_THRESH = I++;
-  private static final int GRADIENT_THRESH = I++;
 
   /**
    * The {@link Mat}s to segment.
@@ -131,11 +129,12 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
     // Create the ROI extractor
     ROIExtractor extractor = new ROIExtractor(getInt(gt, SURE_FG), getDouble(gt, SURE_BG_FRAC));
 
-    // Create the blob detector
-    BlobDetector detector = new BlobDetector(getInt(gt, DOG_THRESH), getInt(gt, GRADIENT_THRESH));
+    // Create the blob detector (it is not actually used as lungs.juxtapleural is set to false)
+    BlobDetector detector = new BlobDetector(1, 1);
 
     // Segment the Mats
     Lungs lungs = new Lungs(filter, extractor, detector);
+    lungs.setJuxtapleural(false);
 
     // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
     // in segmented
@@ -187,32 +186,13 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
   @Override
   protected String gtToString(Genotype<DoubleGene> gt) {
     return "\n# Size of the kernel used by the bilateral filter\n"
-        + "segmentation.filter.kernelsize = "
-        + getDouble(gt, KERNEL_SIZE)
-        + "\n"
-        + "# Sigma for colour used by the bilateral filter\n"
-        + "segmentation.filter.sigmacolor = "
-        + getDouble(gt, SIGMA_COLOUR)
-        + "\n"
-        + "# Sigma for space used by the bilateral filter\n"
-        + "segmentation.filter.sigmaspace = "
-        + getDouble(gt, SIGMA_SPACE)
-        + "\n"
-        + "# The threshold used to obtain the sure foreground\n"
-        + "segmentation.surefg = "
-        + getDouble(gt, SURE_FG)
-        + "\n"
-        + "# The threshold used to obtain the sure background\n"
-        + "segmentation.surebgFraction = "
-        + getDouble(gt, SURE_BG_FRAC)
-        + "\n"
-        + "# The threshold used when deciding if a point in sigma space could be a key point (values higher\n"
-        + "# than this can be key points)\n"
-        + "segmentation.blob.dogThresh = "
-        + getDouble(gt, DOG_THRESH)
-        + "\n"
-        + "# The threshold used when deciding if a key point is an edge (and hence should be filtered out)\n"
-        + "segmentation.blob.gradientThresh = " + getDouble(gt, GRADIENT_THRESH) + "\n";
+        + "segmentation.filter.kernelsize = " + getDouble(gt, KERNEL_SIZE) + "\n"
+        + "# Sigma for colour used by the bilateral filter\n" + "segmentation.filter.sigmacolor = "
+        + getDouble(gt, SIGMA_COLOUR) + "\n" + "# Sigma for space used by the bilateral filter\n"
+        + "segmentation.filter.sigmaspace = " + getDouble(gt, SIGMA_SPACE) + "\n"
+        + "# The threshold used to obtain the sure foreground\n" + "segmentation.surefg = "
+        + getDouble(gt, SURE_FG) + "\n" + "# The threshold used to obtain the sure background\n"
+        + "segmentation.surebgFraction = " + getDouble(gt, SURE_BG_FRAC) + "\n";
   }
 
   /**
@@ -255,11 +235,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
         // Sure Foreground
         DoubleChromosome.of(0, 255),
         // Sure Background Fraction
-        DoubleChromosome.of(0, 0.9),
-        // DOG threshold
-        DoubleChromosome.of(1, 255),
-        // Gradient threshold
-        DoubleChromosome.of(1, 255));
+        DoubleChromosome.of(0, 0.9));
   }
 
   /**
