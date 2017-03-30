@@ -472,6 +472,10 @@ public class Lungs {
     new MatViewer(mats, annotated).display();
   }
 
+  public void logStats() {
+    LOGGER.info("blobThresholder success rate was " + blobThresholder.successRate() * 100 + "%");
+  }
+
   public static Lungs getInstance() {
     // Create filter
     BilateralFilter filter =
@@ -510,6 +514,8 @@ public class Lungs {
     lungs.annotatedSegmented(stack);
     // lungs.roiContours(stack);
     // lungs.blobs(stack);
+
+    lungs.logStats();
   }
 
 }
