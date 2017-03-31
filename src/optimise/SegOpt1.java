@@ -39,9 +39,9 @@ import vision.ROIExtractor;
  *
  * @author Stuart Clark
  */
-public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
+public class SegOpt1 extends Optimiser<DoubleGene, Double> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SegmentationOptimiser.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SegOpt1.class);
 
   /*
    * Indexes in genotype for parameters to be optimised
@@ -72,7 +72,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
    * @param generations the maximum number of generations that should be used.
    * @param numStacks the number of stacks to use to obtain images for segmentation evaluation.
    */
-  public SegmentationOptimiser(int popSize, int generations, int numStacks) {
+  public SegOpt1(int popSize, int generations, int numStacks) {
     super(popSize, generations);
     this.mats = new ArrayList<>();
     this.groundTruths = new ArrayList<>();
@@ -144,6 +144,11 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
       allROIs.add(rois);
     }
 
+    return calcFitness(allROIs);
+  }
+
+
+  protected double calcFitness(List<List<ROI>> allROIs) {
     return noduleInclusion(allROIs);
   }
 
@@ -154,7 +159,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
    *         included in the segmented Mat. 1 meaning perfect inclusion 0 meaning no inclusion at
    *         all.
    */
-  private double noduleInclusion(List<List<ROI>> allROIs) {
+  protected double noduleInclusion(List<List<ROI>> allROIs) {
     double noduleInclusion = 0.0;
     for (int i = 0; i < allROIs.size(); i++) {
       // Get ground truths for segmented mat
@@ -239,7 +244,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
   }
 
   /**
-   * @param args optionally can provide an integer that is used as the reading number
+   * @param args
    * @throws IOException
    */
   public static void main(String[] args) throws IOException {
@@ -249,7 +254,7 @@ public class SegmentationOptimiser extends Optimiser<DoubleGene, Double> {
     int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
     int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
     int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
-    SegmentationOptimiser optimiser = new SegmentationOptimiser(popSize, generations, numStacks);
+    SegOpt1 optimiser = new SegOpt1(popSize, generations, numStacks);
 
     // Load the persisted population if configured to
     if (ConfigHelper.getBoolean(SegOpt.LOAD_POPULATION)) {
