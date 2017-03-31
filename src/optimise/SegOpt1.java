@@ -2,35 +2,20 @@ package optimise;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jenetics.DoubleChromosome;
 import org.jenetics.DoubleGene;
 import org.jenetics.Genotype;
 import org.jenetics.util.Factory;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.FindOptions;
-import org.mongodb.morphia.query.Query;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import config.SegOpt;
 import core.Lungs;
-import model.CTSlice;
-import model.CTStack;
-import model.GroundTruth;
-import model.ROI;
 import util.ConfigHelper;
-import util.DataFilter;
-import util.MatUtils;
-import util.MongoHelper;
 import vision.BilateralFilter;
 import vision.BlobDetector;
-import vision.Matcher;
 import vision.ROIExtractor;
 
 /**
@@ -53,20 +38,7 @@ public class SegOpt1 extends Optimiser<DoubleGene, Double> {
   private static final int SURE_FG = I++;
   private static final int SURE_BG_FRAC = I++;
 
-  /**
-   * The {@link Mat}s to segment.
-   */
-  private List<Mat> mats;
-
-  /**
-   * The points list of {@link Point}s that must be included in the segmentation.
-   */
-  private List<List<GroundTruth>> groundTruths;
-
-  /**
-   * The total number of {@link GroundTruth}s used in the fitness function.
-   */
-  private int totalGTs;
+  protected final LungsOptHelper helper;
 
   /**
    * @param generations the maximum number of generations that should be used.
@@ -74,42 +46,8 @@ public class SegOpt1 extends Optimiser<DoubleGene, Double> {
    */
   public SegOpt1(int popSize, int generations, int numStacks) {
     super(popSize, generations);
-    this.mats = new ArrayList<>();
-    this.groundTruths = new ArrayList<>();
-    DataFilter filter = DataFilter.get();
-
-    // Load some stacks
-    Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> query = filter.all(ds.createQuery(CTStack.class));
-    List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
-
-    // For each slice in all the stacks
-    for (CTStack stack : stacks) {
-      for (CTSlice slice : stack.getSlices()) {
-
-        // Find all the first readings for the slice that contain a nodule. Only one reading
-        // is used as we need to know exactingly how many nodules there are in the set of Mats we
-        // will use
-        List<GroundTruth> gtList =
-            filter.singleReading(
-                ds.createQuery(GroundTruth.class).field("type").equal(GroundTruth.Type.BIG_NODULE)
-                    .field("imageSopUID").equal(slice.getImageSopUID())).asList();
-
-        // If there are nodules in the slice
-        if (!gtList.isEmpty()) {
-
-          // Add Mat for slice into list that will be used in eval(..)
-          mats.add(MatUtils.getSliceMat(slice));
-
-          // Add gtLists to list that will be used in eval(..)
-          groundTruths.add(gtList);
-          totalGTs += gtList.size();
-        }
-
-      }
-    }
-
-    LOGGER.info(mats.size() + " Mats will be used in eval(..)");
+    helper = new LungsOptHelper(numStacks);
+    LOGGER.info(helper.getMats().size() + " Mats will be used in eval(..)");
   }
 
 
@@ -136,56 +74,11 @@ public class SegOpt1 extends Optimiser<DoubleGene, Double> {
     Lungs lungs = new Lungs(filter, extractor, detector);
     lungs.setJuxtapleural(false);
 
-    // Extract the ROIs for the mats. Each sublist contains all the ROIs for the corresponding Mat
-    // in segmented
-    List<List<ROI>> allROIs = new ArrayList<>();
-    for (Mat mat : mats) {
-      List<ROI> rois = lungs.extractRois(mat);
-      allROIs.add(rois);
-    }
-
-    return calcFitness(allROIs);
+    return calcFitness(lungs);
   }
 
-
-  protected double calcFitness(List<List<ROI>> allROIs) {
-    return noduleInclusion(allROIs);
-  }
-
-  /**
-   * @param allROIs a list of lists of {@link ROI}s each sublist should be all of the {@link ROI}s
-   *        for the corresponding Mat in {@code this.mats}.
-   * @return a {@code double} between 0 and 1 inclusive that indicated how well nodules were
-   *         included in the segmented Mat. 1 meaning perfect inclusion 0 meaning no inclusion at
-   *         all.
-   */
-  protected double noduleInclusion(List<List<ROI>> allROIs) {
-    double noduleInclusion = 0.0;
-    for (int i = 0; i < allROIs.size(); i++) {
-      // Get ground truths for segmented mat
-      List<GroundTruth> segGts = groundTruths.get(i);
-      // Get ROIs for segmented mat
-      List<ROI> rois = allROIs.get(i);
-
-      // Find the bestScore for each of the GroundTruths using Matcher
-      for (GroundTruth segGt : segGts) {
-
-        double bestScore = 0.0;
-        for (ROI roi : rois) {
-          double score = Matcher.match(roi, segGt);
-          if (score > bestScore) {
-            bestScore = score;
-          }
-        }
-
-        // Add to noduleInclusion
-        noduleInclusion += bestScore;
-      }
-
-    }
-
-    // Normalise to value between 0 and 1 inclusive and return
-    return noduleInclusion / totalGTs;
+  protected double calcFitness(Lungs lungs) {
+    return helper.noduleInclusion(lungs);
   }
 
   @Override
