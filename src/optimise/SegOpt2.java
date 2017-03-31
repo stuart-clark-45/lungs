@@ -4,10 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import model.ROI;
 import org.opencv.core.Core;
 
 import config.SegOpt;
+import core.Lungs;
+import model.ROI;
 import util.ConfigHelper;
 
 /**
@@ -34,17 +35,17 @@ public class SegOpt2 extends SegOpt1 {
   }
 
   @Override
-  protected double calcFitness(List<List<ROI>> allROIs) {
-    double noduleInc = noduleInclusion(allROIs);
+  protected double calcFitness(Lungs lungs) {
+    List<List<ROI>> allROIs = helper.extractROIs(lungs);
+    double noduleInc = helper.noduleInclusion(allROIs);
 
     // If the nodule inclusion has dropped too far then return 0 fitness
-    if(maxNoduleInc - noduleInc > 0.00005){
+    if (maxNoduleInc - noduleInc > 0.00005) {
       return 0;
     }
 
-    int numROIs = allROIs.stream().mapToInt(List::size).sum();
-
     // Fewer ROIs -> greater fitness
+    int numROIs = allROIs.stream().mapToInt(List::size).sum();
     return -numROIs;
   }
 
