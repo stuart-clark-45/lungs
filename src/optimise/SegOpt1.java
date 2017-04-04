@@ -11,7 +11,7 @@ import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.SegOpt;
+import config.SegOptimisation;
 import core.Lungs;
 import util.ConfigHelper;
 import vision.BilateralFilter;
@@ -144,13 +144,13 @@ public class SegOpt1 extends Optimiser<DoubleGene, Double> {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
     // Create optimiser
-    int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
-    int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
-    int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
+    int popSize = ConfigHelper.getInt(SegOptimisation.POPULATION);
+    int generations = ConfigHelper.getInt(SegOptimisation.GENERATIONS);
+    int numStacks = ConfigHelper.getInt(SegOptimisation.STACKS);
     SegOpt1 optimiser = new SegOpt1(popSize, generations, numStacks);
 
     // Load the persisted population if configured to
-    if (ConfigHelper.getBoolean(SegOpt.LOAD_POPULATION)) {
+    if (ConfigHelper.getBoolean(SegOptimisation.LOAD_POPULATION)) {
       optimiser.loadPopulation();
     }
 

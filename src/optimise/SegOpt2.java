@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.opencv.core.Core;
 
-import config.SegOpt;
+import config.SegOptimisation;
 import core.Lungs;
 import model.ROI;
 import util.ConfigHelper;
@@ -64,9 +64,9 @@ public class SegOpt2 extends SegOpt1 {
     }
 
     // Create optimiser
-    int popSize = ConfigHelper.getInt(SegOpt.POPULATION);
-    int generations = ConfigHelper.getInt(SegOpt.GENERATIONS);
-    int numStacks = ConfigHelper.getInt(SegOpt.STACKS);
+    int popSize = ConfigHelper.getInt(SegOptimisation.POPULATION);
+    int generations = ConfigHelper.getInt(SegOptimisation.GENERATIONS);
+    int numStacks = ConfigHelper.getInt(SegOptimisation.STACKS);
     SegOpt2 optimiser = new SegOpt2(maxNoduleInc, popSize, generations, numStacks);
 
     // Load the persisted population if configured to
