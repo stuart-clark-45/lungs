@@ -132,6 +132,8 @@ public abstract class Optimiser<G extends Gene<?, G>, E extends Comparable<? sup
       LOGGER.info(sb.toString());
       Genotype<G> gt = result.getBestPhenotype().getGenotype();
       LOGGER.info("\n" + gtToString(gt));
+
+      savePopulation();
     }
 
     LOGGER.info(name() + " Finished");
