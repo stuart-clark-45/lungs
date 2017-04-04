@@ -10,12 +10,12 @@ import static util.ConfigHelper.getDouble;
 
 import java.util.List;
 
+import config.BlobOptimisation;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.SegOpt;
 import core.Lungs;
 import model.ROI;
 import util.ConfigHelper;
@@ -56,12 +56,12 @@ public class BlobOpt {
     int lowerBound = 0;
     int dogThresh = -1;
     int minROI = numROIs(allROIs);
-    while (upperBound == lowerBound) {
+    while (lowerBound < upperBound) {
 
       LOGGER.info("There are " + minROI + " ROIs");
 
       // Use mid value as dogThresh
-      dogThresh = lowerBound + (upperBound - lowerBound + 1) / 2;
+      dogThresh = (lowerBound + upperBound) / 2;
       LOGGER.info("Running with dogThresh of " + dogThresh);
       allROIs = helper.extractROIs(createLungs(dogThresh, Integer.MAX_VALUE));
       double inclusion = helper.noduleInclusion(allROIs);
@@ -76,9 +76,9 @@ public class BlobOpt {
 
         // If the number of ROIs has increased then then mid was too low a value
         if (numROI > minROI) {
-          lowerBound = dogThresh;
+          lowerBound = dogThresh + 1;
         } else {
-          upperBound = dogThresh;
+          upperBound = dogThresh - 1;
           minROI = numROI;
         }
 
@@ -93,12 +93,12 @@ public class BlobOpt {
     upperBound = 255;
     lowerBound = 0;
     int gradientThresh = -1;
-    while (upperBound > lowerBound) {
+    while (lowerBound < upperBound) {
 
       LOGGER.info("There are " + minROI + " ROIs");
 
       // Use mid value as gradientThresh
-      gradientThresh = lowerBound + (upperBound - lowerBound + 1) / 2;
+      gradientThresh = (lowerBound + upperBound) / 2;
       LOGGER.info("Running with gradient thresh of " + gradientThresh);
       allROIs = helper.extractROIs(createLungs(dogThresh, gradientThresh));
       double inclusion = helper.noduleInclusion(allROIs);
@@ -113,9 +113,9 @@ public class BlobOpt {
 
         // If the number of ROIs has increased then then mid was too high a value
         if (numROI > minROI) {
-          upperBound = gradientThresh;
+          upperBound = gradientThresh - 1;
         } else {
-          lowerBound = gradientThresh;
+          lowerBound = gradientThresh + 1;
           minROI = numROI;
         }
 
@@ -128,10 +128,19 @@ public class BlobOpt {
     LOGGER.info("Finished running BlobOpt");
   }
 
+  /**
+   * @param allROIs
+   * @return the number of ROIs in allROIs.
+   */
   private int numROIs(List<List<ROI>> allROIs) {
     return allROIs.stream().mapToInt(List::size).sum();
   }
 
+  /**
+   * @param dogThresh
+   * @param gradientThresh
+   * @return an instance of {@link Lungs} using the two thresholds given in the parameters
+   */
   private Lungs createLungs(int dogThresh, int gradientThresh) {
     // Create the filter
     BilateralFilter filter =
@@ -152,7 +161,7 @@ public class BlobOpt {
 
   public static void main(String[] args) {
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    new BlobOpt(ConfigHelper.getInt(SegOpt.STACKS)).run();
+    new BlobOpt(ConfigHelper.getInt(BlobOptimisation.STACKS)).run();
   }
 
 }
