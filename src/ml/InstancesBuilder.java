@@ -101,27 +101,27 @@ public class InstancesBuilder {
     this.functions.add(roi -> roi.getElongation() != null ? roi.getElongation() : missingValue());
 
     // Add Coarse Histogram
-    for (int i = 0; i < AllHists.COARSE; i++) {
+    for (int i = 0; i < AllHists.getCoarse(); i++) {
       this.attributes.add(new Attribute("Coarse Hist " + i));
       this.functions.add(roi -> roi.getCoarseHist().next());
     }
 
-    // Add Medium Histogram
-    for (int i = 0; i < AllHists.MID; i++) {
-      this.attributes.add(new Attribute("Medium Hist " + i));
-      this.functions.add(roi -> roi.getMedHist().next());
-    }
-
     // Add Fine Histogram
-    for (int i = 0; i < AllHists.FINE; i++) {
+    for (int i = 0; i < AllHists.getFine(); i++) {
       this.attributes.add(new Attribute("Fine Hist " + i));
       this.functions.add(roi -> roi.getFineHist().next());
     }
 
-    // Add LTB
-    for (int i = 0; i < LTP.BINS; i++) {
-      this.attributes.add(new Attribute("LTP " + i));
-      this.functions.add(roi -> roi.getLtp().next());
+    // Add Coarse LTB
+    for (int i = 0; i < LTP.getCoarse(); i++) {
+      this.attributes.add(new Attribute("Coarse LTP " + i));
+      this.functions.add(roi -> roi.getLtpCoarse().next());
+    }
+
+    // Add Fine LTB
+    for (int i = 0; i < LTP.getFine(); i++) {
+      this.attributes.add(new Attribute("Fine LTP " + i));
+      this.functions.add(roi -> roi.getLtpFine().next());
     }
 
     // Add class
