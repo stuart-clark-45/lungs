@@ -3,6 +3,7 @@ package model.roi;
 import static model.Histogram.POS_VALS_8BIT;
 import static org.apache.commons.lang3.ArrayUtils.toObject;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,8 @@ public class HistogramTest {
     mat.put(1, 3, 255);
     mat.put(1, 4, 255);
 
-    mat.put(2, 1, 129);
-    mat.put(2, 2, 129);
+    mat.put(2, 1, 180);
+    mat.put(2, 2, 180);
     mat.put(2, 3, 120);
     mat.put(2, 4, 120);
 
@@ -50,12 +51,6 @@ public class HistogramTest {
   public void testBadMat() throws Exception {
     Histogram histogram = new Histogram(2, POS_VALS_8BIT);
     histogram.add(Mat.zeros(1, 1, CvType.CV_8UC3));
-  }
-
-  @Test(expected = LungsException.class)
-  public void testBadBins() throws Exception {
-    Histogram histogram = new Histogram(13, POS_VALS_8BIT);
-    histogram.add(Mat.zeros(1, 1, CvType.CV_16UC1));
   }
 
   @Test
@@ -104,4 +99,8 @@ public class HistogramTest {
     assertArrayEquals(toObject(expected), toObject(histogram.getBins()));
   }
 
+  @Test
+  public void testSturges() throws Exception {
+    assertEquals(8, Histogram.sturges(256, 100));
+  }
 }

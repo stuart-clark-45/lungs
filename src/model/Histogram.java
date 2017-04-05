@@ -1,5 +1,6 @@
 package model;
 
+import static java.lang.Math.round;
 import static util.MatUtils.get;
 
 import java.util.Iterator;
@@ -57,8 +58,7 @@ public class Histogram implements Iterator<Double> {
   }
 
   /**
-   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
-   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   * @param numBins the desired number of bins. This will be rounded to the nearest power of 2.
    * @param numPosVal the number of possible values that can be stored in the histogram.
    */
   public Histogram(int numBins, int numPosVal) {
@@ -71,14 +71,14 @@ public class Histogram implements Iterator<Double> {
    * Creates a copy of {@code that} with {@code numBins} bins. {@link Histogram#computeBins()} and
    * {@link Histogram#toFrequencies()} still need to called if desired.
    * 
-   * @param numBins the number of bins that should be used in the {@link Histogram} returned. should
-   *        be a power of two e.g. 2, 4, 8, 16, 32, 64, 128, 256
+   * @param numBins the desired number of bins. This will be rounded to the nearest power of 2.
    * @param that the histogram to copy.
    */
   public Histogram(int numBins, Histogram that) {
     this.numBins = numBins;
     this.numPosVal = that.numPosVal;
     this.valCounter = that.valCounter.clone();
+    this.totalCounter = that.totalCounter;
   }
 
   /**
@@ -121,7 +121,7 @@ public class Histogram implements Iterator<Double> {
    * @throws LungsException if parameters given are invalid.
    */
   public void add(Mat mat) throws LungsException {
-    validateParams(mat, numBins);
+    validateMat(mat);
 
     // Count up the number of occurrences for each value
     valCounter = new double[numPosVal];
@@ -143,7 +143,7 @@ public class Histogram implements Iterator<Double> {
    * @throws LungsException if parameters given are invalid.
    */
   public void add(List<Point> region, Mat mat) throws LungsException {
-    validateParams(mat, numBins);
+    validateMat(mat);
 
     // Count up the number of occurrences for each value
     valCounter = new double[numPosVal];
@@ -159,23 +159,12 @@ public class Histogram implements Iterator<Double> {
    * Take the values added to the Histogram and place them into bins.
    */
   public void computeBins() {
-    // Create a histogram with the correct number of bins
     bins = new double[numBins];
-    int binIndex = 0;
-    int valPerBin = (int) Math.ceil(numPosVal / numBins);
-    int counter = 0;
-    for (double val : valCounter) {
-      // Add val to the current value in the bin
-      bins[binIndex] += val;
-
-      // Move onto the next bin if required
-      if (counter != 0 && counter % valPerBin == 0) {
-        binIndex++;
-      }
-
-      counter++;
+    int valPerBin = (int) Math.ceil(numPosVal / numBins) + 1;
+    for (int i = 0; i < valCounter.length; i++) {
+      int index = i / valPerBin;
+      bins[index] += valCounter[i];
     }
-
   }
 
   /**
@@ -188,20 +177,27 @@ public class Histogram implements Iterator<Double> {
   }
 
   /**
-   * Checks that {@code mat} has one channel and that {@code numBins} is a power of 2.
+   * Checks that {@code mat} has one channel
    * 
    * @param mat
-   * @param numBins
    * @throws LungsException
    */
-  private static void validateParams(Mat mat, int numBins) throws LungsException {
+  private static void validateMat(Mat mat) throws LungsException {
     if (mat.channels() != 1) {
       throw new LungsException("mat must have 1 channel");
     }
+  }
 
-    if ((numBins & -numBins) != numBins) {
-      throw new LungsException("numBins must be a power of two but is " + numBins);
-    }
+  /**
+   * Uses Sturges' rule to calculate the appropriate number of bins to use in a histogram.
+   *
+   * @param numPosVal the number of possible values i.e. {@link Histogram#POS_VALS_8BIT}.
+   * @param numElements the expected number of element i.e. the average number of pixels in an
+   *        {@link ROI}.
+   * @return the appropriate number of bins to use.
+   */
+  public static int sturges(int numPosVal, double numElements) {
+    return (int) round(numPosVal / (numPosVal / (1 + Math.log(numElements) / Math.log(2))));
   }
 
 }
