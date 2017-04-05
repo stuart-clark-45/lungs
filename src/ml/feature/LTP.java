@@ -23,7 +23,7 @@ public class LTP implements Feature {
 
   public static final int BINS = 64;
   static final int BASE = 3;
-  static final int NUM_POS_VAL = 65536;
+  static final int NUM_POS_VAL = (int) Math.pow(BASE, 8);
 
   /**
    * See {@link LTP#neighbourValue(Point, Point, Set, Mat)}.
