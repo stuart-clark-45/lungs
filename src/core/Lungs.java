@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import config.Annotation;
 import config.Segmentation;
-import ml.ArffGenerator;
 import ml.FeatureEngine;
 import ml.InstancesBuilder;
 import ml.feature.MinCircle;
@@ -55,11 +54,11 @@ import vision.BlobToROI;
 import vision.ConvexHull;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
-import weka.classifiers.trees.J48;
+import weka.classifiers.trees.HoeffdingTree;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils;
+import weka.core.SerializationHelper;
 
 public class Lungs {
 
@@ -89,6 +88,11 @@ public class Lungs {
    * The minimum size of a nodule in the data set provided.
    */
   private static final double MIN_NODULE_RADIUS = 1.0;
+
+  /**
+   * The name of that classifier models are written to and read from.
+   */
+  private static final String MODEL_FILE = "classifier.model";
 
   private Datastore ds;
   private final ROIExtractor extractor;
@@ -324,12 +328,9 @@ public class Lungs {
   public void assistance(CTStack stack) throws Exception {
     List<Mat> mats = getStackMats(stack);
 
-    // Train classifier
-    LOGGER.info("Training classifier");
-    Instances trainingData = ConverterUtils.DataSource.read(ArffGenerator.TRAIN_FILE);
-    trainingData.setClassIndex(trainingData.numAttributes() - 1);
-    Classifier classifier = new J48();
-    classifier.buildClassifier(trainingData);
+    // Load classifier
+    LOGGER.info("Loading classifier");
+    Classifier classifier = readClassifier();
 
     // Create nodule predictions
     LOGGER.info("Creating nodule predictions for stack");
@@ -508,6 +509,18 @@ public class Lungs {
 
     // Create lungs instance
     return new Lungs(filter, extractor, blobDetector);
+  }
+
+  public static Classifier newClassifier() {
+    return new HoeffdingTree();
+  }
+
+  public static void writeClassifier(Classifier classifier) throws Exception {
+    SerializationHelper.write(MODEL_FILE, classifier);
+  }
+
+  public static Classifier readClassifier() throws Exception {
+    return (Classifier) SerializationHelper.read(MODEL_FILE);
   }
 
   /**
