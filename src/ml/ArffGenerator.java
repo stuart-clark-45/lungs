@@ -5,13 +5,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import model.ROI;
-import util.LimitedIterator;
+import util.LimitedIterable;
 import util.MongoHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -101,43 +102,47 @@ public class ArffGenerator {
    * @param file the name of the arff file to create
    * @param name the name to give the {@link Instances} saved to the file.
    * @param set the set you would like to create i.e {@link ROI.Set#TRAIN} or {@link ROI.Set#TEST}.
-   * @param limitOn true if the number of nodules and non-nodules should be the same in the
-   *        {@link Instances} returned, false is all the non-nodules available should be used.
-   * @return
+   * @param oversample true if nodules should be oversampled so that there are the same number of
+   *        nodules and non-nodules
    */
-  private void createFile(String name, String file, ROI.Set set, boolean limitOn)
+  private void createFile(String name, String file, ROI.Set set, boolean oversample)
       throws IOException {
     LOGGER.info("Creating " + name + "...");
+
+    // Find all the non nodules
+    LOGGER.info("Finding all NON_NODULE for " + name);
+    Query<ROI> nonNodules =
+        ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NON_NODULE);
+    long numNonNodule = nonNodules.count();
 
     // Find all the nodules
     LOGGER.info("Finding all NODULE for " + name);
     Query<ROI> noduleQuery =
         ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NODULE);
-    int numNodules = (int) noduleQuery.count();
+    long numNodule = noduleQuery.count();
 
-    // Find all the non nodules
-    LOGGER.info("Finding all NON_NODULE for " + name);
-    Query<ROI> nonNoduleQuery =
-        ds.createQuery(ROI.class).field(SET).equal(set).field(CLASS).equal(ROI.Class.NON_NODULE);
-    int numNonNodule;
-    if (limitOn) {
-      numNonNodule = numNodules;
+    // Oversample nodules if required
+    Iterable<ROI> nodules;
+    if (oversample) {
+      nodules = oversample(noduleQuery, numNodule, numNonNodule);
+      numNodule = numNonNodule;
     } else {
-      numNonNodule = (int) nonNoduleQuery.count();
+      nodules = noduleQuery;
     }
 
     // Log the size of the classes
-    LOGGER.info(name + " will have:\n" + numNodules + " NODULES\n" + numNonNodule + " NON_NODULES");
+    LOGGER.info(name + " will have:\n" + numNodule + " NODULES\n" + numNonNodule + " NON_NODULES");
 
+    // Create the ArffSaver
     ArffSaver saver = new ArffSaver();
     saver.setFile(new File(file));
     saver.setRetrieval(Saver.INCREMENTAL);
-    Instances instances = builder.createSet(name, numNodules + numNonNodule);
+    Instances instances = builder.createSet(name, (int) (numNodule + numNonNodule));
     saver.setStructure(instances);
 
     // Write all the nodules to the arff file
     int counter = 0;
-    for (ROI roi : noduleQuery) {
+    for (ROI roi : nodules) {
       Instance instance = builder.createInstance(roi);
       instance.setDataset(instances);
       saver.writeIncremental(instance);
@@ -149,10 +154,8 @@ public class ArffGenerator {
 
     // Write all the non-nodules to the arff file
     counter = 0;
-    LimitedIterator<ROI> nonNodules =
-        new LimitedIterator<>(nonNoduleQuery.iterator(), numNonNodule);
-    while (nonNodules.hasNext()) {
-      Instance instance = builder.createInstance(nonNodules.next());
+    for (ROI roi : nonNodules) {
+      Instance instance = builder.createInstance(roi);
       instance.setDataset(instances);
       saver.writeIncremental(instance);
 
@@ -163,6 +166,33 @@ public class ArffGenerator {
 
     // Flushes the instances to the file
     saver.writeIncremental(null);
+  }
+
+  /**
+   * @param noduleQuery
+   * @param numNodule
+   * @param numNonNodule
+   * @return an iterable with {@code numNonNodule} elements, produced by repeating the ROIs in
+   *         nodule query.
+   */
+  private Iterable<ROI> oversample(Query<ROI> noduleQuery, long numNodule, long numNonNodule) {
+    // Calculate how many times the nodules query need to be repeated
+    long numRequired = numNonNodule - numNodule;
+    long numIterables = numRequired / numNodule;
+
+    // Add all full queries to nodules
+    Iterable<ROI> nodules = noduleQuery.cloneQuery();
+    for (long i = 1; i < numIterables; i++) {
+      nodules = IterableUtils.chainedIterable(nodules, noduleQuery.cloneQuery());
+    }
+
+    // Add a limited iterable that contains the remainder required to balance the sets
+    numRequired = numRequired - (numIterables * numNodule);
+    LimitedIterable<ROI> limited =
+        new LimitedIterable<>(noduleQuery.cloneQuery().iterator(), (int) numRequired);
+    nodules = IterableUtils.chainedIterable(nodules, limited);
+
+    return nodules;
   }
 
   public static void main(String[] args) throws Exception {
