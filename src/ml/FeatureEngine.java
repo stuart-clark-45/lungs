@@ -185,7 +185,6 @@ public class FeatureEngine {
     features.add(new Circularity());
     features.add(new Convexity());
     features.add(new HuCircularity());
-    features.add(new LTP());
     return features;
   }
 
