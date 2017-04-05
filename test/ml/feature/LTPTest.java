@@ -1,6 +1,5 @@
 package ml.feature;
 
-import static ml.feature.LTP.BINS;
 import static ml.feature.LTP.GTE;
 import static ml.feature.LTP.LT;
 import static ml.feature.LTP.NUM_POS_VAL;
@@ -12,6 +11,9 @@ import static util.MatUtils.put;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.ROIAreaStats;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opencv.core.CvType;
@@ -20,6 +22,7 @@ import org.opencv.core.Point;
 
 import model.Histogram;
 import model.ROI;
+import util.MongoHelper;
 import util.Testing;
 
 /**
@@ -27,6 +30,26 @@ import util.Testing;
  */
 @RunWith(Testing.class)
 public class LTPTest {
+
+  @Before
+  public void setUp() throws Exception {
+    Testing.drop();
+
+    // Add some rois that are used to compute ROIAreaStats
+    ROI roi = new ROI();
+    roi.setArea(8);
+    MongoHelper.getDataStore().save(roi);
+    roi = new ROI();
+    roi.setArea(2);
+    MongoHelper.getDataStore().save(roi);
+
+    ROIAreaStats.compute();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    Testing.drop();
+  }
 
   @Test
   public void test() throws Exception {
@@ -65,16 +88,16 @@ public class LTPTest {
     new LTP().compute(roi, mat);
 
     // Order is: Up Left, Up, Up Right, Right, Down Right, Down, Down Left, Left
-    List<int[]> lqps = new ArrayList<>();
-    lqps.add(new int[] {VOID, VOID, VOID, VOID, VOID, LT, VOID, VOID});
-    lqps.add(new int[] {VOID, GTE, VOID, VOID, GTE, GTE, GTE, VOID});
-    lqps.add(new int[] {VOID, VOID, LT, LT, GTE, VOID, VOID, VOID});
-    lqps.add(new int[] {VOID, GTE, VOID, GTE, VOID, GTE, VOID, GTE});
-    lqps.add(new int[] {LT, VOID, VOID, VOID, VOID, VOID, GTE, LT});
-    lqps.add(new int[] {LT, LT, LT, VOID, VOID, VOID, VOID, VOID});
+    List<int[]> ltps = new ArrayList<>();
+    ltps.add(new int[] {VOID, VOID, VOID, VOID, VOID, LT, VOID, VOID});
+    ltps.add(new int[] {VOID, GTE, VOID, VOID, GTE, GTE, GTE, VOID});
+    ltps.add(new int[] {VOID, VOID, LT, LT, GTE, VOID, VOID, VOID});
+    ltps.add(new int[] {VOID, GTE, VOID, GTE, VOID, GTE, VOID, GTE});
+    ltps.add(new int[] {LT, VOID, VOID, VOID, VOID, VOID, GTE, LT});
+    ltps.add(new int[] {LT, LT, LT, VOID, VOID, VOID, VOID, VOID});
 
-    List<Integer> values = new ArrayList<>(lqps.size());
-    for (int[] lqp : lqps) {
+    List<Integer> values = new ArrayList<>(ltps.size());
+    for (int[] lqp : ltps) {
       int value = 0;
       for (int i = 0; i < lqp.length; i++) {
         value += Math.pow(LTP.BASE, i) * lqp[i];
@@ -82,12 +105,16 @@ public class LTPTest {
       values.add(value);
     }
 
-    Histogram histogram = new Histogram(BINS, NUM_POS_VAL);
-    values.forEach(histogram::add);
-    histogram.computeBins();
-    histogram.toFrequencies();
+    Histogram coarse = new Histogram(LTP.getCoarse(), NUM_POS_VAL);
+    values.forEach(coarse::add);
+    coarse.computeBins();
+    coarse.toFrequencies();
+    assertArrayEquals(toObject(coarse.getBins()), toObject(roi.getLtpCoarse().getBins()));
 
-    assertArrayEquals(toObject(histogram.getBins()), toObject(roi.getLtp().getBins()));
+    Histogram fine = new Histogram(LTP.getFine(), coarse);
+    fine.computeBins();
+    fine.toFrequencies();
+    assertArrayEquals(toObject(fine.getBins()), toObject(roi.getLtpFine().getBins()));
   }
 
 }

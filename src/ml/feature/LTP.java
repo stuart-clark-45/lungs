@@ -1,6 +1,7 @@
 package ml.feature;
 
 import static java.lang.Math.pow;
+import static model.Histogram.sturges;
 import static util.MatUtils.get;
 
 import java.util.HashSet;
@@ -12,16 +13,17 @@ import org.opencv.core.Point;
 
 import model.Histogram;
 import model.ROI;
+import model.ROIAreaStats;
 import util.LungsException;
 
 /**
- * Creates a histogram for a Local Ternary Pattern and assigns it to the {@link ROI}.
+ * Creates a histogram for a Local Ternary Pattern and assigns it to the {@link ROI}. Must be run
+ * after {@link Area}.
  *
  * @author Stuart Clark
  */
 public class LTP implements Feature {
 
-  public static final int BINS = 64;
   static final int BASE = 3;
   static final int NUM_POS_VAL = (int) Math.pow(BASE, 8);
 
@@ -45,7 +47,8 @@ public class LTP implements Feature {
     List<Point> region = roi.getRegion();
     Set<Point> regionSet = new HashSet<>(region);
 
-    Histogram histogram = new Histogram(BINS, NUM_POS_VAL);
+    Histogram fine = new Histogram(getFine(), NUM_POS_VAL);
+    Histogram coarse = new Histogram(getCoarse(), NUM_POS_VAL);
 
     for (Point point : region) {
       int value = 0;
@@ -82,16 +85,20 @@ public class LTP implements Feature {
       value +=
           pow(BASE, 7) * neighbourValue(point, new Point(point.x - 1, point.y), regionSet, mat);
 
-      // Add the value to the histogram
-      histogram.add(value);
+      // Add the value to the histograms
+      fine.add(value);
+      coarse.add(value);
     }
 
     // Compute the histogram bins
-    histogram.computeBins();
-    histogram.toFrequencies();
+    fine.computeBins();
+    fine.toFrequencies();
+    coarse.computeBins();
+    coarse.toFrequencies();
 
     // Store in the ROI
-    roi.setLtp(histogram);
+    roi.setLtpFine(fine);
+    roi.setLtpCoarse(coarse);
   }
 
   /**
@@ -104,8 +111,8 @@ public class LTP implements Feature {
    * @return <ul>
    *         <li>{@code LT} if the value for the pixel at {@code neighbour} is less than the value
    *         for the pixel at {@code point}</li>
-   *         <li>{@code GTE} if the value for the pixel at {@code neighbour} is greater than or equal to the
-   *         value for the pixel at {@code point}</li>
+   *         <li>{@code GTE} if the value for the pixel at {@code neighbour} is greater than or
+   *         equal to the value for the pixel at {@code point}</li>
    *         <li>{@code VOID} if {@code neighbour} is not part of the region.
    *         <ul/>
    */
@@ -119,4 +126,21 @@ public class LTP implements Feature {
       return VOID;
     }
   }
+
+  /**
+   * @return the number of bins used in a coarse LTP histogram i.e. {@link ROI#ltpCoarse}.
+   */
+  public static int getCoarse() {
+    ROIAreaStats stats = ROIAreaStats.get();
+    return sturges(NUM_POS_VAL, stats.getMean());
+  }
+
+  /**
+   * @return the number of bins used in a fine LTP histogram i.e. {@link ROI#ltpFine}.
+   */
+  public static int getFine() {
+    ROIAreaStats stats = ROIAreaStats.get();
+    return sturges(NUM_POS_VAL, stats.getMax());
+  }
+
 }
