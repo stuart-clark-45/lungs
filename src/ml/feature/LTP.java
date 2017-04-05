@@ -64,12 +64,11 @@ public class LTP implements Feature {
 
       // Right
       value +=
-          pow(BASE, 3) * neighbourValue(point, new Point(point.x - 1, point.y), regionSet, mat);
+          pow(BASE, 3) * neighbourValue(point, new Point(point.x + 1, point.y), regionSet, mat);
 
       // Down Right
       value +=
-          pow(BASE, 4)
-              * neighbourValue(point, new Point(point.x + 1, point.y + 1), regionSet, mat);
+          pow(BASE, 4) * neighbourValue(point, new Point(point.x + 1, point.y + 1), regionSet, mat);
 
       // Down
       value +=
