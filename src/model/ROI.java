@@ -90,11 +90,6 @@ public class ROI {
   private Histogram coarseHist;
 
   /**
-   * A intensity histogram with a medium amount of bins. Computed using {@link ml.feature.AllHists}.
-   */
-  private Histogram medHist;
-
-  /**
    * A intensity histogram with lots of bins. Computed using {@link ml.feature.AllHists}.
    */
   private Histogram fineHist;
@@ -152,9 +147,14 @@ public class ROI {
   private Double convexity;
 
   /**
-   * The histogram for the Local Ternary Pattern for the {@link ROI}.
+   * The fine histogram for the Local Ternary Pattern for the {@link ROI}.
    */
-  private Histogram ltp;
+  private Histogram ltpFine;
+
+  /**
+   * The coarse histogram for the Local Ternary Pattern for the {@link ROI}.
+   */
+  private Histogram ltpCoarse;
 
   public ROI() {
     region = new ArrayList<>();
@@ -268,14 +268,6 @@ public class ROI {
     this.coarseHist = coarseHist;
   }
 
-  public Histogram getMedHist() {
-    return medHist;
-  }
-
-  public void setMedHist(Histogram medHist) {
-    this.medHist = medHist;
-  }
-
   public Histogram getFineHist() {
     return fineHist;
   }
@@ -357,11 +349,19 @@ public class ROI {
     this.huCircularity = huCircularity;
   }
 
-  public Histogram getLtp() {
-    return ltp;
+  public Histogram getLtpFine() {
+    return ltpFine;
   }
 
-  public void setLtp(Histogram ltp) {
-    this.ltp = ltp;
+  public void setLtpFine(Histogram ltpFine) {
+    this.ltpFine = ltpFine;
+  }
+
+  public Histogram getLtpCoarse() {
+    return ltpCoarse;
+  }
+
+  public void setLtpCoarse(Histogram ltpCoarse) {
+    this.ltpCoarse = ltpCoarse;
   }
 }
