@@ -11,17 +11,17 @@ import org.mongodb.morphia.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import core.Lungs;
 import model.ROI;
 import util.LimitedIterable;
 import util.MongoHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.trees.J48;
+import weka.classifiers.UpdateableClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ArffLoader;
+import weka.core.converters.ArffLoader.ArffReader;
 import weka.core.converters.ArffSaver;
-import weka.core.converters.ConverterUtils;
 import weka.core.converters.Saver;
 
 /**
@@ -59,16 +59,24 @@ public class ArffGenerator {
     LOGGER.info("Testing the classifier...");
 
     // Load trainingData
-    Instances trainData = ConverterUtils.DataSource.read(TRAIN_FILE);
+    BufferedReader reader = new BufferedReader(new FileReader(TRAIN_FILE));
+    ArffReader arff = new ArffReader(reader, 0);
+    Instances trainData = arff.getStructure();
     trainData.setClassIndex(trainData.numAttributes() - 1);
 
-    // Build classifier
-    Classifier cls = new J48();
-    cls.buildClassifier(trainData);
+    // Incrementally build classifier
+    Classifier classifier = Lungs.newClassifier();
+    Instance instance;
+    while ((instance = arff.readInstance(trainData)) != null) {
+      ((UpdateableClassifier) classifier).updateClassifier(instance);
+    }
+
+    // Save classifier model
+    Lungs.writeClassifier(classifier);
 
     // Load testData
-    BufferedReader reader = new BufferedReader(new FileReader(TEST_FILE));
-    ArffLoader.ArffReader arff = new ArffLoader.ArffReader(reader, 0);
+    reader = new BufferedReader(new FileReader(TEST_FILE));
+    arff = new ArffReader(reader, 0);
     Instances testData = arff.getStructure();
     testData.setClassIndex(testData.numAttributes() - 1);
 
@@ -76,11 +84,11 @@ public class ArffGenerator {
     Evaluation eval = new Evaluation(testData);
     Instance inst;
     while ((inst = arff.readInstance(testData)) != null) {
-      eval.evaluationForSingleInstance(cls.distributionForInstance(inst), inst, true);
+      eval.evaluationForSingleInstance(classifier.distributionForInstance(inst), inst, true);
     }
 
     // Evaluate classifier and print some statistics
-    eval.evaluateModel(cls, testData);
+    eval.evaluateModel(classifier, testData);
     LOGGER.info(eval.toSummaryString("\nResults\n======\n", false));
     LOGGER.info(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n"));
     LOGGER.info(eval.toMatrixString("\n=== Confusion Matrix ===\n"));
