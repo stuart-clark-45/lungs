@@ -344,7 +344,7 @@ public class Lungs {
 
       // Create Instances
       List<ROI> rois = extractRois(mat);
-      rois.parallelStream().forEach(roi -> fEngine.computeFeatures(roi, mat));
+      rois.parallelStream().forEach(roi -> fEngine.computeAllFeatures(roi, mat));
       Instances instances = iBuilder.createSet("Slice Instances", rois.size());
       iBuilder.addInstances(instances, rois);
       Attribute classAttribute = instances.classAttribute();

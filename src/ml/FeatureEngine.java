@@ -27,6 +27,7 @@ import ml.feature.MinCircle;
 import ml.feature.Perimeter;
 import model.CTSlice;
 import model.ROI;
+import model.ROIAreaStats;
 import util.FutureMonitor;
 import util.LungsException;
 import util.MatUtils;
@@ -41,15 +42,23 @@ public class FeatureEngine {
   private static final int LOG_INTERVAL = 1000;
   private static final String IMAGE_SOP_UID = "imageSopUID";
 
-  private List<Feature> features;
+  private List<Feature> primary;
+  private List<Feature> secondary;
   private Datastore ds;
+  private ROIAreaStats areaStats;
 
   public FeatureEngine() {
-    this(defaultFeatures());
+    this(primaryFeatures(), secondaryFeatures());
   }
 
-  public FeatureEngine(List<Feature> features) {
-    this.features = features;
+  /**
+   * @param primary a list of primary {@link Feature}s.
+   * @param secondary a list of secondary features. These features require information obtained from
+   *        the aggregation of primary feature values in order to be computed.
+   */
+  public FeatureEngine(List<Feature> primary, List<Feature> secondary) {
+    this.primary = primary;
+    this.secondary = secondary;
     this.ds = MongoHelper.getDataStore();
   }
 
@@ -64,6 +73,23 @@ public class FeatureEngine {
     // Find all the distinct SOP UIDs for the ROIs
     List sopUIDs = ds.getCollection(ROI.class).distinct(IMAGE_SOP_UID);
 
+    // Monitor the progress of computing the primary features
+    FutureMonitor monitor = new FutureMonitor(createFutures(es, sopUIDs, primary));
+    monitor.setLogString("ROI's primary features have been computed");
+    monitor.monitor();
+
+    // Perform required aggregations for secondary features
+    ROIAreaStats.compute();
+
+    // Monitor the progress of computing the secondary features
+    monitor = new FutureMonitor(createFutures(es, sopUIDs, secondary));
+    monitor.setLogString("ROI's secondary features have been computed");
+    monitor.monitor();
+
+    LOGGER.info("Finished computing features");
+  }
+
+  private List<Future> createFutures(ExecutorService es, List sopUIDs, List<Feature> features) {
     List<Future> futures = new ArrayList<>();
     int counter = 0;
     long numROI = ds.createQuery(ROI.class).count();
@@ -85,7 +111,7 @@ public class FeatureEngine {
         futures.add(es.submit(() -> {
 
           // Compute all the features for the ROI
-            computeFeatures(roi, mat);
+            computeFeatures(roi, mat, features);
 
             // Update the ROI
             ds.save(roi);
@@ -98,21 +124,44 @@ public class FeatureEngine {
 
     }
 
-    // Monitor the progress of the Futures
-    FutureMonitor monitor = new FutureMonitor(futures);
-    monitor.setLogString("ROI's features computed");
-    monitor.monitor();
-
-    LOGGER.info("Finished computing features");
+    return futures;
   }
 
   /**
-   * Compute all features for the {@code roi}.
-   * 
+   * Compute all {@code features} for the {@code roi}.
+   *
    * @param roi
    * @param mat the {@link Mat} where the {@code roi} is found.
    */
-  public void computeFeatures(ROI roi, Mat mat) {
+  public void computeAllFeatures(ROI roi, Mat mat) {
+
+    // Compute primary features
+    for (Feature feature : primary) {
+      try {
+        feature.compute(roi, mat);
+      } catch (LungsException e) {
+        LOGGER.error("Failed to compute feature for mat with id: " + roi.getId(), e);
+      }
+    }
+
+    // Compute secondary features
+    for (Feature feature : secondary) {
+      try {
+        feature.compute(roi, mat);
+      } catch (LungsException e) {
+        LOGGER.error("Failed to compute feature for mat with id: " + roi.getId(), e);
+      }
+    }
+  }
+
+  /**
+   * Compute all {@code features} for the {@code roi}.
+   * 
+   * @param roi
+   * @param mat the {@link Mat} where the {@code roi} is found.
+   * @param features
+   */
+  private void computeFeatures(ROI roi, Mat mat, List<Feature> features) {
     for (Feature feature : features) {
       try {
         feature.compute(roi, mat);
@@ -123,21 +172,31 @@ public class FeatureEngine {
   }
 
   /**
-   * @return list of default features to use.
+   * @return list of primary features to use.
    */
-  private static List<Feature> defaultFeatures() {
+  private static List<Feature> primaryFeatures() {
     List<Feature> features = new ArrayList<>();
     features.add(new MeanIntensity());
     features.add(new Area());
     features.add(new Perimeter());
     features.add(new FitEllipse());
-    features.add(new AllHists());
     features.add(new BoundingBox());
     features.add(new MinCircle());
     features.add(new Circularity());
     features.add(new Convexity());
     features.add(new HuCircularity());
     features.add(new LTP());
+    return features;
+  }
+
+  /**
+   * @return list of secondary features to use. These features require information obtained from the
+   *         aggregation of primary feature values in order to be computed.
+   */
+  private static List<Feature> secondaryFeatures() {
+    List<Feature> features = new ArrayList<>();
+    features.add(new LTP());
+    features.add(new AllHists());
     return features;
   }
 
