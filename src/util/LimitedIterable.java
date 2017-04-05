@@ -7,7 +7,7 @@ import java.util.Iterator;
  *
  * @author Stuart Clark
  */
-public class LimitedIterator<T> implements Iterator<T> {
+public class LimitedIterable<T> implements Iterable<T>, Iterator<T> {
 
   private final Iterator<T> iterator;
   private final int limit;
@@ -15,9 +15,9 @@ public class LimitedIterator<T> implements Iterator<T> {
 
   /**
    * @param iterator the {@link Iterator} to limit.
-   * @param limit the number of times it should be possible to call {@link LimitedIterator#next()}.
+   * @param limit the number of times it should be possible to call {@link LimitedIterable#next()}.
    */
-  public LimitedIterator(Iterator<T> iterator, int limit) {
+  public LimitedIterable(Iterator<T> iterator, int limit) {
     this.iterator = iterator;
     this.limit = limit;
     this.counter = 0;
@@ -34,6 +34,11 @@ public class LimitedIterator<T> implements Iterator<T> {
       return null;
     }
     return iterator.next();
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return this;
   }
 
 }

@@ -12,12 +12,12 @@ import org.junit.Test;
 /**
  * @author Stuart Clark
  */
-public class LimitedIteratorTest {
+public class LimitedIterableTest {
 
   @Test
   public void test() throws Exception {
     List<String> input = Arrays.asList("1", "2", "3");
-    LimitedIterator<String> iterator = new LimitedIterator<>(input.iterator(), 2);
+    LimitedIterable<String> iterator = new LimitedIterable<>(input.iterator(), 2);
 
     List<String> output = new ArrayList<>();
     while (iterator.hasNext()) {
