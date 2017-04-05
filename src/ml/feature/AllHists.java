@@ -1,11 +1,13 @@
 package ml.feature;
 
 import static model.Histogram.POS_VALS_8BIT;
+import static model.Histogram.sturges;
 
 import org.opencv.core.Mat;
 
 import model.Histogram;
 import model.ROI;
+import model.ROIAreaStats;
 import util.LungsException;
 
 /**
@@ -16,27 +18,36 @@ import util.LungsException;
  */
 public class AllHists implements Feature {
 
-  public static final int COARSE = 16;
-  public static final int MID = 64;
-  public static final int FINE = 128;
-
   @Override
   public void compute(ROI roi, Mat mat) throws LungsException {
-    Histogram fine = new Histogram(FINE, POS_VALS_8BIT);
+    // Create the fine histogram and add it to the roi
+    Histogram fine = new Histogram(getFine(), POS_VALS_8BIT);
     fine.add(roi.getRegion(), mat);
     fine.computeBins();
     fine.toFrequencies();
     roi.setFineHist(fine);
 
-    Histogram mid = new Histogram(MID, fine);
-    mid.computeBins();
-    mid.toFrequencies();
-    roi.setMedHist(mid);
-
-    Histogram coarse = new Histogram(COARSE, fine);
+    // Create the coarse histogram and add it to the roi
+    Histogram coarse = new Histogram(getCoarse(), fine);
     coarse.computeBins();
     coarse.toFrequencies();
     roi.setCoarseHist(coarse);
+  }
+
+  /**
+   * @return the number of bins used in a coarse histogram i.e. {@link ROI#coarseHist}.
+   */
+  public static int getCoarse() {
+    ROIAreaStats stats = ROIAreaStats.get();
+    return sturges(POS_VALS_8BIT, stats.getMean());
+  }
+
+  /**
+   * @return the number of bins used in a fine histogram i.e. {@link ROI#fineHist}.
+   */
+  public static int getFine() {
+    ROIAreaStats stats = ROIAreaStats.get();
+    return sturges(POS_VALS_8BIT, stats.getMax());
   }
 
 }
