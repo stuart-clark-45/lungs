@@ -46,7 +46,7 @@ public class BlobOpt {
     Lungs unfiltered = createLungs(10, 255);
     List<List<ROI>> allROIs = helper.extractROIs(unfiltered);
 
-    double idealInclusion = 0.5 * helper.noduleInclusion(unfiltered);
+    double idealInclusion = 0.9 * helper.noduleInclusion(unfiltered);
     LOGGER.info("ideal inclusion is " + idealInclusion);
 
     /*
