@@ -61,7 +61,7 @@ public class BlobOpt {
       LOGGER.info("There are " + minROI + " ROIs");
 
       // Use mid value as dogThresh
-      dogThresh = (lowerBound + upperBound) / 2;
+      dogThresh = lowerBound + (upperBound - lowerBound + 1) / 2;
       LOGGER.info("Running with dogThresh of " + dogThresh);
       allROIs = helper.extractROIs(createLungs(dogThresh, Integer.MAX_VALUE));
       double inclusion = helper.noduleInclusion(allROIs);
@@ -92,20 +92,20 @@ public class BlobOpt {
      */
     upperBound = 255;
     lowerBound = 0;
-    int gradientThresh = -1;
+    int gradientThresh = 255;
     while (lowerBound < upperBound) {
 
       LOGGER.info("There are " + minROI + " ROIs");
 
       // Use mid value as gradientThresh
-      gradientThresh = (lowerBound + upperBound) / 2;
+      gradientThresh = lowerBound + (upperBound - lowerBound + 1) / 2;
       LOGGER.info("Running with gradient thresh of " + gradientThresh);
       allROIs = helper.extractROIs(createLungs(dogThresh, gradientThresh));
       double inclusion = helper.noduleInclusion(allROIs);
 
       // If inclusion has dropped then mid was too low a value
       if (inclusion < idealInclusion) {
-        lowerBound = gradientThresh;
+        upperBound = gradientThresh;
 
       } else {
 
