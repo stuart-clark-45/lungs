@@ -215,7 +215,6 @@ public class MissedNodules {
     try {
       File imageDir = new File(IMAGE_DIR);
       FileUtils.deleteDirectory(imageDir);
-      imageDir.delete();
       imageDir.mkdir();
       new File(DARK_DIR).mkdir();
       new File(LIGHT_DIR).mkdir();
