@@ -65,6 +65,7 @@ public class ArffGenerator {
 
     // Incrementally build classifier
     Classifier classifier = Lungs.newClassifier();
+    classifier.buildClassifier(trainData);
     Instance instance;
     while ((instance = arff.readInstance(trainData)) != null) {
       ((UpdateableClassifier) classifier).updateClassifier(instance);
