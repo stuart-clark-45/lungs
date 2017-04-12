@@ -40,7 +40,7 @@ public class SegOpt2 extends SegOpt1 {
     double noduleInc = helper.noduleInclusion(allROIs);
 
     // If the nodule inclusion has dropped too far then return 0 fitness
-    if (maxNoduleInc - noduleInc > 0.00005) {
+    if (noduleInc > 0.9 * maxNoduleInc) {
       return 0;
     }
 
