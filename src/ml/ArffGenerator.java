@@ -54,9 +54,6 @@ public class ArffGenerator {
     createTrainFile();
     createTestFile();
 
-    // Test the classifier
-    LOGGER.info("Testing the classifier...");
-
     // Load trainingData
     BufferedReader reader = new BufferedReader(new FileReader(TRAIN_FILE));
     ArffReader arff = new ArffReader(reader, 0);
@@ -64,17 +61,21 @@ public class ArffGenerator {
     trainData.setClassIndex(trainData.numAttributes() - 1);
 
     // Incrementally build classifier
+    LOGGER.info("Building the classifier...");
     Classifier classifier = Lungs.newClassifier();
     classifier.buildClassifier(trainData);
     Instance instance;
     while ((instance = arff.readInstance(trainData)) != null) {
       ((UpdateableClassifier) classifier).updateClassifier(instance);
     }
+    LOGGER.info("Finished building classifier");
 
     // Save classifier model
+    LOGGER.info("Writing classifier to file...");
     Lungs.writeClassifier(classifier);
 
     // Load testData
+    LOGGER.info("Testing the classifier...");
     reader = new BufferedReader(new FileReader(TEST_FILE));
     arff = new ArffReader(reader, 0);
     Instances testData = arff.getStructure();
