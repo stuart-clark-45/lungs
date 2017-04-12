@@ -174,6 +174,8 @@ public class ArffGenerator {
 
     // Flushes the instances to the file
     saver.writeIncremental(null);
+
+    LOGGER.info("Finished creating " + name);
   }
 
   /**
