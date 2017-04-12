@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.mongodb.morphia.Datastore;
@@ -13,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import core.Lungs;
 import model.ROI;
-import util.LimitedIterable;
 import util.MongoHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -190,19 +191,18 @@ public class ArffGenerator {
     long numRequired = numNonNodule - numNodule;
     long numIterables = numRequired / numNodule;
 
-    // Add all full queries to nodules
-    Iterable<ROI> nodules = noduleQuery.cloneQuery();
-    for (long i = 1; i < numIterables; i++) {
-      nodules = IterableUtils.chainedIterable(nodules, noduleQuery.cloneQuery());
+
+    // Add all full queries to to the list of iterables
+    List<Iterable<ROI>> iterables = new LinkedList<>();
+    for (long i = 0; i < numIterables; i++) {
+      iterables.add(noduleQuery.cloneQuery());
     }
 
-    // Add a limited iterable that contains the remainder required to balance the sets
+    // Add a bounded iterable that contains the remainder required to balance the sets
     numRequired = numRequired - (numIterables * numNodule);
-    LimitedIterable<ROI> limited =
-        new LimitedIterable<>(noduleQuery.cloneQuery().iterator(), (int) numRequired);
-    nodules = IterableUtils.chainedIterable(nodules, limited);
+    iterables.add(IterableUtils.boundedIterable(noduleQuery.cloneQuery(), numRequired));
 
-    return nodules;
+    return IterableUtils.chainedIterable(iterables.toArray(new Iterable[iterables.size()]));
   }
 
   public static void main(String[] args) throws Exception {
