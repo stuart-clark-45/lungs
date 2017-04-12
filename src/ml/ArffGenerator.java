@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.mongodb.morphia.Datastore;
@@ -186,23 +184,24 @@ public class ArffGenerator {
    * @return an iterable with {@code numNonNodule} elements, produced by repeating the ROIs in
    *         nodule query.
    */
+  @SuppressWarnings("unchecked")
   private Iterable<ROI> oversample(Query<ROI> noduleQuery, long numNodule, long numNonNodule) {
     // Calculate how many times the nodules query need to be repeated
     long numRequired = numNonNodule - numNodule;
-    long numIterables = numRequired / numNodule;
+    int numFullRepeat = (int) (numRequired / numNodule);
 
 
     // Add all full queries to to the list of iterables
-    List<Iterable<ROI>> iterables = new LinkedList<>();
-    for (long i = 0; i < numIterables; i++) {
-      iterables.add(noduleQuery.cloneQuery());
+    Iterable[] iterables = new Iterable[numFullRepeat + 1];
+    for (int i = 0; i < numFullRepeat; i++) {
+      iterables[i] = noduleQuery.cloneQuery();
     }
 
     // Add a bounded iterable that contains the remainder required to balance the sets
-    numRequired = numRequired - (numIterables * numNodule);
-    iterables.add(IterableUtils.boundedIterable(noduleQuery.cloneQuery(), numRequired));
+    numRequired = numRequired - (numFullRepeat * numNodule);
+    iterables[numFullRepeat] = IterableUtils.boundedIterable(noduleQuery.cloneQuery(), numRequired);
 
-    return IterableUtils.chainedIterable(iterables.toArray(new Iterable[iterables.size()]));
+    return IterableUtils.chainedIterable(iterables);
   }
 
   public static void main(String[] args) throws Exception {
