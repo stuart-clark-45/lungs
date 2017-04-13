@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import core.Lungs;
 import model.MinMaxXY;
@@ -28,6 +30,8 @@ import util.PointUtils;
  * @author Stuart Clark
  */
 public class BlobToROI {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(BlobToROI.class);
 
   /**
    * The number of times that {@link this#blobToROI(ROI, Mat)} has been called successfully.
@@ -82,13 +86,7 @@ public class BlobToROI {
     List<ROI> rois = ROIExtractor.labelsToROIs(labels);
 
     // Get the ROI which has points in the blob
-    ROI blobROI;
-    try {
-      blobROI = getBlobROI(rois, blobRegion, rounded);
-    } catch (LungsException e) {
-      failure++;
-      throw e;
-    }
+    ROI blobROI = getBlobROI(rois, blobRegion, rounded);
 
     // Set the blob back in the thresholded submat
     for (Point point : blobRegion) {
@@ -179,8 +177,7 @@ public class BlobToROI {
    * @return the {@link ROI} that (partially) fills the blob.
    * @throws LungsException if no single blob could be identified.
    */
-  private ROI getBlobROI(List<ROI> rois, List<Point> blobRegion, MinMaxXY<Integer> rounded)
-      throws LungsException {
+  private ROI getBlobROI(List<ROI> rois, List<Point> blobRegion, MinMaxXY<Integer> rounded) {
 
     // Get all the thresholded ROIs that have at least one point inside the blob
     List<ROI> blobROIs = rois.stream().filter(roi -> {
@@ -198,7 +195,15 @@ public class BlobToROI {
     if (numBlobROIs == 1) {
       return blobROIs.get(0);
     } else {
-      throw new LungsException(numBlobROIs + " ROIs found inside the blob there should only be one");
+      LOGGER.warn(numBlobROIs + " ROIs found inside the blob there should only be one");
+      failure++;
+      ROI combined = new ROI();
+      List<Point> points = new ArrayList<>();
+      for (ROI roi : blobROIs) {
+        points.addAll(roi.getRegion());
+      }
+      combined.setRegion(points);
+      return combined;
     }
   }
 
