@@ -51,7 +51,7 @@ public class LungsOptHelper {
 
     // Load some stacks
     Datastore ds = MongoHelper.getDataStore();
-    Query<CTStack> query = filter.all(ds.createQuery(CTStack.class));
+    Query<CTStack> query = filter.train(ds.createQuery(CTStack.class));
     List<CTStack> stacks = query.asList(new FindOptions().limit(numStacks));
 
     // For each slice in all the stacks
