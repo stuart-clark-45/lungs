@@ -54,7 +54,7 @@ import vision.BlobToROI;
 import vision.ConvexHull;
 import vision.ROIExtractor;
 import weka.classifiers.Classifier;
-import weka.classifiers.trees.HoeffdingTree;
+import weka.classifiers.bayes.NaiveBayesUpdateable;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -512,7 +512,7 @@ public class Lungs {
   }
 
   public static Classifier newClassifier() {
-    return new HoeffdingTree();
+    return new NaiveBayesUpdateable();
   }
 
   public static void writeClassifier(Classifier classifier) throws Exception {
