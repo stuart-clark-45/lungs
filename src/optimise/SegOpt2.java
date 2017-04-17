@@ -39,9 +39,9 @@ public class SegOpt2 extends SegOpt1 {
     List<List<ROI>> allROIs = helper.extractROIs(lungs);
     double noduleInc = helper.noduleInclusion(allROIs);
 
-    // If the nodule inclusion has dropped too far then return 0 fitness
-    if (noduleInc > 0.9 * maxNoduleInc) {
-      return 0;
+    // If the nodule inclusion has dropped return worst possible fitness
+    if (noduleInc < maxNoduleInc) {
+      return Double.MIN_VALUE;
     }
 
     // Fewer ROIs -> greater fitness
